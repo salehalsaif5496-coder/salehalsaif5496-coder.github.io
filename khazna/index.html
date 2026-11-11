@@ -358,7 +358,7 @@ async function connectDb(){
   }catch(e){console.log('db unavailable',e)}
 }
 let saveT;
-function save(){S.updatedAt=Date.now();lsSet();clearTimeout(saveT);saveT=setTimeout(()=>{
+function save(){S.updatedAt=Date.now();lsSet();try{schedulePushSync()}catch(e){}clearTimeout(saveT);saveT=setTimeout(()=>{
   if(!store.ref)return;const payload={json:JSON.stringify(S),updatedAt:S.updatedAt};
   store.writing=store.writing.then(()=>store.ref.set(payload)).catch(e=>console.log('save fail',e));},700)}
 
@@ -379,7 +379,7 @@ async function pinDone(){
 function openDoor(){
   $('#doorScene').classList.add('open');$('#pinMsg').textContent='';
   setTimeout(()=>{$('#flash').style.opacity=.9},700);
-  setTimeout(()=>{$('#login').classList.add('hidden');$('#app').classList.remove('hidden');go(location.hash.slice(1)||'home');$('#flash').style.opacity=0},1400)
+  setTimeout(()=>{$('#login').classList.add('hidden');$('#app').classList.remove('hidden');go(location.hash.slice(1)||'home');setTimeout(refreshPush,1500);$('#flash').style.opacity=0},1400)
 }
 function setupLogin(){buildPad();pinBuf='';drawDots();
   if(S.pin){pinStage='enter';$('#pinMsg').textContent='أدخل رمز الدخول'}
@@ -596,10 +596,11 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
   const upcoming=S.tasks.filter(x=>!x.daily&&x.date>t).sort((a,b)=>a.date.localeCompare(b.date));
   const overdue=S.tasks.filter(x=>!x.daily&&x.date<t&&!(x.doneDates||[]).includes(x.date));
   $('#main').innerHTML=`<div class="tower">${wins}</div><div class="tower-cap">${tt.length?`أنرت <b class="mono" style="color:#fff">${done}</b> من <span class="mono">${tt.length}</span> نوافذ اليوم`:'العمارة مطفية — أضف مهام اليوم'}</div>
-  <h2 class="sec">التنبيهات</h2>
-  <div class="card"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>تذكير الصباح</b><span class="mute">${S.morning?`كل يوم الساعة <span class="mono">${S.morning}</span> — مضاف في تقويمك`:'تنبيه يومي يذكرك تفتح مهام اليوم'}</span></div>
-    <input type="time" class="inp mono" id="mTime" value="${S.morning||'08:00'}" style="width:104px;padding:9px 8px;font-size:14px"></div>
-    <div class="btn-row"><button class="btn" onclick="setMorning()">${S.morning?'تحديث تذكير الصباح':'تفعيل تذكير الصباح'}</button><button class="btn" onclick="remindAll()">🔔 تنبيه لكل المهام</button></div></div>
+  <h2 class="sec">الإشعارات</h2>
+  <div class="card"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>${S.pushOn?'الإشعارات شغالة':'الإشعارات مطفية'}</b><span class="mute">${S.pushOn?'كل مهمة لها وقت يوصلك إشعارها من الخزنة':'فعّلها عشان توصلك كل مهمة في وقتها'}</span></div></div>
+    ${S.pushOn?`<div class="toggle" style="margin-top:14px"><span>🗂 ملخص الصباح</span><input type="time" class="inp mono" id="mTime" value="${S.morning||''}" onchange="setMorning(this.value)" style="width:110px;padding:8px;font-size:14px"></div>
+    <div class="btn-row"><button class="btn" onclick="testPush()">إرسال إشعار تجربة</button><button class="btn" onclick="disablePush()">إيقاف</button></div>`
+    :`<button class="btn primary" style="margin-top:14px" onclick="enablePush()">تفعيل الإشعارات</button>`}</div>
   ${next?`<h2 class="sec">الموعد القادم</h2><div class="card watch-wrap" id="watchCard"></div>`:''}
   <h2 class="sec">اليوم</h2><div>${tt.map(x=>taskRow(x)).join('')||'<div class="empty">ما فيه مهام اليوم</div>'}</div>
   ${overdue.length?`<h2 class="sec">متأخرة</h2><div>${overdue.map(x=>taskRow({...x,done:false},true)).join('')}</div>`:''}
@@ -608,7 +609,7 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
     const tgt=new Date();tgt.setHours(+h,+m,0,0);const diff=Math.max(0,tgt-n),hh=Math.floor(diff/3600000),mm=Math.floor(diff%3600000/60000);
     c.innerHTML=watchSVG(n)+`<div><div class="t">باقي على «${esc(next.title)}»</div><div class="c mono">${hh}:${pad2(mm)}</div><div class="t mono">${next.time}</div></div>`};draw();watchTimer=setInterval(draw,30000)}}
 function taskRow(x,showDate){return `<div class="task ${x.done?'done':''}" onclick="toggleTask('${x.id}')"><div class="chk"></div><div class="info"><div>${esc(x.title)}</div>
-  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div><button class="bell ${x.reminded?'on':''}" onclick="event.stopPropagation();remindTask('${x.id}')" aria-label="تذكير">🔔</button>${delBtn('task',x.id)}</div>`}
+  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div>${x.time?`<button class="bell ${S.pushOn&&!x.mute?'on':''}" onclick="event.stopPropagation();toggleMute('${x.id}')" aria-label="تنبيه">🔔</button>`:''}${delBtn('task',x.id)}</div>`}
 function toggleTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;const key=x.daily?today():x.date;x.doneDates=x.doneDates||[];
   const i=x.doneDates.indexOf(key);if(i>=0)x.doneDates.splice(i,1);else{x.doneDates.push(key);if(x.daily)x.doneDates=x.doneDates.slice(-60)}save();render()}
 function addTask(){let daily=false;
@@ -620,30 +621,39 @@ function addTask(){let daily=false;
   $('#fDaily').onclick=e=>{daily=!daily;e.currentTarget.classList.toggle('on',daily)};
   $('#fRem').onclick=e=>{rem=!rem;e.currentTarget.classList.toggle('on',rem)};
   $('#fSave').onclick=()=>{const title=$('#fT').value.trim();if(!title)return toast('اكتب المهمة');
-    const t={id:uid(),title,date:$('#fD').value||today(),time:$('#fTm').value||null,daily,doneDates:[]};S.tasks.push(t);save();closeSheet();render();
-    if(rem)setTimeout(()=>remindTask(t.id),250)}})}
+    const t={id:uid(),title,date:$('#fD').value||today(),time:$('#fTm').value||null,daily,doneDates:[],mute:!rem};S.tasks.push(t);save();closeSheet();render();
+    if(rem&&t.time&&!S.pushOn)toast('فعّل الإشعارات من فوق عشان يوصلك تنبيهها')}})}
 
-/* ================= REMINDERS (iPhone Calendar alarms via .ics) ================= */
-const APP_URL='https://salehalsaif5496-coder.github.io/khazna/#tasks';
-const icsEsc=t=>String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
-const icsDT=(date,time)=>date.replace(/-/g,'')+'T'+(time||'09:00').replace(':','')+'00';
-function icsStamp(){const d=new Date();return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'}
-function addMin(time,m){const [h,mm]=(time||'09:00').split(':').map(Number);const t=h*60+mm+m;return pad2(Math.floor(t/60)%24)+':'+pad2(t%60)}
-function vevent(uid,title,date,time,daily,desc){return ['BEGIN:VEVENT','UID:'+uid+'@khazna','DTSTAMP:'+icsStamp(),
-  'DTSTART:'+icsDT(date,time),'DTEND:'+icsDT(date,addMin(time,15)),daily?'RRULE:FREQ=DAILY':'','SUMMARY:'+icsEsc(title),
-  'DESCRIPTION:'+icsEsc(desc||'من تطبيق الخزنة'),'URL:'+APP_URL,
-  'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:PT0M','END:VALARM','END:VEVENT'].filter(Boolean).join('\r\n')}
-function wrapIcs(events){return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Khazna//AR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:الخزنة',...events,'END:VCALENDAR'].join('\r\n')}
+/* ================= PUSH NOTIFICATIONS (Supabase server) ================= */
+const PUSH={url:'https://lpsifrdiangpfcwhjeim.supabase.co',key:'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwc2lmcmRpYW5ncGZjd2hqZWltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0MjQ5MDgsImV4cCI6MjExMDAwMDkwOH0.SbQyshCXUagRaHSVDztTYaV-8rKTJVipq-t2Bovilm4',vapid:'BEXEbYEYBZyMZOG7EVYYz2Sbkt6tV9HW-p1URA5_I1lf1Vk1WUOEb5VVQrErmNTeJur-cLfKH9qmqF3X8JPN05s'};
 const isIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
-function openIcs(ics,name){const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
-  if(!isIOS())a.download=name+'.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},4000)}
-function taskEvent(x){const date=x.daily?(x.date<today()?today():x.date):x.date;return vevent(x.id,'☑︎ '+x.title,date,x.time,x.daily,x.daily?'مهمة يومية — من تطبيق الخزنة':'مهمة — من تطبيق الخزنة')}
-function remindTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;openIcs(wrapIcs([taskEvent(x)]),'khazna-task');x.reminded=true;save();render();
-  toast(x.time?'اختر «إضافة للتقويم» والتنبيه يوصلك '+x.time:'بدون وقت؟ بيوصلك التنبيه ٩ الصباح')}
-function remindAll(){const t=today();const list=S.tasks.filter(x=>x.daily||x.date>=t);if(!list.length)return toast('ما فيه مهام تنبيهها');
-  openIcs(wrapIcs(list.map(taskEvent)),'khazna-tasks');list.forEach(x=>x.reminded=true);save();render();toast('اختر «إضافة الكل» للتقويم')}
-function setMorning(){const tm=($('#mTime')&&$('#mTime').value)||'08:00';S.morning=tm;save();
-  openIcs(wrapIcs([vevent('morning','🗂 مهام اليوم — الخزنة',today(),tm,true,'افتح الخزنة وشوف نوافذ اليوم')]),'khazna-morning');render();toast('اختر «إضافة للتقويم»')}
+const isStandalone=()=>navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+function b64u(s){const p='='.repeat((4-s.length%4)%4);const r=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
+function pushSecret(){if(!S.pushSecret){const a=new Uint8Array(32);crypto.getRandomValues(a);S.pushSecret=[...a].map(x=>x.toString(16).padStart(2,'0')).join('');save()}return S.pushSecret}
+function reminderList(){const t=today();return S.tasks.filter(x=>x.daily||x.date>=t).filter(x=>x.daily||!(x.doneDates||[]).includes(x.date)).map(x=>({
+  task_id:x.id,title:x.title,time:x.mute?null:(x.time||null),date:x.daily?null:x.date,daily:!!x.daily,skip_date:x.daily&&(x.doneDates||[]).includes(t)?t:null}))}
+async function pushCall(extra){const body={secret:pushSecret(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Riyadh',morning:S.morning||null,reminders:reminderList(),...extra};
+  const r=await fetch(PUSH.url+'/functions/v1/khazna-sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+PUSH.key,'apikey':PUSH.key},body:JSON.stringify(body)});
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j}
+let pushT,pushLast='';
+function schedulePushSync(){if(!S.pushOn)return;clearTimeout(pushT);pushT=setTimeout(async()=>{const sig=JSON.stringify([reminderList(),S.morning]);if(sig===pushLast)return;
+  try{await pushCall({});pushLast=sig}catch(e){console.log('push sync',e)}},1200)}
+async function getSub(){const reg=await navigator.serviceWorker.ready;return (await reg.pushManager.getSubscription())||reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(PUSH.vapid)})}
+async function enablePush(){
+  if(isIOS()&&!isStandalone())return toast('افتح الخزنة من أيقونتها في الشاشة الرئيسية وفعّلها من هناك');
+  if(!('Notification' in window)||!('serviceWorker' in navigator)||!('PushManager' in window))return toast('جهازك ما يدعم الإشعارات — حدّث iOS');
+  try{const perm=await Notification.requestPermission();if(perm!=='granted')return toast('ما سمحت بالإشعارات — فعّلها من إعدادات الآيفون ← الخزنة');
+    toast('لحظة…');const sub=await getSub();S.pushOn=true;if(!S.morning)S.morning='08:00';save();
+    const r=await pushCall({subscription:sub.toJSON(),test:true});pushLast=JSON.stringify([reminderList(),S.morning]);render();
+    toast(r.test==='sent'?'تم التفعيل — وصلك إشعار تجربة؟':'تم التفعيل ✓')}
+  catch(e){console.log(e);toast('ما قدرت أفعّلها: '+(e.message||e))}}
+async function testPush(){try{const sub=await getSub();const r=await pushCall({subscription:sub.toJSON(),test:true});toast(r.test==='sent'?'انرسل — بيوصلك خلال ثواني':'ما انرسل، جرّب «إيقاف» ثم «تفعيل»')}catch(e){toast('خطأ: '+(e.message||e))}}
+async function disablePush(){try{const reg=await navigator.serviceWorker.ready;const s=await reg.pushManager.getSubscription();if(s)await s.unsubscribe()}catch(e){}
+  S.pushOn=false;save();try{await pushCall({unsubscribe:true,reminders:[]})}catch(e){}render();toast('وقفت الإشعارات')}
+function setMorning(v){S.morning=v||null;save();toast(v?'ملخص الصباح الساعة '+v:'ألغيت ملخص الصباح')}
+function toggleMute(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;if(!S.pushOn)return toast('فعّل الإشعارات أول');x.mute=!x.mute;save();render();toast(x.mute?'ألغيت تنبيه هالمهمة':'بيوصلك تنبيهها '+x.time)}
+async function refreshPush(){if(!S.pushOn||!('serviceWorker' in navigator))return;try{const reg=await navigator.serviceWorker.ready;const s=await reg.pushManager.getSubscription();
+  if(!s){S.pushOn=false;save();return}await pushCall({subscription:s.toJSON()});pushLast=JSON.stringify([reminderList(),S.morning])}catch(e){console.log('refresh',e)}}
 
 /* ================= PLAN ================= */
 function renderPlan(){const an=avgNet();
