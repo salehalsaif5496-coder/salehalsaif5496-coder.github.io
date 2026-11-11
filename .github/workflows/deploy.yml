@@ -28,6 +28,7 @@ jobs:
           unzip -q rays-quality-pwa.zip -d site
           cp site/index.html site/404.html
           rm -f site/_redirects site/_headers
+          cp -r khazna site/khazna
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
