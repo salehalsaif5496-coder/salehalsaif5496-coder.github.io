@@ -198,6 +198,11 @@ h2.sec{font-size:13px;color:var(--mute);font-weight:500;margin:26px 2px 10px;dis
 .task .info span{font-size:11px;color:var(--mute)}
 .pill{font-size:10px;border:1px solid #333;border-radius:20px;padding:1px 7px;margin-inline-start:6px;color:#999}
 .watch-wrap{display:flex;align-items:center;gap:16px}
+.bell{background:none;border:none;font-size:15px;padding:6px 6px;opacity:.28;filter:grayscale(1)}
+.bell.on{opacity:1;filter:grayscale(1) brightness(1.6) drop-shadow(0 0 6px rgba(255,255,255,.6))}
+.notif{display:flex;align-items:center;gap:12px}
+.notif .ic{width:40px;height:40px;border-radius:12px;border:1px solid #2a2a2a;display:grid;place-items:center;font-size:18px;flex:none;filter:grayscale(1)}
+.notif .tx{flex:1;font-size:12.5px;line-height:1.6} .notif .tx b{font-size:14px;font-weight:500;display:block}
 .watch-wrap svg{flex:none}
 .watch-wrap .t{font-size:13px;color:var(--mute)} .watch-wrap .c{font-size:26px;margin-top:4px}
 
@@ -591,6 +596,10 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
   const upcoming=S.tasks.filter(x=>!x.daily&&x.date>t).sort((a,b)=>a.date.localeCompare(b.date));
   const overdue=S.tasks.filter(x=>!x.daily&&x.date<t&&!(x.doneDates||[]).includes(x.date));
   $('#main').innerHTML=`<div class="tower">${wins}</div><div class="tower-cap">${tt.length?`أنرت <b class="mono" style="color:#fff">${done}</b> من <span class="mono">${tt.length}</span> نوافذ اليوم`:'العمارة مطفية — أضف مهام اليوم'}</div>
+  <h2 class="sec">التنبيهات</h2>
+  <div class="card"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>تذكير الصباح</b><span class="mute">${S.morning?`كل يوم الساعة <span class="mono">${S.morning}</span> — مضاف في تقويمك`:'تنبيه يومي يذكرك تفتح مهام اليوم'}</span></div>
+    <input type="time" class="inp mono" id="mTime" value="${S.morning||'08:00'}" style="width:104px;padding:9px 8px;font-size:14px"></div>
+    <div class="btn-row"><button class="btn" onclick="setMorning()">${S.morning?'تحديث تذكير الصباح':'تفعيل تذكير الصباح'}</button><button class="btn" onclick="remindAll()">🔔 تنبيه لكل المهام</button></div></div>
   ${next?`<h2 class="sec">الموعد القادم</h2><div class="card watch-wrap" id="watchCard"></div>`:''}
   <h2 class="sec">اليوم</h2><div>${tt.map(x=>taskRow(x)).join('')||'<div class="empty">ما فيه مهام اليوم</div>'}</div>
   ${overdue.length?`<h2 class="sec">متأخرة</h2><div>${overdue.map(x=>taskRow({...x,done:false},true)).join('')}</div>`:''}
@@ -599,17 +608,42 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
     const tgt=new Date();tgt.setHours(+h,+m,0,0);const diff=Math.max(0,tgt-n),hh=Math.floor(diff/3600000),mm=Math.floor(diff%3600000/60000);
     c.innerHTML=watchSVG(n)+`<div><div class="t">باقي على «${esc(next.title)}»</div><div class="c mono">${hh}:${pad2(mm)}</div><div class="t mono">${next.time}</div></div>`};draw();watchTimer=setInterval(draw,30000)}}
 function taskRow(x,showDate){return `<div class="task ${x.done?'done':''}" onclick="toggleTask('${x.id}')"><div class="chk"></div><div class="info"><div>${esc(x.title)}</div>
-  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div>${delBtn('task',x.id)}</div>`}
+  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div><button class="bell ${x.reminded?'on':''}" onclick="event.stopPropagation();remindTask('${x.id}')" aria-label="تذكير">🔔</button>${delBtn('task',x.id)}</div>`}
 function toggleTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;const key=x.daily?today():x.date;x.doneDates=x.doneDates||[];
   const i=x.doneDates.indexOf(key);if(i>=0)x.doneDates.splice(i,1);else{x.doneDates.push(key);if(x.daily)x.doneDates=x.doneDates.slice(-60)}save();render()}
 function addTask(){let daily=false;
   sheet(`<h3>مهمة جديدة</h3><input class="inp" id="fT" placeholder="وش المطلوب منك؟">
   <div class="row2"><div><label class="f">اليوم</label><input class="inp" id="fD" type="date" value="${today()}"></div><div><label class="f">الوقت (اختياري)</label><input class="inp" id="fTm" type="time"></div></div>
   <div class="toggle"><span>تتكرر كل يوم</span><button class="sw" id="fDaily"></button></div>
-  <div style="margin-top:18px"><button class="btn primary" id="fSave">إضافة نافذة</button></div>`,()=>{setTimeout(()=>$('#fT').focus(),350);
+  <div class="toggle"><span>🔔 نبّهني على الجوال</span><button class="sw on" id="fRem"></button></div>
+  <div style="margin-top:18px"><button class="btn primary" id="fSave">إضافة نافذة</button></div>`,()=>{setTimeout(()=>$('#fT').focus(),350);let rem=true;
   $('#fDaily').onclick=e=>{daily=!daily;e.currentTarget.classList.toggle('on',daily)};
+  $('#fRem').onclick=e=>{rem=!rem;e.currentTarget.classList.toggle('on',rem)};
   $('#fSave').onclick=()=>{const title=$('#fT').value.trim();if(!title)return toast('اكتب المهمة');
-    S.tasks.push({id:uid(),title,date:$('#fD').value||today(),time:$('#fTm').value||null,daily,doneDates:[]});save();closeSheet();render()}})}
+    const t={id:uid(),title,date:$('#fD').value||today(),time:$('#fTm').value||null,daily,doneDates:[]};S.tasks.push(t);save();closeSheet();render();
+    if(rem)setTimeout(()=>remindTask(t.id),250)}})}
+
+/* ================= REMINDERS (iPhone Calendar alarms via .ics) ================= */
+const APP_URL='https://salehalsaif5496-coder.github.io/khazna/#tasks';
+const icsEsc=t=>String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');
+const icsDT=(date,time)=>date.replace(/-/g,'')+'T'+(time||'09:00').replace(':','')+'00';
+function icsStamp(){const d=new Date();return d.getUTCFullYear()+pad2(d.getUTCMonth()+1)+pad2(d.getUTCDate())+'T'+pad2(d.getUTCHours())+pad2(d.getUTCMinutes())+pad2(d.getUTCSeconds())+'Z'}
+function addMin(time,m){const [h,mm]=(time||'09:00').split(':').map(Number);const t=h*60+mm+m;return pad2(Math.floor(t/60)%24)+':'+pad2(t%60)}
+function vevent(uid,title,date,time,daily,desc){return ['BEGIN:VEVENT','UID:'+uid+'@khazna','DTSTAMP:'+icsStamp(),
+  'DTSTART:'+icsDT(date,time),'DTEND:'+icsDT(date,addMin(time,15)),daily?'RRULE:FREQ=DAILY':'','SUMMARY:'+icsEsc(title),
+  'DESCRIPTION:'+icsEsc(desc||'من تطبيق الخزنة'),'URL:'+APP_URL,
+  'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(title),'TRIGGER:PT0M','END:VALARM','END:VEVENT'].filter(Boolean).join('\r\n')}
+function wrapIcs(events){return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Khazna//AR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:الخزنة',...events,'END:VCALENDAR'].join('\r\n')}
+const isIOS=()=>/iP(hone|ad|od)/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+function openIcs(ics,name){const blob=new Blob([ics],{type:'text/calendar;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;
+  if(!isIOS())a.download=name+'.ics';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},4000)}
+function taskEvent(x){const date=x.daily?(x.date<today()?today():x.date):x.date;return vevent(x.id,'☑︎ '+x.title,date,x.time,x.daily,x.daily?'مهمة يومية — من تطبيق الخزنة':'مهمة — من تطبيق الخزنة')}
+function remindTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;openIcs(wrapIcs([taskEvent(x)]),'khazna-task');x.reminded=true;save();render();
+  toast(x.time?'اختر «إضافة للتقويم» والتنبيه يوصلك '+x.time:'بدون وقت؟ بيوصلك التنبيه ٩ الصباح')}
+function remindAll(){const t=today();const list=S.tasks.filter(x=>x.daily||x.date>=t);if(!list.length)return toast('ما فيه مهام تنبيهها');
+  openIcs(wrapIcs(list.map(taskEvent)),'khazna-tasks');list.forEach(x=>x.reminded=true);save();render();toast('اختر «إضافة الكل» للتقويم')}
+function setMorning(){const tm=($('#mTime')&&$('#mTime').value)||'08:00';S.morning=tm;save();
+  openIcs(wrapIcs([vevent('morning','🗂 مهام اليوم — الخزنة',today(),tm,true,'افتح الخزنة وشوف نوافذ اليوم')]),'khazna-morning');render();toast('اختر «إضافة للتقويم»')}
 
 /* ================= PLAN ================= */
 function renderPlan(){const an=avgNet();
