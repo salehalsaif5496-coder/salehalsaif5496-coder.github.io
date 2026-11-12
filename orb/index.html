@@ -101,7 +101,7 @@ function startListening(){
   if (dict) { dict.start().catch(() => flashError()); return; }
   if (hasWebRec) {
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-    rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = true;
+    rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = false;
     rec.onstart = () => { set("listen"); clearTimeout(silT); silT = setTimeout(() => { if (!heard.trim()) { try { rec && rec.stop(); } catch(_){} } }, 8000); };
     rec.onresult = e => { heard = [...e.results].map(r => r[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { rec && rec.stop(); } catch(_){} }, 1500); };
     rec.onerror = e => diag("rec " + (e && e.error));
@@ -190,12 +190,7 @@ function diag(m){
     body: JSON.stringify({session_id:"diag-" + SESSION, role:"assistant", content:String(m).slice(0,1500)})}).catch(()=>{}); } catch(e){}
 }
 function unlockAudio(){
-  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch(e){}
-  try {
-    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-    if (actx.state !== "running") actx.resume();
-    const b = actx.createBuffer(1, 1, 22050), src = actx.createBufferSource(); src.buffer = b; src.connect(actx.destination); src.start(0);
-  } catch(e){ diag("unlock " + e); }
+  try { player.muted = false; player.src = "data:audio/wav;base64,UklGRkQDAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YSADAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgA=="; const p = player.play(); if (p) p.catch(e => diag("unlock " + e)); } catch(e){ diag("unlock " + e); }
 }
 function iosSay(t){
   if (!("speechSynthesis" in window)) return Promise.resolve();
@@ -215,19 +210,10 @@ function fetchVoice(t){
 }
 async function playBlob(blob, gen, t){
   if (gen !== sayGen) return;
-  if (actx) {
-    try {
-      if (actx.state !== "running") await actx.resume();
-      const buf = await actx.decodeAudioData(await blob.arrayBuffer());
-      if (gen !== sayGen) return;
-      await new Promise(res => { const src = actx.createBufferSource(); src.buffer = buf; src.connect(actx.destination); src.onended = res; curSrc = src; src.start(0); });
-      return;
-    } catch(e){ diag("webaudio " + (e && e.message || e) + " state=" + (actx && actx.state)); }
-  }
   const ok = await new Promise(res => {
     const url = URL.createObjectURL(blob);
     player.onended = () => { URL.revokeObjectURL(url); res(true); };
-    player.onerror = () => { URL.revokeObjectURL(url); res(false); };
+    player.onerror = () => { URL.revokeObjectURL(url); diag("audio el error " + (player.error && player.error.code)); res(false); };
     player.src = url; const p = player.play(); if (p) p.catch(e => { diag("audio el " + e); res(false); });
   });
   if (!ok && gen === sayGen) await iosSay(t);
