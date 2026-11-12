@@ -77,7 +77,7 @@ function startListening(){
     rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = true;
     rec.onstart = () => { set("listen"); clearTimeout(silT); silT = setTimeout(() => { if (!heard.trim()) { try { rec && rec.stop(); } catch(_){} } }, 8000); };
     rec.onresult = e => { heard = [...e.results].map(r => r[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { rec && rec.stop(); } catch(_){} }, 1500); };
-    rec.onerror = () => {};
+    rec.onerror = e => diag("rec " + (e && e.error));
     rec.onend = () => { rec = null; if (st === "listen") { heard.trim() ? ask(heard.trim()) : set("idle"); } };
     try { rec.start(); } catch(e){ flashError(); }
     return;
@@ -91,7 +91,7 @@ function stopListening(){
 
 /* ================= think ================= */
 async function ask(q){
-  set("think");
+  set("think"); diag("ask start oa=" + !!oaKey + " ant=" + !!apiKey);
   history.push({role:"user", content:q});
   history = history.slice(-13); while (history.length && history[0].role !== "user") history.shift();
   try {
@@ -133,7 +133,7 @@ async function ask(q){
     logTurn("user", q); logTurn("assistant", answer);
     if (!streamed) speak(answer);
   } catch(e) {
-    history.pop(); flashError();
+    diag("ask " + (e && e.message || e)); history.pop(); flashError();
   }
 }
 
@@ -153,12 +153,22 @@ function speak(text){
 }
 let speakQueue = [];
 function clean(t){ return t.replace(/[*#_`>•\-]/g, " ").trim(); }
-const OA_VOICE = "ash";
-const OA_STYLE = "تكلم باللهجة السعودية النجدية العامية مثل شاب من الرياض يسولف مع خويه. نبرة عفوية مرحة وفيها حماس وحياة، مو قراءة رسمية ولا فصحى. اضحك ضحكة خفيفة طبيعية إذا الكلام فيه مزح. سرعة كلام طبيعية مثل المكالمة.";
+const OA_VOICE = "coral";
+const OA_STYLE = "تكلم باللهجة السعودية النجدية العامية مثل بنت من الرياض تسولف بعفوية مع أحد تعرفه. نبرة عفوية مرحة وفيها حماس وحياة، مو قراءة رسمية ولا فصحى. اضحك ضحكة خفيفة طبيعية إذا الكلام فيه مزح. سرعة كلام طبيعية مثل المكالمة.";
 const player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", "");
 let playChain = Promise.resolve(), sayGen = 0, pendingSay = 0;
+let actx = null;
+function diag(m){
+  try { fetch(SB_URL + "/rest/v1/orb_messages", {method:"POST", headers:{...SB_H, "Prefer":"return=minimal"},
+    body: JSON.stringify({session_id:"diag-" + SESSION, role:"assistant", content:String(m).slice(0,1500)})}).catch(()=>{}); } catch(e){}
+}
 function unlockAudio(){
-  try { player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; const p = player.play(); if (p) p.catch(()=>{}); } catch(e){}
+  try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch(e){}
+  try {
+    if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
+    if (actx.state !== "running") actx.resume();
+    const b = actx.createBuffer(1, 1, 22050), src = actx.createBufferSource(); src.buffer = b; src.connect(actx.destination); src.start(0);
+  } catch(e){ diag("unlock " + e); }
 }
 function iosSay(t){
   if (!("speechSynthesis" in window)) return Promise.resolve();
@@ -171,23 +181,38 @@ function fetchVoice(t){
   return fetch("https://api.openai.com/v1/audio/speech", {
     method:"POST", headers:{"Authorization":"Bearer " + oaKey, "content-type":"application/json"},
     body: JSON.stringify({model:"gpt-4o-mini-tts", voice:OA_VOICE, input:t, instructions:OA_STYLE, response_format:"mp3"})
-  }).then(r => { if (r.status === 401) { try{ localStorage.removeItem("orb_oa_key"); }catch(_){} oaKey = ""; } if (!r.ok) throw 0; return r.blob(); });
+  }).then(async r => {
+    if (!r.ok) { let t = ""; try { t = await r.text(); } catch(_){} diag("tts " + r.status + " " + t.slice(0,400)); if (r.status === 401) { try{ localStorage.removeItem("orb_oa_key"); }catch(_){} oaKey = ""; } throw 0; }
+    return r.blob();
+  }, e => { diag("tts network " + e); throw e; });
 }
-function playBlob(blob, gen){
-  return new Promise(res => {
-    if (gen !== sayGen) return res();
+async function playBlob(blob, gen, t){
+  if (gen !== sayGen) return;
+  if (actx) {
+    try {
+      if (actx.state !== "running") await actx.resume();
+      const buf = await actx.decodeAudioData(await blob.arrayBuffer());
+      if (gen !== sayGen) return;
+      await new Promise(res => { const src = actx.createBufferSource(); src.buffer = buf; src.connect(actx.destination); src.onended = res; curSrc = src; src.start(0); });
+      return;
+    } catch(e){ diag("webaudio " + (e && e.message || e) + " state=" + (actx && actx.state)); }
+  }
+  const ok = await new Promise(res => {
     const url = URL.createObjectURL(blob);
-    player.onended = player.onerror = () => { URL.revokeObjectURL(url); res(); };
-    player.src = url; const p = player.play(); if (p) p.catch(() => res());
+    player.onended = () => { URL.revokeObjectURL(url); res(true); };
+    player.onerror = () => { URL.revokeObjectURL(url); res(false); };
+    player.src = url; const p = player.play(); if (p) p.catch(e => { diag("audio el " + e); res(false); });
   });
+  if (!ok && gen === sayGen) await iosSay(t);
 }
+let curSrc = null;
 function queueSay(t){
   t = clean(t); if (!t) return;
   set("speak"); const gen = sayGen; pendingSay++;
   const audio = oaKey ? fetchVoice(t).catch(() => null) : Promise.resolve(null);
   playChain = playChain.then(() => audio).then(blob => {
     if (gen !== sayGen) return;
-    return blob ? playBlob(blob, gen) : iosSay(t);
+    return blob ? playBlob(blob, gen, t) : iosSay(t);
   }).finally(() => { pendingSay--; if (gen === sayGen && pendingSay <= 0 && st === "speak") set("idle"); });
 }
 function webSpeak(text){
@@ -203,6 +228,7 @@ function webSpeak(text){
 function stopSpeaking(){
   sayGen++; pendingSay = 0; playChain = Promise.resolve();
   try { player.pause(); } catch(e){}
+  try { curSrc && curSrc.stop(); } catch(e){}
   try { tts && tts.stop(); } catch(e){}
   try { speechSynthesis.cancel(); } catch(e){}
 }
