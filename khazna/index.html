@@ -61,9 +61,15 @@ header.top h1{font-size:15px;font-weight:500;letter-spacing:.5px;color:var(--mut
 header.top h1 b{color:var(--ink);font-weight:700}
 .icon-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:none;display:grid;place-items:center}
 main{flex:1;overflow-y:auto;overflow-x:hidden;padding:0 18px 110px;-webkit-overflow-scrolling:touch}
+#orbStage{position:fixed;inset:0;background:#000;z-index:8;display:none}
+#orbStage.on{display:block}
+#orbC{position:absolute;inset:0;width:100%;height:100%;display:block;cursor:pointer;-webkit-tap-highlight-color:transparent}
+#orbKey{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.85);padding:24px}
+#orbKey.on{display:flex}
+#orbK{width:min(420px,90vw);background:#0b0b0b;border:1px solid #2a2a2a;border-radius:14px;color:#ddd;padding:16px;font:15px/1.4 -apple-system,system-ui,sans-serif;direction:ltr;outline:none;text-align:center}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;padding:8px 10px calc(8px + var(--sab));display:flex;justify-content:space-around;
   background:linear-gradient(0deg,#000 60%,rgba(0,0,0,0));z-index:10}
-nav.tabs button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:#666;padding:6px 8px;min-width:58px}
+nav.tabs button{background:none;border:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:#666;padding:6px 4px;min-width:50px}
 nav.tabs button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.5}
 nav.tabs button.on{color:#fff}
 nav.tabs button.on svg{filter:drop-shadow(0 0 6px rgba(255,255,255,.7))}
@@ -302,8 +308,10 @@ label.f{display:block;font-size:12px;color:var(--mute);margin:12px 0 6px}
     <button data-t="income"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="1" transform="rotate(-8 12 12)"/><circle cx="12" cy="12" r="2.5"/></svg>الإيرادات</button>
     <button data-t="tasks"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20"/><path d="M9 6h2M13 6h2M9 10h2M13 10h2M9 14h2M13 14h2"/></svg>المهام</button>
     <button data-t="plan"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><rect x="7" y="7" width="10" height="10"/><rect x="10" y="10" width="4" height="4"/></svg>الخطة</button>
+    <button data-t="orb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 9.5a4.5 4.5 0 0 1 3-2" opacity=".6"/></svg>الكرة</button>
   </nav>
 </div>
+<div id="orbStage"><canvas id="orbC"></canvas><div id="orbKey"><input id="orbK" type="password" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div></div>
 
 <div class="veil" id="veil"></div>
 <div class="sheet" id="sheet"></div>
@@ -401,11 +409,12 @@ function avgNet(n=3){const ks=[];for(let i=0;i<12&&ks.length<n;i++){const k=shif
 
 /* ================= ROUTER ================= */
 let tab='home',viewMonth=curMonth(),openDrawer=null;
-function go(t){if(!['home','expenses','income','tasks','plan'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+t)}catch(e){}
+function go(t){if(!['home','expenses','income','tasks','plan','orb'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+t)}catch(e){}
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));render();$('#main').scrollTop=0}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
 window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==tab&&!$('#app').classList.contains('hidden'))go(h)});
-function render(){const subs={home:'لوحة القيادة',expenses:'الأرشيف',income:'الإيرادات',tasks:'مهام اليوم',plan:'الخطة'};$('#hdrSub').textContent=subs[tab];
+function render(){const isOrb=tab==='orb';$('#orbStage').classList.toggle('on',isOrb);if(window.Orb){isOrb?Orb.show():Orb.hide()}if(isOrb){$('#fab').classList.add('hidden');return}
+  const subs={home:'لوحة القيادة',expenses:'الأرشيف',income:'الإيرادات',tasks:'مهام اليوم',plan:'الخطة'};$('#hdrSub').textContent=subs[tab];
   const fab=$('#fab');fab.classList.toggle('hidden',!['expenses','income','tasks','plan'].includes(tab));
   fab.onclick={expenses:addExpense,income:addIncome,tasks:addTask,plan:addGoal}[tab]||null;
   ({home:renderHome,expenses:renderExpenses,income:renderIncome,tasks:renderTasks,plan:renderPlan})[tab]()}
@@ -765,5 +774,6 @@ function lockDoor(){closeStage();$('#app').classList.add('hidden');$('#doorScene
   setupLogin();
 })();
 </script>
+<script src="./orb.js"></script>
 </body>
 </html>
