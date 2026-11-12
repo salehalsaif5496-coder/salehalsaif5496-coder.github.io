@@ -61,6 +61,7 @@ let rec = null, heard = "", primed = false, silT = null;
 const standalone = (() => { try { return window.top === window.self; } catch(e){ return false; } })();
 const hasWebRec = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
 let apiKey = ""; try { apiKey = localStorage.getItem("orb_key") || ""; } catch(e){}
+let oaKey = ""; try { oaKey = localStorage.getItem("orb_oa_key") || ""; } catch(e){}
 
 /* ================= capabilities (inside Claude) ================= */
 if (window.claude && claude.use) {
@@ -86,7 +87,8 @@ function flashError(){ set("error"); setTimeout(() => { if (st === "error") set(
 
 /* ================= tap ================= */
 document.getElementById("c").addEventListener("click", () => {
-  primeSpeech();
+  if (longPressed) { longPressed = false; return; }
+  primeSpeech(); unlockAudio();
   if (st === "think") return;
   if (st === "speak") { stopSpeaking(); startListening(); return; }
   if (st === "listen") { stopListening(); return; }
@@ -172,17 +174,48 @@ function primeSpeech(){
 }
 function speak(text){
   set("speak");
+  if (!tts) { queueSay(text); return; }
   if (tts) { tts.speak(text.slice(0,1990), {language:"ar"}).then(() => { if (st === "speak") set("idle"); }).catch(() => webSpeak(text)); return; }
   webSpeak(text);
 }
 let speakQueue = [];
 function clean(t){ return t.replace(/[*#_`>•\-]/g, " ").trim(); }
+const OA_VOICE = "ash";
+const OA_STYLE = "تكلم باللهجة السعودية النجدية العامية مثل شاب من الرياض يسولف مع خويه. نبرة عفوية مرحة وفيها حماس وحياة، مو قراءة رسمية ولا فصحى. اضحك ضحكة خفيفة طبيعية إذا الكلام فيه مزح. سرعة كلام طبيعية مثل المكالمة.";
+const player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", "");
+let playChain = Promise.resolve(), sayGen = 0, pendingSay = 0;
+function unlockAudio(){
+  try { player.src = "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA="; const p = player.play(); if (p) p.catch(()=>{}); } catch(e){}
+}
+function iosSay(t){
+  if (!("speechSynthesis" in window)) return Promise.resolve();
+  return new Promise(res => {
+    const u = new SpeechSynthesisUtterance(t); u.lang = "ar-SA"; if (voice) u.voice = voice; u.rate = 1.05;
+    u.onend = u.onerror = () => res(); speechSynthesis.speak(u);
+  });
+}
+function fetchVoice(t){
+  return fetch("https://api.openai.com/v1/audio/speech", {
+    method:"POST", headers:{"Authorization":"Bearer " + oaKey, "content-type":"application/json"},
+    body: JSON.stringify({model:"gpt-4o-mini-tts", voice:OA_VOICE, input:t, instructions:OA_STYLE, response_format:"mp3"})
+  }).then(r => { if (r.status === 401) { try{ localStorage.removeItem("orb_oa_key"); }catch(_){} oaKey = ""; } if (!r.ok) throw 0; return r.blob(); });
+}
+function playBlob(blob, gen){
+  return new Promise(res => {
+    if (gen !== sayGen) return res();
+    const url = URL.createObjectURL(blob);
+    player.onended = player.onerror = () => { URL.revokeObjectURL(url); res(); };
+    player.src = url; const p = player.play(); if (p) p.catch(() => res());
+  });
+}
 function queueSay(t){
-  t = clean(t); if (!t || !("speechSynthesis" in window)) return;
-  set("speak");
-  const u = new SpeechSynthesisUtterance(t); u.lang = "ar-SA"; if (voice) u.voice = voice; u.rate = 1.05;
-  u.onend = u.onerror = () => { setTimeout(() => { if (st === "speak" && !speechSynthesis.speaking && !speechSynthesis.pending) set("idle"); }, 250); };
-  speechSynthesis.speak(u);
+  t = clean(t); if (!t) return;
+  set("speak"); const gen = sayGen; pendingSay++;
+  const audio = oaKey ? fetchVoice(t).catch(() => null) : Promise.resolve(null);
+  playChain = playChain.then(() => audio).then(blob => {
+    if (gen !== sayGen) return;
+    return blob ? playBlob(blob, gen) : iosSay(t);
+  }).finally(() => { pendingSay--; if (gen === sayGen && pendingSay <= 0 && st === "speak") set("idle"); });
 }
 function webSpeak(text){
   if (!("speechSynthesis" in window)) { set("idle"); return; }
@@ -195,6 +228,8 @@ function webSpeak(text){
   } catch(e){ set("idle"); }
 }
 function stopSpeaking(){
+  sayGen++; pendingSay = 0; playChain = Promise.resolve();
+  try { player.pause(); } catch(e){}
   try { tts && tts.stop(); } catch(e){}
   try { speechSynthesis.cancel(); } catch(e){}
 }
@@ -205,12 +240,18 @@ function openKey(){ keyBox.classList.add("on"); setTimeout(() => keyIn.focus(), 
 function saveKey(){
   const v = keyIn.value.trim();
   if (!v.startsWith("sk-")) return;
-  apiKey = v; try { localStorage.setItem("orb_key", apiKey); } catch(_){}
+  if (v.startsWith("sk-ant-")) { apiKey = v; try { localStorage.setItem("orb_key", v); } catch(_){} }
+  else { oaKey = v; try { localStorage.setItem("orb_oa_key", v); } catch(_){} }
   keyIn.value = ""; keyBox.classList.remove("on"); keyIn.blur();
 }
 keyIn.addEventListener("keydown", e => { if (e.key === "Enter") saveKey(); });
-keyIn.addEventListener("input", () => { if (/^sk-ant-\S{40,}$/.test(keyIn.value.trim())) saveKey(); });
+keyIn.addEventListener("input", () => { if (/^sk-\S{40,}$/.test(keyIn.value.trim())) setTimeout(saveKey, 300); });
 keyBox.addEventListener("click", e => { if (e.target === keyBox) keyBox.classList.remove("on"); });
+
+let lpT = null, longPressed = false;
+cvEl().addEventListener("pointerdown", () => { clearTimeout(lpT); lpT = setTimeout(() => { longPressed = true; stopListening(); openKey(); }, 700); });
+["pointerup","pointerleave","pointercancel"].forEach(ev => cvEl().addEventListener(ev, () => clearTimeout(lpT)));
+function cvEl(){ return document.getElementById(document.getElementById("orbC") ? "orbC" : "c"); }
 
 /* ================= the orb ================= */
 const cv = document.getElementById("c"), g = cv.getContext("2d");
