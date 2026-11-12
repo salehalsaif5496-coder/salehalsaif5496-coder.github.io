@@ -15,6 +15,7 @@ create table if not exists public.khazna_reminders (
   time        text,                         -- 'HH:MM' local (null = no own push, counted in morning summary)
   date        date,                         -- one-off date (null when daily)
   daily       boolean not null default false,
+  days        smallint[],                   -- weekly: allowed weekdays (0=Sun..6=Sat), null = every day
   skip_date   date,                         -- task already done on this day → no push
   last_sent   date,
   primary key (device_hash, task_id)

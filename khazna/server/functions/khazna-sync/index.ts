@@ -45,8 +45,9 @@ Deno.serve(async (req) => {
       time: hhmm(r.time),
       date: r.daily ? null : ymd(r.date),
       daily: !!r.daily,
+      days: r.daily && Array.isArray(r.days) ? [...new Set(r.days.map((d: any) => +d).filter((d: number) => Number.isInteger(d) && d >= 0 && d <= 6))].sort() : null,
       skip_date: ymd(r.skip_date),
-    })).filter((r: any) => r.task_id && r.title && (r.daily || r.date));
+    })).map((r: any) => ({ ...r, days: r.days && r.days.length && r.days.length < 7 ? r.days : null })).filter((r: any) => r.task_id && r.title && (r.daily || r.date));
     const { data: old } = await db.from("khazna_reminders").select("task_id,time,date,last_sent").eq("device_hash", device_hash);
     const prev = new Map((old || []).map((o: any) => [o.task_id, o]));
     const rows = list.map((r: any) => {

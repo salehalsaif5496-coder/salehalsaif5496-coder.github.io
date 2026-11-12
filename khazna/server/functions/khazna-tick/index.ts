@@ -27,12 +27,13 @@ Deno.serve(async (req) => {
   for (const d of devices || []) {
     const now = localNow(d.tz || "Asia/Riyadh");
     const { data: rems } = await db.from("khazna_reminders").select("*").eq("device_hash", d.device_hash);
-    const today = (rems || []).filter((r: any) => (r.daily || r.date === now.date) && r.skip_date !== now.date);
+    const wd = new Date(now.date + "T12:00:00Z").getUTCDay();
+    const today = (rems || []).filter((r: any) => (r.daily ? (!r.days || !r.days.length || r.days.includes(wd)) : r.date === now.date) && r.skip_date !== now.date);
     const pushes: { payload: any; mark?: string }[] = [];
 
     for (const r of today) {
       if (r.last_sent === now.date || !due(r.time, now.min)) continue;
-      pushes.push({ payload: { title: "⏰ " + r.title, body: r.daily ? "مهمتك اليومية — حان وقتها" : "حان وقت المهمة", url: "/khazna/#tasks", tag: "t-" + r.task_id }, mark: r.task_id });
+      pushes.push({ payload: { title: "⏰ " + r.title, body: r.daily ? (r.days && r.days.length ? "مهمتك الأسبوعية — حان وقتها" : "مهمتك اليومية — حان وقتها") : "حان وقت المهمة", url: "/khazna/#tasks", tag: "t-" + r.task_id }, mark: r.task_id });
     }
     if (d.morning && d.morning_sent !== now.date && due(d.morning, now.min)) {
       const n = today.length;

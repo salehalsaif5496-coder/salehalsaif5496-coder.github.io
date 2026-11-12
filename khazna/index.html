@@ -389,7 +389,12 @@ function setupLogin(){buildPad();pinBuf='';drawDots();
 const catName=id=>(S.cats.find(c=>c.id===id)||{name:'أخرى'}).name;
 const sumExp=k=>S.expenses.filter(e=>mk(e.date)===k).reduce((a,e)=>a+e.amt,0);
 const sumInc=k=>S.incomes.filter(e=>mk(e.date)===k).reduce((a,e)=>a+e.amt,0);
-function todaysTasks(){const t=today();return S.tasks.filter(x=>x.daily||x.date===t).map(x=>({...x,done:(x.doneDates||[]).includes(x.daily?t:x.date)}))
+const WD=['أحد','اثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت'];
+const dow=s=>new Date(s+'T12:00:00').getDay();
+const weekly=x=>!!(x.daily&&Array.isArray(x.days)&&x.days.length&&x.days.length<7);
+const onDay=(x,d)=>!weekly(x)||x.days.includes(d);
+const daysLabel=x=>[...x.days].sort((a,b)=>a-b).map(d=>WD[d]).join(' · ');
+function todaysTasks(){const t=today(),d=dow(t);return S.tasks.filter(x=>x.daily?onDay(x,d):x.date===t).map(x=>({...x,done:(x.doneDates||[]).includes(x.daily?t:x.date)}))
   .sort((a,b)=>(a.done-b.done)||((a.time||'99')>(b.time||'99')?1:-1))}
 function avgNet(n=3){const ks=[];for(let i=0;i<12&&ks.length<n;i++){const k=shiftMonth(curMonth(),-i);if(sumInc(k)||sumExp(k))ks.push(k)}
   if(!ks.length)return 0;return ks.reduce((a,k)=>a+sumInc(k)-sumExp(k),0)/ks.length}
@@ -595,6 +600,7 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
   const now=new Date(),nowHM=pad2(now.getHours())+':'+pad2(now.getMinutes());const next=tt.find(x=>!x.done&&x.time&&x.time>=nowHM);
   const upcoming=S.tasks.filter(x=>!x.daily&&x.date>t).sort((a,b)=>a.date.localeCompare(b.date));
   const overdue=S.tasks.filter(x=>!x.daily&&x.date<t&&!(x.doneDates||[]).includes(x.date));
+  const rec=S.tasks.filter(x=>weekly(x)&&!x.days.includes(dow(t)));
   $('#main').innerHTML=`<div class="tower">${wins}</div><div class="tower-cap">${tt.length?`أنرت <b class="mono" style="color:#fff">${done}</b> من <span class="mono">${tt.length}</span> نوافذ اليوم`:'العمارة مطفية — أضف مهام اليوم'}</div>
   <h2 class="sec">الإشعارات</h2>
   <div class="card"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>${S.pushOn?'الإشعارات شغالة':'الإشعارات مطفية'}</b><span class="mute">${S.pushOn?'كل مهمة لها وقت يوصلك إشعارها من الخزنة':'فعّلها عشان توصلك كل مهمة في وقتها'}</span></div></div>
@@ -604,24 +610,29 @@ function renderTasks(){const tt=todaysTasks(),done=tt.filter(x=>x.done).length;c
   ${next?`<h2 class="sec">الموعد القادم</h2><div class="card watch-wrap" id="watchCard"></div>`:''}
   <h2 class="sec">اليوم</h2><div>${tt.map(x=>taskRow(x)).join('')||'<div class="empty">ما فيه مهام اليوم</div>'}</div>
   ${overdue.length?`<h2 class="sec">متأخرة</h2><div>${overdue.map(x=>taskRow({...x,done:false},true)).join('')}</div>`:''}
-  ${upcoming.length?`<h2 class="sec">قادمة</h2><div>${upcoming.map(x=>taskRow({...x,done:false},true)).join('')}</div>`:''}`;
+  ${upcoming.length?`<h2 class="sec">قادمة</h2><div>${upcoming.map(x=>taskRow({...x,done:false},true)).join('')}</div>`:''}
+  ${rec.length?`<h2 class="sec">متكررة في أيام ثانية</h2><div>${rec.map(x=>taskRow({...x,done:false})).join('')}</div>`:''}`;
   clearInterval(watchTimer);if(next){const draw=()=>{const c=$('#watchCard');if(!c)return clearInterval(watchTimer);const n=new Date();const [h,m]=next.time.split(':');
     const tgt=new Date();tgt.setHours(+h,+m,0,0);const diff=Math.max(0,tgt-n),hh=Math.floor(diff/3600000),mm=Math.floor(diff%3600000/60000);
     c.innerHTML=watchSVG(n)+`<div><div class="t">باقي على «${esc(next.title)}»</div><div class="c mono">${hh}:${pad2(mm)}</div><div class="t mono">${next.time}</div></div>`};draw();watchTimer=setInterval(draw,30000)}}
 function taskRow(x,showDate){return `<div class="task ${x.done?'done':''}" onclick="toggleTask('${x.id}')"><div class="chk"></div><div class="info"><div>${esc(x.title)}</div>
-  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div>${x.time?`<button class="bell ${S.pushOn&&!x.mute?'on':''}" onclick="event.stopPropagation();toggleMute('${x.id}')" aria-label="تنبيه">🔔</button>`:''}${delBtn('task',x.id)}</div>`}
-function toggleTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;const key=x.daily?today():x.date;x.doneDates=x.doneDates||[];
+  <span>${x.time?`<span class="mono">${x.time}</span>`:''}${weekly(x)?`<span class="pill">${daysLabel(x)}</span>`:x.daily?'<span class="pill">يومية</span>':''}${showDate&&!x.daily?` ${prettyDate(x.date)}`:''}</span></div>${x.time?`<button class="bell ${S.pushOn&&!x.mute?'on':''}" onclick="event.stopPropagation();toggleMute('${x.id}')" aria-label="تنبيه">🔔</button>`:''}${delBtn('task',x.id)}</div>`}
+function toggleTask(id){const x=S.tasks.find(t=>t.id===id);if(!x)return;if(x.daily&&!onDay(x,dow(today())))return toast('هالمهمة أيامها: '+daysLabel(x));const key=x.daily?today():x.date;x.doneDates=x.doneDates||[];
   const i=x.doneDates.indexOf(key);if(i>=0)x.doneDates.splice(i,1);else{x.doneDates.push(key);if(x.daily)x.doneDates=x.doneDates.slice(-60)}save();render()}
-function addTask(){let daily=false;
+function addTask(){let rep='once';const sel=new Set([dow(today())]);
   sheet(`<h3>مهمة جديدة</h3><input class="inp" id="fT" placeholder="وش المطلوب منك؟">
-  <div class="row2"><div><label class="f">اليوم</label><input class="inp" id="fD" type="date" value="${today()}"></div><div><label class="f">الوقت (اختياري)</label><input class="inp" id="fTm" type="time"></div></div>
-  <div class="toggle"><span>تتكرر كل يوم</span><button class="sw" id="fDaily"></button></div>
+  <label class="f">التكرار</label><div class="chips" id="fRep"><button class="chip on" data-r="once">مرة وحدة</button><button class="chip" data-r="daily">كل يوم</button><button class="chip" data-r="days">أيام محددة</button></div>
+  <div id="fDaysW" style="display:none"><label class="f">أيام الأسبوع</label><div class="chips" id="fDays">${WD.map((n,i)=>`<button class="chip ${sel.has(i)?'on':''}" data-d="${i}">${n}</button>`).join('')}</div></div>
+  <div class="row2"><div id="fDW"><label class="f">اليوم</label><input class="inp" id="fD" type="date" value="${today()}"></div><div><label class="f">الوقت (اختياري)</label><input class="inp" id="fTm" type="time"></div></div>
   <div class="toggle"><span>🔔 نبّهني على الجوال</span><button class="sw on" id="fRem"></button></div>
   <div style="margin-top:18px"><button class="btn primary" id="fSave">إضافة نافذة</button></div>`,()=>{setTimeout(()=>$('#fT').focus(),350);let rem=true;
-  $('#fDaily').onclick=e=>{daily=!daily;e.currentTarget.classList.toggle('on',daily)};
+  document.querySelectorAll('#fRep .chip').forEach(b=>b.onclick=()=>{rep=b.dataset.r;document.querySelectorAll('#fRep .chip').forEach(c=>c.classList.toggle('on',c===b));
+    $('#fDaysW').style.display=rep==='days'?'':'none';$('#fDW').style.visibility=rep==='once'?'visible':'hidden'});
+  document.querySelectorAll('#fDays .chip').forEach(b=>b.onclick=()=>{const d=+b.dataset.d;sel.has(d)?sel.delete(d):sel.add(d);b.classList.toggle('on',sel.has(d))});
   $('#fRem').onclick=e=>{rem=!rem;e.currentTarget.classList.toggle('on',rem)};
   $('#fSave').onclick=()=>{const title=$('#fT').value.trim();if(!title)return toast('اكتب المهمة');
-    const t={id:uid(),title,date:$('#fD').value||today(),time:$('#fTm').value||null,daily,doneDates:[],mute:!rem};S.tasks.push(t);save();closeSheet();render();
+    if(rep==='days'&&!sel.size)return toast('اختر يوم واحد على الأقل');const daily=rep!=='once',days=rep==='days'&&sel.size<7?[...sel].sort((a,b)=>a-b):null;
+    const t={id:uid(),title,date:daily?today():($('#fD').value||today()),time:$('#fTm').value||null,daily,days,doneDates:[],mute:!rem};S.tasks.push(t);save();closeSheet();render();
     if(rem&&t.time&&!S.pushOn)toast('فعّل الإشعارات من فوق عشان يوصلك تنبيهها')}})}
 
 /* ================= PUSH NOTIFICATIONS (Supabase server) ================= */
@@ -631,7 +642,7 @@ const isStandalone=()=>navigator.standalone===true||matchMedia('(display-mode: s
 function b64u(s){const p='='.repeat((4-s.length%4)%4);const r=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from([...r].map(c=>c.charCodeAt(0)))}
 function pushSecret(){if(!S.pushSecret){const a=new Uint8Array(32);crypto.getRandomValues(a);S.pushSecret=[...a].map(x=>x.toString(16).padStart(2,'0')).join('');save()}return S.pushSecret}
 function reminderList(){const t=today();return S.tasks.filter(x=>x.daily||x.date>=t).filter(x=>x.daily||!(x.doneDates||[]).includes(x.date)).map(x=>({
-  task_id:x.id,title:x.title,time:x.mute?null:(x.time||null),date:x.daily?null:x.date,daily:!!x.daily,skip_date:x.daily&&(x.doneDates||[]).includes(t)?t:null}))}
+  task_id:x.id,title:x.title,time:x.mute?null:(x.time||null),date:x.daily?null:x.date,daily:!!x.daily,days:weekly(x)?x.days:null,skip_date:x.daily&&(x.doneDates||[]).includes(t)?t:null}))}
 async function pushCall(extra){const body={secret:pushSecret(),tz:Intl.DateTimeFormat().resolvedOptions().timeZone||'Asia/Riyadh',morning:S.morning||null,reminders:reminderList(),...extra};
   const r=await fetch(PUSH.url+'/functions/v1/khazna-sync',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+PUSH.key,'apikey':PUSH.key},body:JSON.stringify(body)});
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||('HTTP '+r.status));return j}
