@@ -236,22 +236,31 @@ function stopSpeaking(){
 
 /* ================= key sheet (standalone only, once) ================= */
 const keyBox = document.getElementById("key"), keyIn = document.getElementById("k");
-function openKey(){ keyBox.classList.add("on"); setTimeout(() => keyIn.focus(), 50); }
+function openKey(){ keyOpenedAt = Date.now(); keyBox.classList.add("on"); setTimeout(() => keyIn.focus(), 350); }
 function saveKey(){
   const v = keyIn.value.trim();
   if (!v.startsWith("sk-")) return;
   if (v.startsWith("sk-ant-")) { apiKey = v; try { localStorage.setItem("orb_key", v); } catch(_){} }
   else { oaKey = v; try { localStorage.setItem("orb_oa_key", v); } catch(_){} }
   keyIn.value = ""; keyBox.classList.remove("on"); keyIn.blur();
+  set("listen"); setTimeout(() => { if (st === "listen") set("idle"); }, 900);
 }
 keyIn.addEventListener("keydown", e => { if (e.key === "Enter") saveKey(); });
 keyIn.addEventListener("input", () => { if (/^sk-\S{40,}$/.test(keyIn.value.trim())) setTimeout(saveKey, 300); });
-keyBox.addEventListener("click", e => { if (e.target === keyBox) keyBox.classList.remove("on"); });
+keyBox.addEventListener("click", e => { if (e.target === keyBox && Date.now() - keyOpenedAt > 900) keyBox.classList.remove("on"); });
 
-let lpT = null, longPressed = false;
-cvEl().addEventListener("pointerdown", () => { clearTimeout(lpT); lpT = setTimeout(() => { longPressed = true; stopListening(); openKey(); }, 700); });
-["pointerup","pointerleave","pointercancel"].forEach(ev => cvEl().addEventListener(ev, () => clearTimeout(lpT)));
+let lpT = null, longPressed = false, keyOpenedAt = 0;
 function cvEl(){ return document.getElementById(document.getElementById("orbC") ? "orbC" : "c"); }
+(function(){
+  const el = cvEl();
+  el.style.webkitTouchCallout = "none"; el.style.touchAction = "none"; el.style.webkitUserSelect = "none";
+  el.addEventListener("contextmenu", e => e.preventDefault());
+  const start = () => { clearTimeout(lpT); lpT = setTimeout(() => { longPressed = true; try{ stopListening(); }catch(_){} openKey(); }, 650); };
+  const end = () => clearTimeout(lpT);
+  el.addEventListener("touchstart", start, {passive:true});
+  el.addEventListener("touchend", end); el.addEventListener("touchcancel", end);
+  el.addEventListener("mousedown", start); el.addEventListener("mouseup", end); el.addEventListener("mouseleave", end);
+})();
 
 /* ================= the orb ================= */
 const cv = document.getElementById("c"), g = cv.getContext("2d");
