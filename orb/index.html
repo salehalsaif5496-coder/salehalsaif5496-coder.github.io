@@ -28,18 +28,29 @@ canvas{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:pointe
 <div id="key"><input id="k" type="password" placeholder="sk-ant-..." autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"></div>
 <script>
 /* ================= context ================= */
-const SYSTEM = `أنت "الكرة"، مساعد صوتي ذكي لصالح في محمصة ريز (Rays Coffee Roastery)، محمصة قهوة مختصة سعودية في الرياض.
-عن ريز: تبيع جملة للمقاهي والشركات في الرياض والخبر والقصيم وعسير وتبوك، تفتتح مقهاها الخاص في مارس، وهدف مبيعاتها السنوي ٢٠ مليون ريال. صالح مدير الجودة ويشتغل في التسويق البصري.
-وراك مجلس داخلي من أربعة: مستشار استراتيجي، خبير تسويق، صوت العميل (صاحب مقهى)، ومشكّك يكشف المخاطر. لما يكون السؤال شغل أو قرار، فكّر بآرائهم الأربعة داخلياً ثم قل الخلاصة كرأي واحد متوازن. لما تكون سوالف عادية، سولف بشكل طبيعي.
-ردّك ينقرأ بصوت عالي، فـ:
-- تكلم بلهجة سعودية بيضاء طبيعية ودودة.
-- جمل قصيرة، بدون رموز ولا نقاط ولا ترقيم مرئي ولا إيموجي ولا إنجليزي إلا للضرورة.
-- لا تتجاوز ٧٠ كلمة إلا إذا طلب التفصيل.
-- اختم بسؤال قصير إذا يفيد النقاش.`;
+const SB_URL = "https://lpsifrdiangpfcwhjeim.supabase.co";
+const SB_KEY = "sb_publishable_VzyeRgisydU3JcgkHHVBeg_GDdiinHn";
+const SB_H = {"apikey":SB_KEY, "Authorization":"Bearer "+SB_KEY, "content-type":"application/json"};
+const SESSION = new Date().toISOString().slice(0,16) + "-" + Math.random().toString(36).slice(2,7);
+let brief = "";
+fetch(SB_URL + "/rest/v1/orb_brief?id=eq.main&select=content", {headers:SB_H})
+  .then(r => r.ok ? r.json() : []).then(j => { if (j[0]) brief = j[0].content; }).catch(()=>{});
+function logTurn(role, content){
+  fetch(SB_URL + "/rest/v1/orb_messages", {method:"POST", headers:{...SB_H, "Prefer":"return=minimal"},
+    body: JSON.stringify({session_id:SESSION, role, content:content.slice(0,8000)})}).catch(()=>{});
+}
+const SYSTEM_BASE = `أنت "الكرة"، المساحة الصوتية لصالح، مرتبطة بـ Claude اللي يشتغل معه على مشاريعه.
+صالح مدير الجودة في محمصة ريز (Rays Coffee Roastery) بالرياض ويشتغل في التسويق البصري.
+كل سوالفكم تنحفظ، وClaude يقرأها بعدين في المحادثة الرئيسية ويكمل الشغل عليها. فدورك:
+- لما يوصف صالح مشروع أو فكرة: افهمها، اسأله سؤال واحد قصير يوضح الناقص، ولخّص له اللي فهمته عشان ينحفظ واضح.
+- لما يسأل عن قرار شغل: فكّر داخلياً بآراء مجلس من أربعة (مستشار استراتيجي، خبير تسويق، صوت العميل، مشكّك) وقل الخلاصة كرأي واحد.
+- لما تكون سوالف عادية: سولف بشكل طبيعي.
+ردّك ينقرأ بصوت عالي، فتكلم بلهجة سعودية بيضاء ودودة، جمل قصيرة، بدون رموز ولا قوائم ولا إيموجي، ولا تتجاوز ٧٠ كلمة إلا إذا طلب التفصيل.`;
+const SYSTEM_TEXT = () => SYSTEM_BASE + (brief ? "\n\nمشاريعه الحالية:\n" + brief : "");
 
 /* ================= state ================= */
 let st = "idle";            // idle | listen | think | speak | error
-let history = [];
+let history = []; try { history = JSON.parse(localStorage.getItem("orb_hist") || "[]"); } catch(e){}
 let sample = null, dict = null, tts = null;
 let rec = null, heard = "", primed = false;
 const standalone = (() => { try { return window.top === window.self; } catch(e){ return false; } })();
@@ -102,18 +113,18 @@ function stopListening(){
 async function ask(q){
   set("think");
   history.push({role:"user", content:q});
-  history = history.slice(-12);
+  history = history.slice(-13); while (history.length && history[0].role !== "user") history.shift();
   try {
     let answer = "";
     if (sample) {
-      const msgs = history.map((m,i) => i === history.length-1 ? {role:"user", content: SYSTEM + "\n\nصالح يقول: " + m.content} : m);
+      const msgs = history.map((m,i) => i === history.length-1 ? {role:"user", content: SYSTEM_TEXT() + "\n\nصالح يقول: " + m.content} : m);
       const r = await sample(msgs, {modelTier:"default", cache:false});
       answer = (r && r.text) || "";
     } else if (apiKey) {
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST",
         headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-        body: JSON.stringify({model:"claude-sonnet-5-5", max_tokens:500, system:SYSTEM, messages:history})
+        body: JSON.stringify({model:"claude-sonnet-5-5", max_tokens:500, system:SYSTEM_TEXT(), messages:history})
       });
       if (res.status === 401) { try{ localStorage.removeItem("orb_key"); }catch(e){} apiKey = ""; throw new Error("key"); }
       const j = await res.json();
@@ -122,6 +133,8 @@ async function ask(q){
     answer = answer.replace(/[*#_`>•\-]/g, " ").trim();
     if (!answer) throw new Error("empty");
     history.push({role:"assistant", content:answer});
+    try { localStorage.setItem("orb_hist", JSON.stringify(history.slice(-16))); } catch(e){}
+    logTurn("user", q); logTurn("assistant", answer);
     speak(answer);
   } catch(e) {
     history.pop(); flashError();
