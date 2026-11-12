@@ -47,10 +47,12 @@ const SYSTEM_BASE = `أنت "الكرة"، المساحة الصوتية لصا�
 - لما تكون سوالف عادية: سولف بشكل طبيعي.
 ردّك ينقرأ بصوت عالي. أهم قاعدة: تكلم بالعامية النجدية/الرياضية مثل صالح بالضبط، ممنوع الفصحى نهائياً.
 استخدم مثل: وش، ليش، زين، أبي، تبي، كذا، الحين، يعني، والله، عاد، شوي، مرة، يا رجال، تمام، سم، أبشر، ما عليه، وش رايك، خلنا، بعدين.
+وكمان: وشلونك، إيه، لا والله، ترى، مره حلو، حيل، هالشي، ذا، ذي، يوم (بمعنى لما)، عشان، بعد (بمعنى كمان)، وش السالفة، صدق؟، يا شيخ، تكفى، خلاص، طيب، أجل، ولا يهمك.
+اكتب الكلام مثل ما ينطق بالضبط في الرياض، بدون تشكيل، ولا تخلط فصحى مع عامي في نفس الجملة.
 ممنوع كلمات مثل: ماذا، لماذا، الآن، سوف، هذا رائع، بالتأكيد، يمكنني، أود، حسناً، إليك.
 مثال غلط: "بالتأكيد، يمكنني مساعدتك في ذلك الآن."
 مثال صح: "أبشر، خلنا نشوفها الحين."
-روحك خفيفة ومرحة مثل خوي يسولف مع خويه: تمزح، تتفاعل بحماس، وتضحك إذا الموقف يضحك. جمل قصيرة جداً مثل المكالمة، جملتين أو ثلاث، بدون رموز ولا قوائم ولا إيموجي ولا تشكيل.`;
+روحك خفيفة ومرحة مثل خوي يسولف مع خويه: تمزح، تتفاعل بحماس، وتضحك إذا الموقف يضحك. جمل قصيرة جداً مثل الفويس نوت، جملة أو جملتين بس إلا إذا طلب أكثر، بدون رموز ولا قوائم ولا إيموجي ولا تشكيل.`;
 const SYSTEM_TEXT = () => SYSTEM_BASE + (brief ? "\n\nمشاريعه الحالية:\n" + brief : "");
 
 /* ================= state ================= */
@@ -88,7 +90,7 @@ function flashError(){ set("error"); setTimeout(() => { if (st === "error") set(
 /* ================= tap ================= */
 document.getElementById("c").addEventListener("click", () => {
   if (longPressed) { longPressed = false; return; }
-  primeSpeech(); unlockAudio();
+  primeSpeech(); if (!audioUnlocked) { audioUnlocked = true; unlockAudio(); }
   if (st === "think") return;
   if (st === "speak") { stopSpeaking(); startListening(); return; }
   if (st === "listen") { stopListening(); return; }
@@ -96,17 +98,28 @@ document.getElementById("c").addEventListener("click", () => {
   startListening();
 });
 
-function startListening(){
-  heard = "";
+function releaseAudio(){
+  try { player.pause(); player.removeAttribute("src"); player.load(); } catch(e){}
+  try { speechSynthesis.cancel(); } catch(e){}
+}
+function startListening(retry){
+  retry = retry || 0; heard = "";
   if (dict) { dict.start().catch(() => flashError()); return; }
   if (hasWebRec) {
+    releaseAudio();
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-    rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = false;
-    rec.onstart = () => { set("listen"); clearTimeout(silT); silT = setTimeout(() => { if (!heard.trim()) { try { rec && rec.stop(); } catch(_){} } }, 8000); };
-    rec.onresult = e => { heard = [...e.results].map(r => r[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { rec && rec.stop(); } catch(_){} }, 1500); };
-    rec.onerror = e => diag("rec " + (e && e.error));
-    rec.onend = () => { rec = null; if (st === "listen") { heard.trim() ? ask(heard.trim()) : set("idle"); } };
-    try { rec.start(); } catch(e){ flashError(); }
+    const r = new R(); rec = r; r.lang = "ar-SA"; r.interimResults = true; r.continuous = false;
+    const t0 = Date.now(); let retrying = false;
+    set("listen");
+    r.onstart = () => { clearTimeout(silT); silT = setTimeout(() => { if (!heard.trim()) { try { r.stop(); } catch(_){} } }, 8000); };
+    r.onresult = e => { heard = [...e.results].map(x => x[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { r.stop(); } catch(_){} }, 1500); };
+    r.onerror = e => {
+      const err = e && e.error;
+      if ((err === "aborted" || err === "audio-capture") && retry < 2 && Date.now() - t0 < 2500 && !heard.trim()) { retrying = true; diag("rec " + err + " retry " + (retry+1)); setTimeout(() => { if (st === "listen") startListening(retry + 1); }, 400); }
+      else diag("rec " + err);
+    };
+    r.onend = () => { if (rec === r) rec = null; if (retrying) return; if (st === "listen") { heard.trim() ? ask(heard.trim()) : set("idle"); } };
+    try { r.start(); } catch(e){ diag("rec start " + e); flashError(); }
     return;
   }
   flashError();
@@ -181,10 +194,10 @@ function speak(text){
 let speakQueue = [];
 function clean(t){ return t.replace(/[*#_`>•\-]/g, " ").trim(); }
 const OA_VOICE = "coral";
-const OA_STYLE = "تكلم باللهجة السعودية النجدية العامية مثل بنت من الرياض تسولف بعفوية مع أحد تعرفه. نبرة عفوية مرحة وفيها حماس وحياة، مو قراءة رسمية ولا فصحى. اضحك ضحكة خفيفة طبيعية إذا الكلام فيه مزح. سرعة كلام طبيعية مثل المكالمة.";
+const OA_STYLE = "Voice: a young woman from Riyadh, Saudi Arabia, speaking to a close friend. Accent: native Saudi Najdi (Riyadh) dialect, NOT Modern Standard Arabic, NOT Egyptian or Levantine. Pronounce ق as a hard g (قال = gaal, وقت = wagt), keep ج as j, drop formal case endings entirely, use the relaxed Najdi melody with natural stress. Tone: casual, warm, playful, lively, like a voice note on WhatsApp; laugh lightly when something is funny. Pacing: fast and fluid, short pauses only, never slow or announcer-like.";
 const player = new Audio(); player.preload = "auto"; player.setAttribute("playsinline", "");
 let playChain = Promise.resolve(), sayGen = 0, pendingSay = 0;
-let actx = null;
+let actx = null, audioUnlocked = false;
 function diag(m){
   try { fetch(SB_URL + "/rest/v1/orb_messages", {method:"POST", headers:{...SB_H, "Prefer":"return=minimal"},
     body: JSON.stringify({session_id:"diag-" + SESSION, role:"assistant", content:String(m).slice(0,1500)})}).catch(()=>{}); } catch(e){}
@@ -214,7 +227,7 @@ async function playBlob(blob, gen, t){
     const url = URL.createObjectURL(blob);
     player.onended = () => { URL.revokeObjectURL(url); res(true); };
     player.onerror = () => { URL.revokeObjectURL(url); diag("audio el error " + (player.error && player.error.code)); res(false); };
-    player.src = url; const p = player.play(); if (p) p.catch(e => { diag("audio el " + e); res(false); });
+    player.src = url; player.playbackRate = 1.15; const p = player.play(); if (p) p.catch(e => { diag("audio el " + e); res(false); });
   });
   if (!ok && gen === sayGen) await iosSay(t);
 }
