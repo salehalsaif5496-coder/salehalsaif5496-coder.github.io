@@ -72,9 +72,9 @@ function startListening(){
   if (dict) { dict.start().catch(() => flashError()); return; }
   if (hasWebRec) {
     const R = window.SpeechRecognition || window.webkitSpeechRecognition;
-    rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = false;
-    rec.onstart = () => set("listen");
-    rec.onresult = e => { heard = [...e.results].map(r => r[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { rec && rec.stop(); } catch(_){} }, 1100); };
+    rec = new R(); rec.lang = "ar-SA"; rec.interimResults = true; rec.continuous = true;
+    rec.onstart = () => { set("listen"); clearTimeout(silT); silT = setTimeout(() => { if (!heard.trim()) { try { rec && rec.stop(); } catch(_){} } }, 8000); };
+    rec.onresult = e => { heard = [...e.results].map(r => r[0].transcript).join(" "); clearTimeout(silT); silT = setTimeout(() => { try { rec && rec.stop(); } catch(_){} }, 1500); };
     rec.onerror = () => {};
     rec.onend = () => { rec = null; if (st === "listen") { heard.trim() ? ask(heard.trim()) : set("idle"); } };
     try { rec.start(); } catch(e){ flashError(); }
