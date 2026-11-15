@@ -30,6 +30,7 @@ jobs:
           rm -f site/_redirects site/_headers
           cp -r khazna site/khazna
           cp -r orb site/orb
+          cp -r lab site/lab
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

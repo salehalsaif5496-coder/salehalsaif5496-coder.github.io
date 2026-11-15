@@ -1,0 +1,449 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="robots" content="noindex, nofollow" />
+<meta name="theme-color" content="#18046B" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<title>مختبر الوصفات · ريز</title>
+<style>
+@font-face{font-family:Plex;font-weight:400;src:url(/assets/node_modules/@expo-google-fonts/ibm-plex-sans-arabic/400Regular/IBMPlexSansArabic_400Regular.ba73b8c18f3ecabea995bfe7535607e1.ttf)}
+@font-face{font-family:Plex;font-weight:600;src:url(/assets/node_modules/@expo-google-fonts/ibm-plex-sans-arabic/600SemiBold/IBMPlexSansArabic_600SemiBold.719a0ad23789571b3e5f40f95e50c791.ttf)}
+@font-face{font-family:Plex;font-weight:700;src:url(/assets/node_modules/@expo-google-fonts/ibm-plex-sans-arabic/700Bold/IBMPlexSansArabic_700Bold.db14cbdd87f0e4ad48c703f5313038f3.ttf)}
+:root{--bg:#18046B;--card:#120353;--card2:#1F0A7A;--line:rgba(239,231,211,.14);--tx:#EFE7D3;--mut:rgba(239,231,211,.62);--or:#F15227;--ok:#8BC34A;--lo:#5AB0FF;--hi:#F15227}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:Plex,-apple-system,system-ui,sans-serif;font-size:15px}
+body{padding:calc(env(safe-area-inset-top) + 10px) 14px calc(env(safe-area-inset-bottom) + 90px)}
+button,input,select,textarea{font-family:inherit;font-size:15px;color:var(--tx)}
+h1{font-size:20px;margin:0}h2{font-size:16px;margin:18px 0 8px}h3{font-size:14px;margin:0 0 6px;color:var(--mut);font-weight:600}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.back{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:8px 12px;text-decoration:none;color:var(--tx);font-size:14px}
+.badge{display:inline-block;font-size:11px;background:rgba(241,82,39,.18);color:var(--or);border-radius:20px;padding:2px 9px;margin-top:4px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;align-items:center}
+.row>*{flex:1}
+label.f{display:block;font-size:12px;color:var(--mut);margin-bottom:4px}
+select,input,textarea{width:100%;background:#0D0240;border:1px solid var(--line);border-radius:10px;padding:11px 10px}
+textarea{min-height:70px;resize:vertical}
+input[type=number]{direction:ltr;text-align:center}
+.tabs{position:fixed;bottom:0;left:0;right:0;display:flex;background:#0D0240;border-top:1px solid var(--line);padding:8px 8px calc(env(safe-area-inset-bottom) + 8px);z-index:5}
+.tabs button{flex:1;background:none;border:0;padding:8px 4px;border-radius:12px;color:var(--mut);font-weight:600;font-size:14px}
+.tabs button.on{background:var(--card2);color:var(--tx)}
+.btn{display:block;width:100%;border:0;border-radius:12px;padding:14px;background:var(--or);color:#1A0089;font-weight:700;font-size:16px;margin-top:10px}
+.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--tx);font-weight:600}
+.grp{border-top:1px solid var(--line);padding-top:12px;margin-top:12px}
+.grp:first-child{border:0;padding:0;margin:0}
+.m{display:grid;grid-template-columns:1fr 92px 62px;gap:6px;align-items:center;margin-bottom:7px}
+.m .n{font-size:14px}.m .n small{display:block;font-size:11px;color:var(--mut)}
+.m .tol{font-size:12px;padding:9px 4px;background:#0a0233}
+.m.calc input{background:transparent;border-style:dashed}
+.hint{font-size:12px;color:var(--mut);line-height:1.6}
+.vt{width:100%;border-collapse:collapse;font-size:13.5px}
+.vt th{color:var(--mut);font-weight:600;font-size:12px;text-align:right;padding:6px 4px;border-bottom:1px solid var(--line)}
+.vt td{padding:8px 4px;border-bottom:1px solid var(--line)}
+.vt td.num{direction:ltr;text-align:center}
+.chip{display:inline-block;border-radius:20px;padding:3px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.c-ok{background:rgba(139,195,74,.18);color:var(--ok)}.c-lo{background:rgba(90,176,255,.18);color:var(--lo)}.c-hi{background:rgba(241,82,39,.2);color:var(--hi)}
+.sum{display:flex;gap:8px;margin:6px 0 10px}.sum div{flex:1;text-align:center;border-radius:12px;padding:10px 4px;font-size:12px}
+.sum b{display:block;font-size:22px}
+.tip{border-right:3px solid var(--or);padding:6px 10px;margin:6px 0;background:rgba(241,82,39,.07);border-radius:6px;font-size:13.5px;line-height:1.6}
+.hist{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--line);cursor:pointer}
+.hist:last-child{border:0}
+.dev{border-bottom:1px solid var(--line);padding:12px 0}.dev:last-child{border:0}
+.dev b{font-size:15px}.dev .w{font-size:13px;color:var(--mut);margin:4px 0;line-height:1.6}
+.dev ul{margin:4px 0 0;padding-right:18px;font-size:13.5px;line-height:1.7}
+.dev label{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:6px;color:var(--mut)}
+.dev input[type=checkbox]{width:18px;height:18px;accent-color:var(--or)}
+.tier{font-size:11px;border:1px solid var(--line);border-radius:20px;padding:1px 8px;margin-right:6px;color:var(--mut)}
+.center{min-height:70vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:10px;color:var(--mut)}
+.hide{display:none!important}
+svg.sp{width:100%;height:46px;display:block}
+.toast{position:fixed;top:calc(env(safe-area-inset-top) + 12px);left:50%;transform:translateX(-50%);background:var(--ok);color:#0D0240;font-weight:700;padding:10px 16px;border-radius:12px;z-index:9;font-size:14px}
+</style>
+</head>
+<body>
+<div id="gate" class="center">جاري التحقق…</div>
+
+<div id="app" class="hide">
+  <div class="top">
+    <div><h1>مختبر الوصفات</h1><span class="badge">🔒 للمؤسس فقط</span></div>
+    <a class="back" href="/">→ التطبيق</a>
+  </div>
+
+  <div class="card">
+    <label class="f">الوصفة</label>
+    <select id="recipe"></select>
+    <div class="row" style="margin-top:8px">
+      <div><label class="f">الفرع</label><input id="branch" list="branches" value="الفرع الرئيسي" /></div>
+    </div>
+    <datalist id="branches"></datalist>
+    <div id="bstate" class="hint" style="margin-top:8px"></div>
+  </div>
+
+  <!-- اليوم -->
+  <section id="t-today">
+    <div id="noBase" class="card hide"><b>ما فيه معتمد لهالوصفة بهالفرع.</b><div class="hint">روح لتبويب «المعتمد» وسجّل أرقام الكوب اللي اعتمدته بذائقتك، وبعدها تبدأ القراءات اليومية.</div></div>
+    <div id="todayWrap">
+      <div id="verdict"></div>
+      <div class="card">
+        <h2 style="margin-top:0">قراءة اليوم</h2>
+        <div class="row" style="margin-bottom:10px"><div><label class="f">التاريخ</label><input id="rdate" type="date" /></div></div>
+        <div id="readForm"></div>
+        <label class="f" style="margin-top:10px">ملاحظة اليوم</label>
+        <textarea id="rnote" placeholder="مثال: الفلتر تغيّر أمس، الباريستا الجديد…"></textarea>
+        <button class="btn" id="saveReading">احفظ وقارن بالمعتمد</button>
+      </div>
+      <div class="card"><h2 style="margin-top:0">آخر القراءات</h2><div id="history" class="hint">لا توجد قراءات بعد.</div></div>
+      <div class="card" id="trendsCard"><h2 style="margin-top:0">الاتجاه (آخر ١٤ قراءة)</h2><div class="hint" style="margin-bottom:8px">الأحدث على اليسار. الشريط الأخضر هو نطاق المعتمد.</div><div id="trends"></div></div>
+    </div>
+  </section>
+
+  <!-- المعتمد -->
+  <section id="t-base" class="hide">
+    <div class="card">
+      <h2 style="margin-top:0">الكوب المعتمد</h2>
+      <div class="hint">سجّل أرقام الكوب اللي اعتمدته بذائقتك. العمود الصغير يحدد <b>السماحية</b>: إذا كان الفرق داخلها فالقراءة «مقاربة»، وإذا كان أقل منها فهي «نازلة»، وإذا كان أعلى فهي «مرتفعة».</div>
+      <div id="baseForm" style="margin-top:12px"></div>
+      <label class="f" style="margin-top:10px">وصف الذائقة المعتمدة</label>
+      <textarea id="tasteNote" placeholder="مثال: حلاوة عسلية، حموضة تفاح أخضر، قوام متوسط، نهاية نظيفة"></textarea>
+      <button class="btn" id="saveBase">اعتمد هذه الأرقام</button>
+      <button class="btn ghost hide" id="delBase">احذف المعتمد لهالوصفة</button>
+    </div>
+  </section>
+
+  <!-- الأجهزة -->
+  <section id="t-dev" class="hide">
+    <div class="card"><h2 style="margin-top:0">الأجهزة والمقاييس</h2>
+      <div class="hint">هذه قائمة الأجهزة اللي يحتاجها كل رقم في المختبر. علّم على كل جهاز تشتريه. والخانات اللي جهازها ما وصل اتركها فاضية، ويتجاهلها المختبر في المقارنة.</div>
+      <div id="devices"></div>
+    </div>
+  </section>
+
+  <nav class="tabs">
+    <button data-t="today" class="on">اليوم</button>
+    <button data-t="base">المعتمد</button>
+    <button data-t="dev">الأجهزة</button>
+  </nav>
+</div>
+
+<script>
+(function () {
+'use strict';
+var URL_ = 'https://tjfgoymcjwatlcwovlhf.supabase.co';
+var KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRqZmdveW1jandhdGxjd292bGhmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0MTgwNjksImV4cCI6MjEwOTk5NDA2OX0.89cqRUVgTJ2NB4frhmYIHiGZFI-Ypatp7jIpx4wmzJQ';
+
+/* ===== المقاييس ===== */
+var G = [
+ {id:'water', t:'ماء الفرع', m:[
+  {k:'water_tds', n:'TDS الماء', u:'ppm', tol:15, st:1, dev:'tdsw'},
+  {k:'gh', n:'العسر الكلي (GH)', u:'ppm CaCO₃', tol:15, st:1, dev:'ghkh'},
+  {k:'kh', n:'القلوية (KH)', u:'ppm CaCO₃', tol:10, st:1, dev:'ghkh'},
+  {k:'water_ph', n:'pH الماء', u:'', tol:0.3, st:0.1, dev:'ph'},
+  {k:'water_temp', n:'حرارة ماء التحضير', u:'°م', tol:1, st:0.5, dev:'therm'} ]},
+ {id:'brew', t:'التحضير', m:[
+  {k:'dose', n:'وزن البن', u:'جم', tol:0.3, st:0.1, dev:'scale'},
+  {k:'water_in', n:'ماء التحضير', u:'جم', tol:5, st:1, dev:'scale'},
+  {k:'beverage', n:'وزن المشروب بالكوب', u:'جم', tol:5, st:1, dev:'scale'},
+  {k:'time', n:'وقت التحضير', u:'ثانية', tol:15, st:1, dev:'scale'},
+  {k:'grind', n:'درجة الطحن', u:'', tol:0.25, st:0.25, dev:'grinder'} ]},
+ {id:'cup', t:'الكوب', m:[
+  {k:'brew_tds', n:'TDS الكوب', u:'%', tol:0.05, st:0.01, dev:'refr'},
+  {k:'ey', n:'نسبة الاستخلاص', u:'%', tol:1, st:0.1, dev:'refr', calc:true},
+  {k:'brew_ph', n:'pH الكوب', u:'', tol:0.1, st:0.01, dev:'ph'} ]},
+ {id:'taste', t:'الذائقة (من ١٠)', m:[
+  {k:'aroma', n:'الرائحة', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'sweetness', n:'الحلاوة', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'acidity', n:'الحموضة', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'bitterness', n:'المرارة', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'body', n:'القوام', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'aftertaste', n:'النهاية', u:'/10', tol:0.5, st:0.25, dev:'human'},
+  {k:'clarity', n:'النظافة', u:'/10', tol:0.5, st:0.25, dev:'human'} ]},
+ {id:'sensor', t:'بديل اللسان والشم (بعد شراء الجهاز)', m:[
+  {k:'e_sour', n:'مستشعر الحموضة', u:'', tol:0.5, st:0.1, dev:'etongue'},
+  {k:'e_bitter', n:'مستشعر المرارة', u:'', tol:0.5, st:0.1, dev:'etongue'},
+  {k:'e_astr', n:'مستشعر القبض', u:'', tol:0.5, st:0.1, dev:'etongue'},
+  {k:'e_umami', n:'مستشعر الأومامي/الغنى', u:'', tol:0.5, st:0.1, dev:'etongue'},
+  {k:'e_aroma', n:'مؤشر الأنف الإلكتروني', u:'', tol:5, st:1, dev:'enose'} ]}
+];
+var ALL = []; G.forEach(function (g) { g.m.forEach(function (m) { m.g = g.id; ALL.push(m); }); });
+var BY = {}; ALL.forEach(function (m) { BY[m.k] = m; });
+
+var DEV = [
+ {id:'refr', n:'ريفراكتوميتر قهوة', tier:'أساسي', what:'يقيس TDS الكوب (%) ومنه تنحسب نسبة الاستخلاص.', ex:['VST Coffee Refractometer (المرجع في المختبرات)','Atago PAL-COFFEE','DiFluid R2 Extract (أرخص ويرتبط بالجوال)'], use:['صفّره بماء الفرع نفسه قبل القياس','برّد العينة لحرارة الغرفة (أو استخدم سرنجة وفلتر للإسبريسو)','قلّب الكوب قبل سحب العينة']},
+ {id:'tdsw', n:'جهاز TDS / EC للماء', tier:'أساسي', what:'يقيس الأملاح الذايبة في ماء الفرع بالـ ppm. الريفراكتوميتر ما يصلح للماء لأن تركيز الأملاح فيه ضعيف عليه.', ex:['HM Digital COM-100 (TDS + EC + حرارة)','HM Digital AP-1 (أبسط)'], use:['قِس الماء بعد الفلتر من نفس الحنفية اللي تعبي منها الغلاية','سجّل في نفس الوقت كل يوم']},
+ {id:'ghkh', n:'عدّة فحص العسر والقلوية (GH / KH)', tier:'أساسي', what:'العسر (كالسيوم + مغنيسيوم) يساعد يسحب النكهة، والقلوية (بيكربونات) تعادل الحموضة. هذا اللي يفرّق طعم نفس الوصفة بين فرع وفرع.', ex:['API GH & KH Test Kit (قطرات، رخيصة)','Hanna Checker لعسر الماء (رقمي وأدق)'], use:['كل قطرة لين يتغير اللون = 17.9 ppm في عدّة API','افحص أسبوعيًا، ويوميًا لو الفلتر جديد']},
+ {id:'ph', n:'جهاز pH رقمي', tier:'أساسي', what:'pH الماء، وpH الكوب كمؤشر تقريبي للحموضة (كل ما نزل الرقم صار الكوب أحمض).', ex:['Apera PH60','Hanna HI98103 Checker'], use:['عايره بمحلول 4.0 و7.0 كل أسبوع','قِس الكوب على حرارة ثابتة، مثل ٢٥°']},
+ {id:'scale', n:'ميزان بدقة 0.1 جم مع مؤقت', tier:'أساسي', what:'وزن البن والماء والمشروب والوقت. بدونه حساب الاستخلاص ما يطلع صحيح.', ex:['Acaia Pearl / Lunar','Timemore Black Mirror'], use:['زِن المشروب في الكوب بعد ما يخلص التقطير']},
+ {id:'therm', n:'ميزان حرارة رقمي سريع', tier:'أساسي', what:'حرارة ماء التحضير الفعلية، لأن الغلاية أحيانًا ما تطابق الشاشة.', ex:['Thermapen ONE','أي مجس سريع بدقة 0.1°'], use:['قِس الماء داخل الغلاية لحظة الصب']},
+ {id:'grinder', n:'مطحنة معايرة', tier:'موجود', what:'درجة الطحن على EK43 أو Forté مثل ما هي في الوصفة.', ex:['Mahlkönig EK43','Baratza Forté BG'], use:['سجّل الرقم الفعلي على القرص']},
+ {id:'human', n:'التذوق البشري (أنت)', tier:'موجود', what:'إلى أن تشتري بديل اللسان والأنف، الذائقة تتسجل بتقييمك من ١٠ على نفس السمات اللي اعتمدتها.', ex:['نفس بروتوكول الكبينق: اشفط على ٧١° وبعدها دافئ وفاتر'], use:['قيّم قبل ما تشوف أرقام الأجهزة عشان ما تتأثر فيها']},
+ {id:'etongue', n:'لسان إلكتروني (بديل اللسان)', tier:'متقدم / معملي', what:'مستشعرات كهروكيميائية تعطي قيم للحموضة والمرارة والقبض والأومامي. هي الأقرب لبديل اللسان، لكنها أجهزة معملية غالية وتحتاج معايرة بلجنة تذوق.', ex:['Insent TS-5000Z (نظام استشعار الطعم)','Alpha MOS ASTREE'], use:['اعتمد قراءته على نفس الكوب اللي اعتمدته بذائقتك','غالبًا تتوفر كخدمة في معامل الجامعات أو المختبرات بدل الشراء']},
+ {id:'enose', n:'أنف إلكتروني (بديل الشم)', tier:'متقدم / معملي', what:'يحلل المركبات العطرية المتطايرة ويعطي بصمة للرائحة. مفيد لكشف تغير الرائحة مع الوقت (التزنخ).', ex:['Alpha MOS HERACLES (Flash GC e-nose)'], use:['سجّل مؤشر التشابه مع البصمة المعتمدة (من ١٠٠)']}
+];
+
+/* ===== الجلسة (نفس دخول تطبيق ريز) ===== */
+var skey = null, sess = null;
+function readSession() {
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (/^sb-.*-auth-token$/.test(k)) {
+      try {
+        var v = localStorage.getItem(k); if (v.indexOf('base64-') === 0) v = atob(v.slice(7));
+        var s = JSON.parse(v); if (s && s.currentSession) s = s.currentSession;
+        if (s && s.access_token) { skey = k; sess = s; return true; }
+      } catch (e) {}
+    }
+  }
+  return false;
+}
+async function refresh() {
+  var r = await fetch(URL_ + '/auth/v1/token?grant_type=refresh_token', {method:'POST', headers:{apikey:KEY,'Content-Type':'application/json'}, body:JSON.stringify({refresh_token:sess.refresh_token})});
+  if (!r.ok) throw new Error('refresh');
+  var s = await r.json();
+  if (!s.expires_at) s.expires_at = Math.floor(Date.now()/1000) + (s.expires_in || 3600);
+  sess = s; try { localStorage.setItem(skey, JSON.stringify(s)); } catch (e) {}
+}
+async function token() {
+  if (sess.expires_at && sess.expires_at - 60 < Date.now()/1000) await refresh();
+  return sess.access_token;
+}
+async function api(path, opt) {
+  opt = opt || {};
+  var h = {apikey:KEY, Authorization:'Bearer ' + await token(), 'Content-Type':'application/json'};
+  if (opt.prefer) h.Prefer = opt.prefer;
+  var r = await fetch(URL_ + path, {method:opt.method || 'GET', headers:h, body:opt.body ? JSON.stringify(opt.body) : undefined});
+  if (!r.ok) throw new Error(await r.text());
+  var t = await r.text(); return t ? JSON.parse(t) : null;
+}
+
+/* ===== أدوات ===== */
+var $ = function (id) { return document.getElementById(id); };
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function num(v) { if (v === '' || v == null) return null; var n = parseFloat(String(v).replace(/[٠-٩]/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'.indexOf(d); }).replace('٫','.').replace(',','.')); return isFinite(n) ? n : null; }
+function fmt(v, st) { if (v == null) return '—'; var d = (st < 0.1 || st === 0.25) ? 2 : st < 1 ? 1 : 0; var t = (+v).toFixed(d); if (t.indexOf('.') >= 0) t = t.replace(/0+$/, '').replace(/\.$/, ''); return t; }
+function today() { return new Date(Date.now() + 3*3600e3).toISOString().slice(0,10); }
+function toast(t) { var d = document.createElement('div'); d.className = 'toast'; d.textContent = t; document.body.appendChild(d); setTimeout(function () { d.remove(); }, 1800); }
+function ey(m) { return (m.brew_tds != null && m.beverage && m.dose) ? Math.round(m.brew_tds * m.beverage / m.dose * 100) / 100 : null; }
+
+/* ===== الحالة ===== */
+var recipes = [], base = null, readings = [];
+
+function formHTML(prefix, withTol) {
+  return '<div class="m hint" style="margin-bottom:2px"><span></span><span style="text-align:center">' + (withTol ? 'المعتمد' : 'اليوم') + '</span><span style="text-align:center">' + (withTol ? '± السماحية' : 'المعتمد') + '</span></div>' + G.map(function (g) {
+    return '<div class="grp"><h3>' + g.t + '</h3>' + g.m.map(function (m) {
+      return '<div class="m' + (m.calc ? ' calc' : '') + '"><div class="n">' + m.n + (m.u ? '<small>' + m.u + '</small>' : '') + (m.calc ? '<small>تنحسب تلقائيًا</small>' : '') + '</div>' +
+        '<input type="number" inputmode="decimal" step="' + m.st + '" id="' + prefix + m.k + '"' + (m.calc ? ' readonly' : '') + ' />' +
+        (withTol ? '<input class="tol" type="number" inputmode="decimal" step="' + m.st + '" id="' + prefix + 'tol_' + m.k + '" title="السماحية ±" placeholder="±" />' : '<span class="hint" id="' + prefix + 'ref_' + m.k + '" style="text-align:center;direction:ltr"></span>') + '</div>';
+    }).join('') + '</div>';
+  }).join('');
+}
+function readForm(prefix) {
+  var o = {};
+  ALL.forEach(function (m) { var v = num($(prefix + m.k).value); if (v != null) o[m.k] = v; });
+  var e = ey(o); if (e != null) o.ey = e; else delete o.ey;
+  return o;
+}
+function wireEY(prefix) {
+  ['brew_tds','beverage','dose'].forEach(function (k) {
+    $(prefix + k).addEventListener('input', function () { var e = ey(readForm(prefix)); $(prefix + 'ey').value = e == null ? '' : e; });
+  });
+}
+
+function classify(m, b, v, tol) {
+  if (b == null || v == null) return null;
+  var d = Math.round((v - b) * 1000) / 1000;
+  return {d:d, s: Math.abs(d) <= tol + 1e-9 ? 'ok' : d < 0 ? 'lo' : 'hi'};
+}
+var LBL = {ok:'مقارب', lo:'نازل', hi:'مرتفع'};
+function tolOf(k) { var t = base && base.tolerances && base.tolerances[k]; return t != null ? t : BY[k].tol; }
+
+function compare(r) {
+  var rows = [];
+  ALL.forEach(function (m) {
+    var c = classify(m, base.metrics[m.k], r.metrics[m.k], tolOf(m.k));
+    if (c) rows.push({m:m, b:base.metrics[m.k], v:r.metrics[m.k], c:c});
+  });
+  return rows;
+}
+function diagnose(rows) {
+  var s = {}; rows.forEach(function (x) { s[x.m.k] = x.c.s; });
+  var t = [];
+  if (s.water_tds && s.water_tds !== 'ok' || s.gh && s.gh !== 'ok' || s.kh && s.kh !== 'ok') t.push('ماء الفرع تغيّر عن المعتمد. افحص الفلتر أو مصدر الماء <b>قبل</b> ما تعدّل الوصفة، لأن أي تعديل ثاني بيكون على ماء غلط.');
+  if (s.kh === 'hi') t.push('القلوية أعلى من المعتمد، فالحموضة بتطلع باهتة حتى لو الاستخلاص مضبوط.');
+  if (s.kh === 'lo') t.push('القلوية أقل من المعتمد، فالكوب ممكن يطلع حاد الحموضة.');
+  if (s.ey === 'lo') t.push('الاستخلاص نازل (قصور استخلاص): اطحن أنعم بدرجة، أو تأكد إن حرارة الماء ما نزلت.');
+  if (s.ey === 'hi') t.push('الاستخلاص مرتفع (استخلاص زائد): اطحن أخشن بدرجة، أو قلّل وقت التلامس.');
+  if (s.brew_tds === 'hi' && s.ey === 'ok') t.push('الكوب أقوى من المعتمد والاستخلاص سليم. راجع الريشيو: البن زايد أو المشروب ناقص.');
+  if (s.brew_tds === 'lo' && s.ey === 'ok') t.push('الكوب أخف من المعتمد والاستخلاص سليم. راجع الريشيو: البن ناقص أو الماء زايد.');
+  if (s.dose && s.dose !== 'ok') t.push('وزن البن طلع عن الوصفة. هذا خطأ تنفيذ من الباريستا، مو من الوصفة.');
+  if (s.water_temp === 'lo') t.push('حرارة الماء أقل من المعتمد، وهذا يقلل الاستخلاص والحلاوة.');
+  if (s.acidity === 'hi' && s.ey === 'lo') t.push('الذائقة تأكد الأرقام: حموضة زايدة مع استخلاص ناقص.');
+  if (s.bitterness === 'hi' && s.ey === 'hi') t.push('الذائقة تأكد الأرقام: مرارة زايدة مع استخلاص زايد.');
+  if ((s.bitterness === 'hi' || s.clarity === 'lo' || s.aroma === 'lo') && s.ey === 'ok' && s.brew_tds === 'ok') t.push('الأرقام سليمة والذائقة نازلة، فالمشكلة غالبًا في <b>البن نفسه</b> (عمر التحميص، أكسدة، تخزين) أو في نظافة المعدات. الجهاز ما يشوف هذا، والتذوق هو الحكم.');
+  if (s.brew_ph === 'lo') t.push('pH الكوب أقل، يعني الكوب أحمض من المعتمد.');
+  if (s.brew_ph === 'hi') t.push('pH الكوب أعلى، يعني الحموضة أبهت من المعتمد.');
+  return t;
+}
+function verdictHTML(r, title) {
+  var rows = compare(r);
+  if (!rows.length) return '<div class="card hint">ما فيه خانات مشتركة بين القراءة والمعتمد للمقارنة.</div>';
+  var cnt = {ok:0, lo:0, hi:0}; rows.forEach(function (x) { cnt[x.c.s]++; });
+  var overall = cnt.lo + cnt.hi === 0 ? '<span class="chip c-ok">مطابق للمعتمد ✓</span>' : (cnt.lo + cnt.hi <= 2 ? '<span class="chip c-hi">قريب، مع انحراف بسيط</span>' : '<span class="chip c-hi">بعيد عن المعتمد</span>');
+  var tips = diagnose(rows);
+  return '<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0;flex:none">' + esc(title) + '</h2><div style="flex:none">' + overall + '</div></div>' +
+    '<div class="sum"><div class="c-ok"><b>' + cnt.ok + '</b>مقارب</div><div class="c-lo"><b>' + cnt.lo + '</b>نازل</div><div class="c-hi"><b>' + cnt.hi + '</b>مرتفع</div></div>' +
+    '<table class="vt"><tr><th>المقياس</th><th style="text-align:center">المعتمد</th><th style="text-align:center">القراءة</th><th style="text-align:center">الفرق</th><th>الحالة</th></tr>' +
+    rows.map(function (x) {
+      return '<tr><td>' + x.m.n + '</td><td class="num">' + fmt(x.b, x.m.st) + '</td><td class="num">' + fmt(x.v, x.m.st) + '</td><td class="num">' + (x.c.d > 0 ? '+' : '') + fmt(x.c.d, x.m.st) + '</td><td><span class="chip c-' + x.c.s + '">' + LBL[x.c.s] + '</span></td></tr>';
+    }).join('') + '</table>' +
+    (tips.length ? '<h2>وش يعني هذا؟</h2>' + tips.map(function (t) { return '<div class="tip">' + t + '</div>'; }).join('') : '') +
+    (r.note ? '<div class="hint" style="margin-top:8px">📝 ' + esc(r.note) + '</div>' : '') + '</div>';
+}
+
+function spark(m) {
+  var pts = readings.slice(0, 14).reverse().filter(function (r) { return r.metrics[m.k] != null; });
+  var b = base.metrics[m.k]; if (b == null || pts.length < 2) return '';
+  var tol = tolOf(m.k), vals = pts.map(function (r) { return r.metrics[m.k]; }).concat([b - tol, b + tol]);
+  var lo = Math.min.apply(0, vals), hi = Math.max.apply(0, vals), pad = (hi - lo) * 0.15 || 1; lo -= pad; hi += pad;
+  var W = 300, H = 46, y = function (v) { return H - (v - lo) / (hi - lo) * H; }, x = function (i) { return pts.length === 1 ? W/2 : 8 + i * (W - 16) / (pts.length - 1); };
+  var path = pts.map(function (r, i) { return (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(r.metrics[m.k]).toFixed(1); }).join(' ');
+  var dots = pts.map(function (r, i) { var c = classify(m, b, r.metrics[m.k], tol).s; return '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(r.metrics[m.k]).toFixed(1) + '" r="3.5" fill="' + (c === 'ok' ? '#8BC34A' : c === 'lo' ? '#5AB0FF' : '#F15227') + '"/>'; }).join('');
+  return '<div style="margin-bottom:10px"><div class="row" style="justify-content:space-between;font-size:13px"><span style="flex:none">' + m.n + '</span><span class="hint" style="flex:none;direction:ltr">' + fmt(b, m.st) + ' ± ' + fmt(tol, m.st) + '</span></div>' +
+    '<svg class="sp" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="none" style="transform:scaleX(-1)"><rect x="0" y="' + y(b + tol).toFixed(1) + '" width="' + W + '" height="' + Math.max(1, y(b - tol) - y(b + tol)).toFixed(1) + '" fill="rgba(139,195,74,.13)"/><line x1="0" x2="' + W + '" y1="' + y(b).toFixed(1) + '" y2="' + y(b).toFixed(1) + '" stroke="rgba(139,195,74,.5)" stroke-dasharray="4 4"/><path d="' + path + '" fill="none" stroke="#EFE7D3" stroke-width="1.6"/>' + dots + '</svg></div>';
+}
+
+/* ===== التحميل ===== */
+function rid() { return $('recipe').value; }
+function br() { return ($('branch').value || '').trim() || 'الفرع الرئيسي'; }
+function recipeById(id) { for (var i = 0; i < recipes.length; i++) if (recipes[i].id === id) return recipes[i]; return null; }
+
+async function loadRecipe() {
+  try { localStorage.setItem('rays-lab-last', JSON.stringify({r:rid(), b:br()})); } catch (e) {}
+  var bs = await api('/rest/v1/lab_baselines?recipe_id=eq.' + encodeURIComponent(rid()) + '&branch=eq.' + encodeURIComponent(br()) + '&select=*');
+  base = bs[0] || null;
+  readings = base ? await api('/rest/v1/lab_readings?baseline_id=eq.' + base.id + '&select=*&order=reading_date.desc,created_at.desc&limit=60') : [];
+  renderAll();
+}
+function fillBaseForm() {
+  var rc = recipeById(rid()), m = base ? base.metrics : {}, tl = base ? base.tolerances : {};
+  if (!base && rc) {
+    m = {};
+    if (rc.dose_g != null) m.dose = +rc.dose_g;
+    if (rc.yield_g != null) m.water_in = +rc.yield_g;
+    if (rc.water_temp_c != null) m.water_temp = +rc.water_temp_c;
+    var g = num(rc.grind_setting); if (g != null) m.grind = g;
+  }
+  ALL.forEach(function (x) {
+    $('b_' + x.k).value = m[x.k] != null ? m[x.k] : '';
+    $('b_tol_' + x.k).value = tl && tl[x.k] != null ? tl[x.k] : x.tol;
+  });
+  $('tasteNote').value = base ? (base.taste_note || '') : (rc && rc.profile ? rc.profile : '');
+  $('delBase').classList.toggle('hide', !base);
+}
+function renderAll() {
+  var rc = recipeById(rid());
+  $('bstate').innerHTML = base ? '✓ معتمد من ' + new Date(base.approved_at).toLocaleDateString('ar-SA-u-ca-gregory', {day:'numeric', month:'long', year:'numeric'}) + (base.taste_note ? '<br>الذائقة: ' + esc(base.taste_note) : '') : 'ما فيه معتمد لهالوصفة بهالفرع إلى الآن.' + (rc && rc.profile ? '<br>وصف الوصفة: ' + esc(rc.profile) : '');
+  fillBaseForm();
+  $('noBase').classList.toggle('hide', !!base);
+  $('todayWrap').classList.toggle('hide', !base);
+  if (!base) return;
+  ALL.forEach(function (m) { var v = base.metrics[m.k]; $('r_ref_' + m.k).textContent = v != null ? fmt(v, m.st) : ''; $('r_' + m.k).value = ''; });
+  ['dose','water_in','grind'].forEach(function (k) { if (base.metrics[k] != null) $('r_' + k).value = base.metrics[k]; });
+  $('rdate').value = today(); $('rnote').value = '';
+  var last = readings[0];
+  $('verdict').innerHTML = last ? verdictHTML(last, last.reading_date === today() ? 'نتيجة اليوم' : 'آخر قراءة · ' + last.reading_date) : '';
+  $('history').innerHTML = readings.length ? readings.slice(0, 20).map(function (r, i) {
+    var rows = compare(r), lo = 0, hi = 0; rows.forEach(function (x) { if (x.c.s === 'lo') lo++; if (x.c.s === 'hi') hi++; });
+    return '<div class="hist" data-i="' + i + '"><span>' + r.reading_date + '</span><span>' + (lo + hi === 0 ? '<span class="chip c-ok">مقارب</span>' : (lo ? '<span class="chip c-lo">' + lo + ' نازل</span> ' : '') + (hi ? '<span class="chip c-hi">' + hi + ' مرتفع</span>' : '')) + '</span></div>';
+  }).join('') : 'لا توجد قراءات بعد.';
+  Array.prototype.forEach.call(document.querySelectorAll('.hist'), function (el) {
+    el.onclick = function () { var r = readings[+el.getAttribute('data-i')]; $('verdict').innerHTML = verdictHTML(r, 'قراءة ' + r.reading_date); window.scrollTo({top:0, behavior:'smooth'}); };
+  });
+  var tr = ALL.map(spark).join('');
+  $('trends').innerHTML = tr || '<div class="hint">يظهر الاتجاه بعد قراءتين على الأقل.</div>';
+}
+function renderDevices() {
+  var own = {}; try { own = JSON.parse(localStorage.getItem('rays-lab-devices') || '{}'); } catch (e) {}
+  $('devices').innerHTML = DEV.map(function (d) {
+    var ms = ALL.filter(function (m) { return m.dev === d.id; }).map(function (m) { return m.n; }).join('، ');
+    return '<div class="dev"><b>' + d.n + '</b><span class="tier">' + d.tier + '</span><div class="w">' + d.what + '</div>' +
+      '<div class="hint">يغطي: ' + ms + '</div><ul>' + d.ex.map(function (e) { return '<li>' + e + '</li>'; }).join('') + '</ul>' +
+      '<div class="hint" style="margin-top:6px"><b>طريقة القياس:</b> ' + d.use.join(' · ') + '</div>' +
+      '<label><input type="checkbox" data-d="' + d.id + '"' + (own[d.id] || d.tier === 'موجود' ? ' checked' : '') + ' /> عندي هذا الجهاز</label></div>';
+  }).join('');
+  Array.prototype.forEach.call(document.querySelectorAll('#devices input[type=checkbox]'), function (c) {
+    c.onchange = function () { own[c.getAttribute('data-d')] = c.checked; try { localStorage.setItem('rays-lab-devices', JSON.stringify(own)); } catch (e) {} };
+  });
+}
+
+async function init() {
+  if (!readSession()) { $('gate').innerHTML = '🔒<br>هذا القسم خاص.<br><a class="back" href="/" style="margin-top:10px">ارجع للتطبيق</a>'; return; }
+  try {
+    var ok = await api('/rest/v1/rpc/is_admin', {method:'POST', body:{}});
+    if (ok !== true) throw new Error('no');
+  } catch (e) { $('gate').innerHTML = '🔒<br>هذا القسم خاص.<br><a class="back" href="/" style="margin-top:10px">ارجع للتطبيق</a>'; return; }
+
+  recipes = await api('/rest/v1/recipes?select=id,name,category,method,dose_g,yield_g,grind_setting,water_temp_c,profile,status&order=category,method,name');
+  var groups = {};
+  recipes.forEach(function (r) { var g = (r.category || 'أخرى') + (r.method ? ' · ' + r.method : ''); (groups[g] = groups[g] || []).push(r); });
+  $('recipe').innerHTML = Object.keys(groups).map(function (g) {
+    return '<optgroup label="' + esc(g) + '">' + groups[g].map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.name || r.id) + (r.status && r.status !== 'معتمدة' ? ' (' + esc(r.status) + ')' : '') + '</option>'; }).join('') + '</optgroup>';
+  }).join('');
+  try {
+    var bl = await api('/rest/v1/lab_baselines?select=branch,recipe_id&order=updated_at.desc');
+    var bset = {}; bl.forEach(function (x) { bset[x.branch] = 1; });
+    $('branches').innerHTML = Object.keys(bset).map(function (b) { return '<option value="' + esc(b) + '">'; }).join('');
+  } catch (e) {}
+  try { var last = JSON.parse(localStorage.getItem('rays-lab-last') || 'null'); if (last && recipeById(last.r)) { $('recipe').value = last.r; $('branch').value = last.b; } } catch (e) {}
+
+  $('baseForm').innerHTML = formHTML('b_', true);
+  $('readForm').innerHTML = formHTML('r_', false);
+  wireEY('b_'); wireEY('r_');
+  renderDevices();
+  $('recipe').onchange = loadRecipe;
+  $('branch').onchange = loadRecipe;
+
+  $('saveBase').onclick = async function () {
+    var metrics = readForm('b_'), tol = {};
+    ALL.forEach(function (m) { var t = num($('b_tol_' + m.k).value); if (t != null) tol[m.k] = Math.abs(t); });
+    if (!Object.keys(metrics).length) { alert('سجّل رقم واحد على الأقل'); return; }
+    this.disabled = true;
+    try {
+      await api('/rest/v1/lab_baselines?on_conflict=recipe_id,branch', {method:'POST', prefer:'resolution=merge-duplicates,return=representation',
+        body:{recipe_id:rid(), branch:br(), metrics:metrics, tolerances:tol, taste_note:$('tasteNote').value.trim() || null, approved_at:new Date().toISOString(), updated_at:new Date().toISOString()}});
+      toast('تم اعتماد الأرقام ✓'); await loadRecipe(); show('today');
+    } catch (e) { alert('ما انحفظ: ' + e.message); }
+    this.disabled = false;
+  };
+  $('delBase').onclick = async function () {
+    if (!base || !confirm('أكيد تحذف المعتمد وكل قراءاته لهالوصفة بهالفرع؟')) return;
+    try { await api('/rest/v1/lab_baselines?id=eq.' + base.id, {method:'DELETE'}); toast('انحذف'); await loadRecipe(); } catch (e) { alert(e.message); }
+  };
+  $('saveReading').onclick = async function () {
+    var metrics = readForm('r_');
+    var real = Object.keys(metrics).filter(function (k) { return ['dose','water_in','grind'].indexOf(k) < 0; });
+    if (!real.length) { alert('سجّل قراءة اليوم أولًا'); return; }
+    this.disabled = true;
+    try {
+      await api('/rest/v1/lab_readings', {method:'POST', prefer:'return=minimal', body:{baseline_id:base.id, reading_date:$('rdate').value || today(), metrics:metrics, note:$('rnote').value.trim() || null}});
+      toast('انحفظت القراءة ✓'); await loadRecipe(); window.scrollTo({top:0, behavior:'smooth'});
+    } catch (e) { alert('ما انحفظت: ' + e.message); }
+    this.disabled = false;
+  };
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) { b.onclick = function () { show(b.getAttribute('data-t')); }; });
+
+  $('gate').classList.add('hide'); $('app').classList.remove('hide');
+  await loadRecipe();
+}
+function show(t) {
+  ['today','base','dev'].forEach(function (x) { $('t-' + x).classList.toggle('hide', x !== t); });
+  Array.prototype.forEach.call(document.querySelectorAll('.tabs button'), function (b) { b.classList.toggle('on', b.getAttribute('data-t') === t); });
+  window.scrollTo(0, 0);
+}
+init().catch(function (e) { $('gate').innerHTML = 'صار خطأ في التحميل.<br><span class="hint">' + esc(e.message) + '</span>'; });
+})();
+</script>
+</body>
+</html>
