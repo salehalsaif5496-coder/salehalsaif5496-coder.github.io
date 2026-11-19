@@ -189,7 +189,7 @@ var G = [
   {k:'brew_tds', n:'TDS الكوب', u:'%', tol:0.05, st:0.01, dev:'refr'},
   {k:'ey', n:'نسبة الاستخلاص', u:'%', tol:1, st:0.1, dev:'refr', calc:true},
   {k:'brew_ph', n:'pH الكوب', u:'', tol:0.1, st:0.01, dev:'ph'} ]},
- {id:'sensor', t:'اللسان والأنف الإلكتروني', m:[
+ {id:'sensor', t:'اللسان والأنف الإلكتروني (اختياري — لاحقًا)', m:[
   {k:'e_sour', n:'مستشعر الحموضة', u:'', tol:0.5, st:0.1, dev:'etongue'},
   {k:'e_bitter', n:'مستشعر المرارة', u:'', tol:0.5, st:0.1, dev:'etongue'},
   {k:'e_astr', n:'مستشعر القبض', u:'', tol:0.5, st:0.1, dev:'etongue'},
@@ -472,8 +472,8 @@ async function init() {
 var STEPS = [
  {t:'١ · مقياسات الأملاح', k:['water_tds','gh'], req:['water_tds','gh']},
  {t:'٢ · القلوية', k:['kh','water_ph'], req:['kh']},
- {t:'٣ · الأنف الإلكتروني', k:['e_aroma'], req:['e_aroma']},
- {t:'٤ · اللسان الإلكتروني', k:['e_sour','e_bitter','e_astr','e_umami'], req:['e_sour','e_bitter','e_astr','e_umami']},
+ {t:'٣ · الأنف الإلكتروني (اختياري — لاحقًا)', k:['e_aroma'], req:[]},
+ {t:'٤ · اللسان الإلكتروني (اختياري — لاحقًا)', k:['e_sour','e_bitter','e_astr','e_umami'], req:[]},
  {t:'٥ · الريفراكتوميتر', k:['brew_tds','beverage','ey','brew_ph'], req:['brew_tds','beverage']},
  {t:'٦ · وصفتي اليوم', k:['dose','water_in','grind','water_temp','time'], req:['dose','water_in','grind','water_temp','time']}
 ];
