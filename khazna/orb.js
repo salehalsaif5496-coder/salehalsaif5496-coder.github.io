@@ -103,6 +103,9 @@ function stopListening(){
 }
 
 /* ================= think ================= */
+/* اختيار الموديل: Haiku للسوالف (أسرع وأرخص)، Sonnet للتحليل والخطط */
+const DEEP_RE = /(حلل|حلّل|تحليل|خطه|خطة|خطط|اقترح|اقتراح|قارن|مقارنه|مقارنة|استراتيجي|فكر|ادرس|دراسه|دراسة|قيم|تقييم|حمله|حملة|ميزانيه تسويق|ميزانية تسويق)/;
+function pickModel(q){ const t = String(q||"").replace(/[ً-ْـ]/g,""); return DEEP_RE.test(t) ? "claude-sonnet-5-5" : "claude-haiku-5-5"; }
 async function ask(q){
   set("think"); diag("ask start oa=" + !!oaKey + " ant=" + !!apiKey);
   history.push({role:"user", content:q});
@@ -117,7 +120,7 @@ async function ask(q){
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method:"POST",
         headers:{"content-type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
-        body: JSON.stringify({model:"claude-sonnet-5-5", max_tokens:350, stream:true, system:SYSTEM_TEXT(), messages:history})
+        body: JSON.stringify({model:pickModel(q), max_tokens:350, stream:true, system:SYSTEM_TEXT(), messages:history})
       });
       if (res.status === 401) { try{ localStorage.removeItem("orb_key"); }catch(e){} apiKey = ""; throw new Error("key"); }
       if (!res.ok || !res.body) throw new Error("http");
