@@ -51,7 +51,7 @@ from jsonb_to_recordset($recipes$
             {"at_sec":40,"pour_to_g":125,"note":"صبّي بدواير صغيرة"},
             {"at_sec":70,"pour_to_g":200,"note":"آخر صبّة، وبعدها حرّكي السيرفر عشان يذوب الثلج"}],
    "tastes":["حامض","حلو","خفيف"],
-   "note":"قهوة باردة منعشة طعمها مثل التوت، حلوة بالعصر 🍓"},
+   "note":"قهوة باردة منعشة طعمها مثل التوت، تحلى مع العصرية 🍓"},
 
   {"id":"iced-caramel","name":"كراميل بارد","style":"iced","roast":["medium"],
    "dose":20,"water":180,"ice":120,"temp_c":92,"target_sec":150,"grind_encore":14,
