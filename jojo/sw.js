@@ -71,3 +71,33 @@ self.addEventListener('fetch', function (e) {
     });
   }));
 });
+
+/* ---------------- التنبيهات (Web Push من jojo-tick) ---------------- */
+self.addEventListener('push', function (e) {
+  var d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (_) { d = { body: e.data ? e.data.text() : '' }; }
+  var icon = new URL('./icons/icon-192.png', self.location.href).href;
+  e.waitUntil(self.registration.showNotification(d.title || 'جوجو 🎀', {
+    body: d.body || '', tag: d.tag || 'jojo', renotify: true, dir: 'rtl', lang: 'ar',
+    icon: icon, badge: icon,
+    data: { url: d.url || './#today' }
+  }));
+});
+
+self.addEventListener('notificationclick', function (e) {
+  e.notification.close();
+  var raw = (e.notification.data && e.notification.data.url) || './#today';
+  var url = new URL(raw, self.registration.scope).href;
+  var app = new URL('./', self.registration.scope).pathname;
+  var saleh = new URL('./saleh/', self.registration.scope).pathname;
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (ws) {
+    for (var i = 0; i < ws.length; i++) {
+      var p = new URL(ws[i].url).pathname;
+      if (p.indexOf(app) === 0 && p.indexOf(saleh) !== 0 && 'focus' in ws[i]) {
+        var w = ws[i];
+        return w.focus().then(function (f) { return f && 'navigate' in f ? f.navigate(url) : f; }).catch(function () { return self.clients.openWindow(url); });
+      }
+    }
+    return self.clients.openWindow(url);
+  }));
+});

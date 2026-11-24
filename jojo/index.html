@@ -286,6 +286,21 @@ nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;font-si
 nav.tabs a svg{width:24px;height:24px}
 nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weight:600}
 .foot{font-size:12px;color:var(--ink-2);text-align:center;margin-top:8px}
+
+/* التنبيهات */
+.push-card{background:linear-gradient(180deg,#2A1C23,var(--cream) 75%);border:1.5px solid #5A3B48;border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.push-card h3{font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.push-card h3 .ic{width:22px;height:22px;flex:none;color:var(--rose)}
+.push-card ol{margin:10px 0 0;padding-inline-start:22px;line-height:1.9;font-size:15px}
+.push-card ol b{color:var(--rose);font-weight:600}
+.push-on{display:inline-flex;align-items:center;gap:6px;color:var(--rose);font-weight:600;font-size:15px}
+.rem{display:flex;align-items:center;gap:10px;min-height:52px;padding:6px 0}
+.rem+.rem{border-top:1px solid var(--line)}
+.rem label{flex:1;display:flex;align-items:center;gap:10px;font-size:15px;min-height:44px;cursor:pointer}
+.rem input[type=checkbox]{width:22px;height:22px;accent-color:var(--pink);flex:none}
+.rem .in{width:auto;flex:none;min-height:44px;padding:8px 10px;font-size:15px}
+.rem .in:disabled{opacity:.45}
+.rem small{display:block;font-size:12px;color:var(--ink-2)}
 </style>
 </head>
 <body>
@@ -304,7 +319,9 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.6';
+var JOJO_VERSION = '2026-11-24.7';
+/* مفتاح VAPID العام للتنبيهات (مو سري) — يحطه الكنترولر نفس jojo_config 'vapid_public' */
+var JOJO_VAPID_PUBLIC = '__SET_BY_CONTROLLER__';
 </script>
 <script>
 (function () {
@@ -596,9 +613,9 @@ var Remote = {
     return upsertRow('jojo_daily', { user_id: Auth.uid(), date: date, pct: pct, updated_at: now }, 'user_id,date',
       { pct: pct, updated_at: now }, 'user_id=eq.' + Auth.uid() + '&date=eq.' + date);
   },
-  tasks: function () { return api('/rest/v1/jojo_tasks?select=id,title,days,created_at&order=created_at.asc'); },
-  addTask: function (title, days) {
-    return api('/rest/v1/jojo_tasks?select=id,title,days,created_at', { method: 'POST', body: { user_id: Auth.uid(), title: title, days: days }, prefer: 'return=representation' }).then(function (r) { return r[0]; });
+  tasks: function () { return api('/rest/v1/jojo_tasks?select=id,title,days,remind_at,created_at&order=created_at.asc'); },
+  addTask: function (title, days, remindAt) {
+    return api('/rest/v1/jojo_tasks?select=id,title,days,remind_at,created_at', { method: 'POST', body: { user_id: Auth.uid(), title: title, days: days, remind_at: remindAt || null }, prefer: 'return=representation' }).then(function (r) { return r[0]; });
   },
   updateTask: function (id, patch) { return api('/rest/v1/jojo_tasks?id=eq.' + id, { method: 'PATCH', body: patch, prefer: 'return=minimal' }); },
   deleteTask: function (id) { return api('/rest/v1/jojo_tasks?id=eq.' + id, { method: 'DELETE', prefer: 'return=minimal' }); },
@@ -663,7 +680,7 @@ function makeDemo(onboard) {
   };
   var created = new Date(Date.now() - 70 * 864e5).toISOString();
   var tasks = onboard ? [] : [
-    { id: 't1', title: 'مذاكرة الكيمياء', days: [0, 1, 2, 3, 4], created_at: created },
+    { id: 't1', title: 'مذاكرة الكيمياء', days: [0, 1, 2, 3, 4], remind_at: '16:30', created_at: created },
     { id: 't2', title: 'أقرأ ١٠ صفحات', days: null, created_at: created },
     { id: 't3', title: 'أرتب غرفتي', days: [5], created_at: created }
   ];
@@ -735,7 +752,7 @@ function makeDemo(onboard) {
     },
     setDaily: function () { return later(); },
     tasks: function () { return later(tasks); },
-    addTask: function (title, days) { var t = { id: nid(), title: title, days: days, created_at: new Date().toISOString() }; tasks.push(t); return later(t); },
+    addTask: function (title, days, remindAt) { var t = { id: nid(), title: title, days: days, remind_at: remindAt || null, created_at: new Date().toISOString() }; tasks.push(t); return later(t); },
     updateTask: function (id, p) { tasks.forEach(function (t) { if (t.id === id) Object.assign(t, p); }); return later(); },
     deleteTask: function (id) { tasks = tasks.filter(function (t) { return t.id !== id; }); return later(); },
     notes: function () { return later(notes); },
@@ -1006,7 +1023,7 @@ function renderToday() {
     '<header class="top"><div class="hello"><h1>' + hello + '</h1><p>' + dateLabel(S.today) + ' · ' + (gymDay ? 'يوم نادي' : 'يوم راحة من النادي') + '</p></div>' +
     '<div class="top-end">' + catSVG() + '<button class="icon-btn" data-act="settings" aria-label="إعداداتي">' + GEAR + '</button></div></header>' +
     '<p class="pill" id="pending" role="status" hidden></p>' +
-    msg +
+    msg + pushCard('today') +
     '<section class="bracelet" aria-label="نسبة الالتزام اليوم"><div class="bracelet-head"><h2>سوارة اليوم</h2><div class="num">' + (pct == null ? '—' : ar(pct) + '٪') + '</div></div>' +
     '<div class="beads" style="--b:' + size + 'px" role="img" aria-label="' + ar(done) + ' من ' + ar(total) + ' مخلّصة">' + beads + '</div><p class="hint">' + hint + '</p>' +
     (LS.get('seeLineOk', false) ? '' : '<p class="see-line" id="seeLine">' + SEE_LINE + ' <button class="link" data-act="see-ok">تمام</button></p>') + '</section>' +
@@ -1032,6 +1049,13 @@ function dayChips(sel, name) {
   }).join('') + '</div>';
 }
 var draftDays = [];
+/* تذكير المهمة: وقت اختياري، ويوصلها بنفس أيام المهمة */
+function remindField(id, val) {
+  var st = pushState();
+  return '<label class="f" for="' + id + '">🔔 تذكير (اختياري)</label><input id="' + id + '" class="in" type="time" name="remind_at" value="' + esc(val || '') + '">' +
+    '<p class="muted" style="font-size:13px;margin-top:6px">يوصلك تنبيه بهالوقت بأيامها. فاضي = بدون تذكير.' +
+    (st === 'on' ? '' : ' <a class="link" href="#settings">فعّلي التنبيهات</a>') + '</p>';
+}
 function renderHabits() {
   var s = S.settings;
   var core = [
@@ -1046,10 +1070,10 @@ function renderHabits() {
   var list = S.tasks.length ? S.tasks.map(function (t) {
     if (editingTask === t.id) {
       return '<form class="item" data-form="edit-task" data-id="' + esc(t.id) + '"><label class="f" for="et">المهمة</label><input id="et" class="in" name="title" maxlength="80" required value="' + esc(t.title) + '">' +
-        '<label class="f">أيامها (اتركيها فاضية = كل يوم)</label>' + dayChips(draftDays, 'edit') +
+        '<label class="f">أيامها (اتركيها فاضية = كل يوم)</label>' + dayChips(draftDays, 'edit') + remindField('er', t.remind_at) +
         '<div class="actions"><button class="btn small">حفظ</button><button type="button" class="btn ghost small" data-act="cancel-task">إلغاء</button></div></form>';
     }
-    return '<div class="item"><div class="body" style="font-weight:500">' + esc(t.title) + '</div><div class="days-s">' + daysText(t.days) + '</div>' +
+    return '<div class="item"><div class="body" style="font-weight:500">' + esc(t.title) + '</div><div class="days-s">' + daysText(t.days) + (t.remind_at ? ' · 🔔 ' + t12(t.remind_at, true) : '') + '</div>' +
       '<div class="meta"><span></span><span class="tools"><button data-act="edit-task" data-id="' + esc(t.id) + '" data-fid="et' + esc(t.id) + '">تعديل</button><button data-act="del-task" data-id="' + esc(t.id) + '">حذف</button></span></div></div>';
   }).join('') : '<div class="empty">' + catSVG('') + 'ما عندك مهام خاصة لسه. أضيفي شي صغير تبين تسوينه، حتى لو بسيط 🌸</div>';
 
@@ -1062,7 +1086,7 @@ function renderHabits() {
     '<h2 class="sec">مهامي الخاصة</h2>' + list +
     (editingTask ? '' :
     '<form class="card" data-form="add-task"><h3>مهمة جديدة</h3><label class="f" for="nt">وش تبين تسوين؟</label><input id="nt" class="in" name="title" maxlength="80" required placeholder="مثلًا: أذاكر نص ساعة">' +
-    '<label class="f">بأي أيام؟ (اتركيها فاضية = كل يوم)</label>' + dayChips(draftDays, 'new') +
+    '<label class="f">بأي أيام؟ (اتركيها فاضية = كل يوم)</label>' + dayChips(draftDays, 'new') + remindField('nr', null) +
     '<div class="actions"><button class="btn block">أضيفيها</button></div></form>')
   );
 }
@@ -1494,7 +1518,8 @@ function renderSettings(onboarding) {
     var s = S.settings;
     draft = {
       sleepAt: s.sleepAt || '23:00', wakeAt: s.wakeAt || '06:30', gymDays: (s.gymDays || []).slice(),
-      vitamins: (s.vitamins || []).slice(), waterGoal: s.waterGoal || 8, city: (s.city && s.city.id) || 'riyadh'
+      vitamins: (s.vitamins || []).slice(), waterGoal: s.waterGoal || 8, city: (s.city && s.city.id) || 'riyadh',
+      rem: Object.assign({}, s.reminders || {})
     };
   }
   var d = draft;
@@ -1517,7 +1542,7 @@ function renderSettings(onboarding) {
     '<button type="button" data-act="water-goal" data-d="-1" aria-label="أقل">−</button><span class="num" aria-live="polite">' + ar(d.waterGoal) + '</span><button type="button" data-act="water-goal" data-d="1" aria-label="أكثر">+</button><span class="muted">أكواب باليوم</span></div></div>' +
     '<div class="card"><h3>' + IC.mosque + 'مدينتك</h3><p class="muted" style="margin-bottom:6px">عشان أوقات الأذان (تقويم أم القرى).</p><label class="sr" for="ct">المدينة</label><select id="ct" class="in" name="city">' +
     CITIES.map(function (c) { return '<option value="' + c.id + '"' + (c.id === d.city ? ' selected' : '') + '>' + c.name + '</option>'; }).join('') + '</select></div>' +
-    (onboarding ? '' : '<div class="card"><h3>' + IC.bell + 'التنبيهات</h3><p class="muted">تنبيهات الأذان والنوم والماء جاية قريب.</p></div>') +
+    (onboarding ? '' : pushCard('settings') + remindersCard(d)) +
     '<button class="btn block" id="saveSettings">' + (onboarding ? 'يلا نبدأ 🎀' : 'احفظي') + '</button>' +
     '</form>' +
     (onboarding ? '' : '<div class="actions" style="justify-content:center;margin-top:22px"><button class="btn ghost small" data-act="signout">تسجيل خروج</button></div>')
@@ -1531,6 +1556,8 @@ async function saveSettingsForm(form) {
     sleepAt: d.sleepAt, wakeAt: d.wakeAt, gymDays: d.gymDays.slice().sort(), vitamins: d.vitamins.slice(), waterGoal: d.waterGoal,
     city: { id: city.id, name: city.name, lat: city.lat, lng: city.lng }, tz: S.settings.tz || 'Asia/Riyadh'
   });
+  var rem = readReminders(form, d.sleepAt, d.wakeAt);
+  if (rem) next.reminders = rem;
   var btn = $('#saveSettings'); btn.disabled = true; btn.textContent = 'لحظة…';
   try {
     await store.saveSettings(next);
@@ -1571,6 +1598,157 @@ function heartAt(el) {
   var r = el.getBoundingClientRect(), h = document.createElement('span');
   h.className = 'heart'; h.innerHTML = HEART; h.style.left = (r.left + r.width / 2 - 9) + 'px'; h.style.top = (r.top - 4) + 'px';
   document.body.appendChild(h); setTimeout(function () { h.remove(); }, 950);
+}
+
+/* ============================================================ التنبيهات (Web Push)
+   الجوال يشترك، jojo-sync يحفظ الاشتراك (بتوكنها)، و jojo-tick كل دقيقة يرسل اللي جا وقته.
+   الآيفون: التنبيهات تشتغل بس لما تفتح جوجو من أيقونتها بالشاشة الرئيسية (iOS 16.4+). */
+function isIOS() { return /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1); }
+function isStandalone() { return navigator.standalone === true || (window.matchMedia && matchMedia('(display-mode: standalone)').matches); }
+function pushKey() { return 'push.' + (Auth.uid() || 'anon'); }
+function vapidReady() { return /^[A-Za-z0-9_-]{80,}$/.test(JOJO_VAPID_PUBLIC); }
+function b64u(s) {
+  var p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/'));
+  var a = new Uint8Array(r.length); for (var i = 0; i < r.length; i++) a[i] = r.charCodeAt(i); return a;
+}
+/* ios-install · unsupported · denied · on · off */
+function pushState() {
+  if (isIOS() && !isStandalone()) return 'ios-install';
+  if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) return 'unsupported';
+  if (Notification.permission === 'denied') return 'denied';
+  if (LS.get(pushKey(), false) === true && Notification.permission === 'granted') return 'on';
+  return 'off';
+}
+async function pushCall(body, retried) {
+  if (DEMO) { await sleep(150); return { ok: true, test: 'demo' }; }
+  var r;
+  try {
+    r = await fetch(SB_URL + '/functions/v1/jojo-sync', {
+      method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + await Auth.token(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+  } catch (e) { if (e instanceof AuthError) throw e; throw new NetError(); }
+  if (r.status === 401 && !retried) { await Auth.refresh(); return pushCall(body, true); }
+  var j = {}; try { j = await r.json(); } catch (e) { /* not json */ }
+  if (!r.ok) throw new HttpError(r.status, j.error || '');
+  return j;
+}
+function sameKey(sub) {
+  try {
+    var k = sub.options && sub.options.applicationServerKey; if (!k) return true;
+    var a = new Uint8Array(k), b = b64u(JOJO_VAPID_PUBLIC);
+    return a.length === b.length && a.every(function (x, i) { return x === b[i]; });
+  } catch (e) { return true; }
+}
+async function getSub() {
+  var reg = await navigator.serviceWorker.ready;
+  var sub = await reg.pushManager.getSubscription();
+  if (sub && !sameKey(sub)) { await sub.unsubscribe(); sub = null; }    // المفتاح تغيّر → اشتراك جديد
+  return sub || reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(JOJO_VAPID_PUBLIC) });
+}
+function pushRerender() { if (route === 'settings') { keepForm(); renderSettings(isEmptySettings(S.settings)); } else render(); }
+var pushBusy = false;
+async function enablePush() {
+  var st = pushState();
+  if (st === 'ios-install') return pushRerender();
+  if (st === 'unsupported') return toast('جوالك ما يدعم التنبيهات، حدّثي النظام 🤍');
+  if (!vapidReady()) return toast('التنبيهات لسه تتجهز، جربي بعد شوي 🤍');
+  if (pushBusy) return; pushBusy = true;
+  try {
+    var perm = await Notification.requestPermission();
+    if (perm !== 'granted') { pushRerender(); return toast('ما سمحتي بالتنبيهات — تقدرين تسمحين لها من إعدادات الجوال ← جوجو'); }
+    toast('لحظة…');
+    var sub = await getSub();
+    var r = await pushCall({ subscription: sub.toJSON(), tz: tz(), test: true });
+    LS.set(pushKey(), true); LS.set('pushCardDone', true);
+    pushRerender();
+    toast(r.test === 'sent' ? 'تم! وصلك تنبيه تجربة؟ 🎀' : 'تم تفعيل التنبيهات 🎀');
+  } catch (e) {
+    if (e instanceof AuthError) return sessionExpired();
+    toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أفعّلها، جربي مرة ثانية');
+  } finally { pushBusy = false; }
+}
+async function testPush() {
+  try {
+    var sub = await getSub(), r = await pushCall({ subscription: sub.toJSON(), tz: tz(), test: true });
+    toast(r.test === 'sent' || r.test === 'demo' ? 'انرسل! بيوصلك خلال ثواني 🐱' : 'ما وصل، جربي توقفينها وتفعّلينها من جديد');
+  } catch (e) { if (e instanceof AuthError) return sessionExpired(); toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أرسل، جربي بعد شوي'); }
+}
+async function disablePush() {
+  try { var reg = await navigator.serviceWorker.ready, s = await reg.pushManager.getSubscription(); if (s) await s.unsubscribe(); } catch (e) { /* ignore */ }
+  LS.set(pushKey(), false);
+  try { await pushCall({ unsubscribe: true }); } catch (e) { if (e instanceof AuthError) return sessionExpired(); }
+  pushRerender(); toast('وقفت التنبيهات');
+}
+/* كل تشغيل: نتأكد إن الاشتراك للحين موجود ونحدّثه بالخادم (الاشتراك ممكن يتغير بصمت) */
+var pushRefreshed = false;
+async function refreshPush() {
+  if (pushRefreshed || DEMO || !LS.get(pushKey(), false)) return;
+  pushRefreshed = true;
+  try {
+    if (pushState() !== 'on') { LS.set(pushKey(), false); return; }
+    var reg = await navigator.serviceWorker.ready, s = await reg.pushManager.getSubscription();
+    if (!s) { LS.set(pushKey(), false); return; }
+    await pushCall({ subscription: s.toJSON(), tz: tz() });
+  } catch (e) { pushRefreshed = false; }
+}
+var IOS_STEPS = '<ol><li>افتحي جوجو من <b>سفاري</b></li><li>اضغطي زر <b>المشاركة</b> (المربع والسهم ⬆️)</li><li>اختاري <b>«إضافة إلى الشاشة الرئيسية»</b></li><li>افتحي جوجو من أيقونتها، وفعّلي التنبيهات من هنا 🎀</li></ol>';
+/* where: 'today' (مرة وحدة) أو 'settings' */
+function pushCard(where) {
+  var st = pushState();
+  if (where === 'today' && (st === 'on' || st === 'unsupported' || st === 'denied' || LS.get('pushCardDone', false))) return '';
+  var later = where === 'today' ? '<button type="button" class="btn ghost small" data-act="push-later">لاحقًا</button>' : '';
+  var h = '<section class="push-card" id="pushCard" aria-label="التنبيهات"><h3>' + IC.bell + (st === 'on' ? 'التنبيهات شغالة' : 'فعّلي التنبيهات') + '</h3>';
+  if (st === 'ios-install') {
+    h += '<p class="muted">على الآيفون التنبيهات تشتغل بس بعد «إضافة إلى الشاشة الرئيسية»:</p>' + IOS_STEPS +
+      (later ? '<div class="actions">' + later + '</div>' : '');
+  } else if (st === 'unsupported') {
+    h += '<p class="muted">هالمتصفح ما يدعم التنبيهات. جربي من جوالك بعد ما تحدّثين النظام 🤍</p>';
+  } else if (st === 'denied') {
+    h += '<p class="muted">التنبيهات مقفلة لجوجو. افتحي <b>إعدادات الجوال ← جوجو ← الإشعارات</b> واسمحي لها، وبعدين ارجعي هنا.</p>';
+  } else if (st === 'on') {
+    h += '<p class="push-on">✓ بيوصلك تنبيه لكل شي بوقته 🐱</p><div class="actions"><button type="button" class="btn small" data-act="push-test">جربي تنبيه</button><button type="button" class="btn ghost small" data-act="push-off">وقفيها</button></div>';
+  } else {
+    h += '<p class="muted">الأذان، النوم والصحيان، الماء، الفيتامينات، النادي، مهامك بأوقاتها، ورسالة صالح أول ما يكتبها 💌</p>' +
+      '<div class="actions"><button type="button" class="btn" data-act="push-on">فعّلي التنبيهات 🔔</button>' + later + '</div>';
+  }
+  return h + '</section>';
+}
+/* إعدادات التنبيهات (settings.reminders) — شرح القيم في jojo/server/functions/jojo-tick/due.ts */
+var HM_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
+var REM_TIMES = [
+  ['sleep', 'وقت النوم', null], ['wake', 'وقت الصحيان', null],
+  ['vitamins', 'الفيتامينات', '09:00'], ['gym', 'النادي (بأيامه)', '17:00'],
+  ['breakfast', 'الفطور', '08:00'], ['lunch', 'الغداء', '13:30'], ['dinner', 'العشاء', '20:00']
+];
+var REM_FLAGS = [['prayers', 'الأذان لكل صلاة', 'بوقت مدينتك (أم القرى)'], ['water', 'الماء كل ٣ ساعات', 'بين الصحيان والنوم، لين توصلين هدفك'], ['message', 'رسالة صالح الجديدة', 'أول ما يكتبها 💌']];
+function remRow(name, label, on, time, sub, follow) {
+  return '<div class="rem"><label><input type="checkbox" name="ron_' + name + '"' + (on ? ' checked' : '') + ' data-act="rem-toggle" data-r="' + name + '"><span>' + label + (sub ? '<small>' + sub + '</small>' : '') + '</span></label>' +
+    (time !== undefined ? '<input class="in" type="time" name="rat_' + name + '" value="' + esc(time) + '" aria-label="وقت تنبيه ' + label + '"' + (on ? '' : ' disabled') + (follow ? ' data-follow="' + follow + '"' : '') + '>' : '') + '</div>';
+}
+function remindersCard(d) {
+  var r = d.rem || {};
+  var rows = REM_TIMES.map(function (x) {
+    var k = x[0], v = r[k], fallback = k === 'sleep' ? d.sleepAt : k === 'wake' ? d.wakeAt : x[2];
+    var on = x[2] === null ? v !== false : HM_RE.test(v || '');
+    var custom = HM_RE.test(v || '');
+    return remRow(k, x[1], on, custom ? v : fallback, undefined, x[2] === null && !custom ? (k === 'sleep' ? 'sleepAt' : 'wakeAt') : null);
+  }).join('') + REM_FLAGS.map(function (x) { return remRow(x[0], x[1], r[x[0]] !== false, undefined, x[2]); }).join('');
+  return '<div class="card"><h3>' + IC.bell + 'وش يذكرك؟</h3><p class="muted" style="margin-bottom:6px">اختاري التنبيهات وأوقاتها. مهامك الخاصة لها تذكير بوقتها من <a class="link" href="#habits">عاداتي</a>.</p>' + rows + '</div>';
+}
+/* يقرأ قيم التنبيهات من الفورم → settings.reminders */
+function readReminders(form, sleepAt, wakeAt) {
+  var out = {};
+  if (!form.elements.ron_sleep) return null;
+  REM_TIMES.forEach(function (x) {
+    var k = x[0], on = form.elements['ron_' + k].checked, t = (form.elements['rat_' + k].value || '').slice(0, 5);
+    if (x[2] === null) {                         // النوم/الصحيان: نفس الوقت = يتبع وقتها لو تغيّر
+      var def = k === 'sleep' ? sleepAt : wakeAt;
+      if (!on) out[k] = false; else if (HM_RE.test(t) && t !== def) out[k] = t;
+    } else out[k] = on && HM_RE.test(t) ? t : false;
+  });
+  REM_FLAGS.forEach(function (x) { if (!form.elements['ron_' + x[0]].checked) out[x[0]] = false; });
+  return out;
 }
 
 /* ============================================================ الأحداث */
@@ -1638,8 +1816,19 @@ document.addEventListener('click', function (ev) {
   } else if (act === 'pick-photo') { var fi = $('#beanPhoto'); if (fi) fi.click(); }
   else if (act === 'photo-cancel') { if (C.photo) URL.revokeObjectURL(C.photo.url); C.photo = null; renderCoffee(); }
   else if (act === 'retry-coffee') { C.err = false; C.recipes = null; renderCoffee(); }
+  else if (act === 'push-on') { enablePush(); }
+  else if (act === 'push-off') { disablePush(); }
+  else if (act === 'push-test') { testPush(); }
+  else if (act === 'push-later') { LS.set('pushCardDone', true); var pc = $('#pushCard'); if (pc) pc.remove(); toast('تقدرين تفعّلينها بعدين من إعداداتي 🤍'); }
+  else if (act === 'rem-toggle') { var ti = b.form && b.form.elements['rat_' + b.dataset.r]; if (ti) ti.disabled = !b.checked; }
   else if (act === 'see-ok') { LS.set('seeLineOk', true); var sl = $('#seeLine'); if (sl) sl.remove(); }
   else if (act === 'signout') { Auth.signOut().then(function () { location.hash = ''; showLogin(); }); }
+});
+/* تنبيه النوم/الصحيان يمشي مع وقتها لين تغيّره هي */
+document.addEventListener('input', function (ev) {
+  var t = ev.target; if (!t || !t.form || t.form.dataset.form !== 'settings') return;
+  if (t.name === 'sleepAt' || t.name === 'wakeAt') { var r = t.form.querySelector('[data-follow="' + t.name + '"]'); if (r) r.value = t.value; }
+  else if (/^rat_/.test(t.name)) t.removeAttribute('data-follow');
 });
 document.addEventListener('keydown', function (ev) {
   if (ev.key === 'Escape') { var p = $('.party'); if (p) p.remove(); }
@@ -1649,6 +1838,7 @@ document.addEventListener('keydown', function (ev) {
 function keepForm() {
   var f = $('form[data-form="settings"]'); if (!f) return;
   draft.sleepAt = f.sleepAt.value; draft.wakeAt = f.wakeAt.value; draft.city = f.city.value;
+  var rem = readReminders(f, draft.sleepAt, draft.wakeAt); if (rem) draft.rem = rem;
 }
 
 document.addEventListener('submit', async function (ev) {
@@ -1662,10 +1852,11 @@ document.addEventListener('submit', async function (ev) {
     if (kind === 'add-task' || kind === 'edit-task') {
       var title = f.title.value.trim(); if (!title) throw 0;
       var days = draftDays.length && draftDays.length < 7 ? draftDays.slice().sort() : null;
-      if (kind === 'add-task') { S.tasks.push(await store.addTask(title, days)); toast('أضفتها 🌸'); }
+      var ra = (f.remind_at && f.remind_at.value || '').slice(0, 5); ra = HM_RE.test(ra) ? ra : null;
+      if (kind === 'add-task') { S.tasks.push(await store.addTask(title, days, ra)); toast(ra ? 'أضفتها، وبذكرك ' + t12(ra, true) + ' 🌸' : 'أضفتها 🌸'); }
       else {
-        await store.updateTask(f.dataset.id, { title: title, days: days });
-        S.tasks.forEach(function (t) { if (t.id === f.dataset.id) { t.title = title; t.days = days; } });
+        await store.updateTask(f.dataset.id, { title: title, days: days, remind_at: ra });
+        S.tasks.forEach(function (t) { if (t.id === f.dataset.id) { t.title = title; t.days = days; t.remind_at = ra; } });
         editingTask = null; toast('عدلتها 🤍');
       }
       draftDays = []; saveCache(); queueDaily(); flush(); S.wins = null; renderHabits();
@@ -1879,6 +2070,7 @@ function stopBackground() {
   clearTimeout(retryTimer); retryTimer = null;
   backoff = 0; retryToasted = false;
   memQueue = {};                             // طابور الذاكرة (لو localStorage مقفل) ما ينتقل لحساب ثاني
+  pushRefreshed = false;
   brewStop();
 }
 async function syncFromServer(cached, attempt) {
@@ -1896,6 +2088,7 @@ async function syncFromServer(cached, attempt) {
     S.synced = true;
     await refreshToday();
     go();
+    refreshPush();
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
     if (cached) {

@@ -1,0 +1,161 @@
+<!doctype html><meta charset="utf-8"><body><pre id="out">RUNNING</pre><iframe id="f" style="width:390px;height:844px"></iframe>
+<!-- Browser check for the push reminders UI in jojo/index.html against a mocked Supabase + mocked Push API (no network).
+     Serve repo root: python3 -m http.server 8765, then open
+       http://localhost:8765/jojo/test/push-harness.html          (Android/desktop: subscribe flow, reminders settings, task reminder)
+       http://localhost:8765/jojo/test/push-harness.html?ios=1    (iPhone Safari, not installed: shows "إضافة إلى الشاشة الرئيسية" steps, no button)
+     and wait for "--- requests ---". The VAPID key below is a dummy (65 bytes, not a real key). -->
+<script>
+var IOS = new URLSearchParams(location.search).get('ios') === '1';
+var TEST_VAPID = 'BAcOFRwjKjE4P0ZNVFtiaXB3foWMk5qhqK-2vcTL0tng5-71_AMKERgfJi00O0JJUFdeZWxzeoGIj5adpKuyucA';
+var MOCK = `<script>
+(function(){
+  var db = {checks:{}, daily:{}, sync:[], tasks:[], taskPosts:[], taskPatches:[]}; window.__db = db; window.__log = [];
+  /* ---- Push API mocks ---- */
+  if (${IOS}) {
+    Object.defineProperty(navigator, 'userAgent', {get:function(){ return 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1'; }});
+    Object.defineProperty(navigator, 'standalone', {get:function(){ return false; }});
+  }
+  var perm = 'default';
+  window.Notification = function(){};
+  Object.defineProperty(window.Notification, 'permission', {get:function(){ return perm; }});
+  window.Notification.requestPermission = function(){ db.permAsked = (db.permAsked||0)+1; perm = 'granted'; return Promise.resolve(perm); };
+  window.PushManager = function(){};
+  var sub = null;
+  var pm = {
+    getSubscription: function(){ return Promise.resolve(sub); },
+    subscribe: function(o){
+      db.subscribeOpts = {userVisibleOnly:o.userVisibleOnly, keyLen:o.applicationServerKey.length, first:o.applicationServerKey[0]};
+      sub = {options:{applicationServerKey:o.applicationServerKey.buffer},
+        toJSON:function(){ return {endpoint:'https://fcm.googleapis.com/fcm/send/abc', expirationTime:null, keys:{p256dh:'BP256', auth:'AUTH'}}; },
+        unsubscribe:function(){ db.unsub = true; sub = null; return Promise.resolve(true); }};
+      return Promise.resolve(sub);
+    }
+  };
+  Object.defineProperty(navigator, 'serviceWorker', {get:function(){ return {ready:Promise.resolve({pushManager:pm}), register:function(){ return Promise.resolve({}); }}; }});
+  /* ---- Supabase mock ---- */
+  function J(x){ return new Response(x===undefined?'':JSON.stringify(x), {status:200, headers:{'Content-Type':'application/json'}}); }
+  function qs(u){ var o={}; u.split('?')[1].split('&').forEach(function(p){ var i=p.indexOf('='); o[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); return o; }
+  window.fetch = async function(url, opt){
+    opt = opt||{}; var m = opt.method||'GET';
+    if (url.indexOf('supabase.co')===-1) throw new TypeError('blocked');
+    var body = opt.body ? JSON.parse(opt.body) : null, h = opt.headers||{};
+    window.__log.push(m+' '+url.split('.co')[1]+(body?' '+JSON.stringify(body):''));
+    if (!h.apikey) return new Response('no apikey',{status:401});
+    if (url.indexOf('/auth/v1/token?grant_type=password')!==-1) return J({access_token:'AT',refresh_token:'RT',expires_in:3600,user:{id:'U1', user_metadata:{}}});
+    if (url.indexOf('/auth/v1/logout')!==-1) return J();
+    if (h.Authorization!=='Bearer AT') return new Response('bad token',{status:401});
+    var q = url.indexOf('?')!==-1 ? qs(url) : {};
+    if (url.indexOf('/functions/v1/jojo-sync')!==-1) { db.sync.push({headers:{auth:h.Authorization, apikey:!!h.apikey, ctype:h['Content-Type']}, body:body}); return J(body.unsubscribe?{ok:true,subscribed:false}:{ok:true,subscribed:true,test:body.test?'sent':undefined}); }
+    if (url.indexOf('jojo_profiles')!==-1) {
+      if (m==='PATCH') { db.profilePatch = body; return J(); }
+      return J([{role:'jojo', settings:{sleepAt:'23:00',wakeAt:'06:30',gymDays:[2],vitamins:['د'],waterGoal:8,city:{id:'riyadh',name:'الرياض',lat:24.7136,lng:46.6753},tz:'Asia/Riyadh'}, created_at:'2026-01-01T00:00:00Z'}]);
+    }
+    if (url.indexOf('jojo_tasks')!==-1) {
+      if (m==='GET') return J(db.tasks);
+      if (m==='POST') { db.taskPosts.push(body); var t = Object.assign({id:'T'+db.taskPosts.length, created_at:'2026-01-01T00:00:00Z'}, body); db.tasks.push(t); return J([t]); }
+      if (m==='PATCH') { db.taskPatches.push(body); return J(); }
+    }
+    if (url.indexOf('jojo_messages')!==-1) return J([]);
+    if (url.indexOf('jojo_checks')!==-1) return J(m==='GET'?[]:undefined);
+    if (url.indexOf('jojo_daily')!==-1) return J();
+    return new Response('unhandled '+url,{status:404});
+  };
+})();
+<\/script>`;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var out = [];
+function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementById("out").textContent = out.join("\n"); }
+(async function(){
+  try { localStorage.clear(); } catch(e){}
+  try {
+  var html = await (await fetch('/jojo/index.html')).text();
+  ok(/var JOJO_VAPID_PUBLIC = '__SET_BY_CONTROLLER__';/.test(html), 'index.html ships the VAPID placeholder (controller fills it)');
+  html = html.replace("'__SET_BY_CONTROLLER__'", "'" + TEST_VAPID + "'").replace('<head>', '<head><base href="/jojo/">'+MOCK);
+  var f = document.getElementById('f'); f.srcdoc = html;
+  await new Promise(function(r){ f.onload = r; });
+  var w = f.contentWindow, d = f.contentDocument;
+  await sleep(300);
+  d.getElementById('em').value='jojo'; d.getElementById('pw').value='x';
+  d.querySelector('form[data-login]').requestSubmit();
+  await sleep(1200);
+  ok(!!d.querySelector('.bracelet'), 'today rendered after login');
+  var card = d.getElementById('pushCard');
+  if (IOS) {
+    ok(!!card && /إضافة إلى الشاشة الرئيسية/.test(card.textContent) && card.querySelectorAll('ol li').length===4, 'iOS (not installed): today card shows the 4 Add-to-Home-Screen steps');
+    ok(!card.querySelector('[data-act="push-on"]'), 'iOS (not installed): no enable button (it would not work)');
+    w.location.hash = '#settings'; await sleep(400);
+    var sc = d.getElementById('pushCard');
+    ok(!!sc && /سفاري/.test(sc.textContent) && /إضافة إلى الشاشة الرئيسية/.test(sc.textContent) && !sc.querySelector('[data-act="push-on"]'), 'iOS (not installed): settings card shows the steps, no button');
+    ok(!!d.querySelector('input[name="ron_prayers"]'), 'reminder choices still editable in settings');
+    w.location.hash = '#today'; await sleep(400);
+    d.querySelector('[data-act="push-later"]').click(); await sleep(100);
+    ok(!d.getElementById('pushCard') && w.localStorage.getItem('jojo.pushCardDone')==='true', '"لاحقًا" hides the today card and remembers');
+    w.location.hash = '#habits'; await sleep(200); w.location.hash = '#today'; await sleep(300);
+    ok(!d.getElementById('pushCard'), 'today card stays hidden after re-render');
+    ok(w.__db.sync.length===0 && !w.__db.permAsked, 'no permission prompt and no jojo-sync call on iOS-not-installed');
+  } else {
+    ok(!!card && !!card.querySelector('[data-act="push-on"]') && /فعّلي التنبيهات 🔔/.test(card.textContent), 'today shows the "فعّلي التنبيهات 🔔" card once');
+    card.querySelector('[data-act="push-on"]').click();
+    await sleep(800);
+    var s0 = w.__db.sync[0] || {};
+    ok(w.__db.permAsked===1, 'asks Notification permission');
+    ok(w.__db.subscribeOpts && w.__db.subscribeOpts.userVisibleOnly===true && w.__db.subscribeOpts.keyLen===65 && w.__db.subscribeOpts.first===4, 'subscribes with userVisibleOnly + the 65-byte VAPID public key');
+    ok(s0.headers && s0.headers.auth==='Bearer AT' && s0.headers.apikey && s0.headers.ctype==='application/json', 'jojo-sync POST carries her Bearer access token + apikey');
+    var b0 = s0.body || {};
+    ok(JSON.stringify(Object.keys(b0).sort())==='["subscription","test","tz"]' && b0.tz==='Asia/Riyadh' && b0.test===true, 'subscribe body is exactly {subscription, tz, test}');
+    ok(b0.subscription && b0.subscription.endpoint==='https://fcm.googleapis.com/fcm/send/abc' && b0.subscription.keys.p256dh==='BP256' && b0.subscription.keys.auth==='AUTH', 'subscription = PushSubscription.toJSON()');
+    ok(w.localStorage.getItem('jojo.push.U1')==='true' && !d.getElementById('pushCard'), 'marked on; today card gone');
+    // ---- settings: reminders
+    w.location.hash = '#settings'; await sleep(400);
+    var sc2 = d.getElementById('pushCard');
+    ok(!!sc2 && /التنبيهات شغالة/.test(sc2.textContent) && sc2.querySelector('[data-act="push-test"]') && sc2.querySelector('[data-act="push-off"]'), 'settings: "شغالة" + test + stop buttons');
+    var F = d.querySelector('form[data-form="settings"]');
+    ok(F.ron_sleep.checked && F.rat_sleep.value==='23:00' && F.ron_wake.checked && F.rat_wake.value==='06:30', 'sleep/wake reminders on by default at sleepAt/wakeAt');
+    ok(!F.ron_vitamins.checked && F.rat_vitamins.disabled && !F.ron_gym.checked && !F.ron_breakfast.checked, 'vitamins/gym/meals off by default (time disabled)');
+    ok(F.ron_prayers.checked && F.ron_water.checked && F.ron_message.checked, 'prayers / water / Saleh message on by default');
+    F.ron_vitamins.click(); await sleep(50);
+    ok(!F.rat_vitamins.disabled, 'ticking vitamins enables its time');
+    F.rat_vitamins.value = '09:15';
+    F.ron_lunch.click(); F.rat_lunch.value = '14:00';
+    F.ron_water.click();
+    F.sleepAt.value = '22:30'; F.sleepAt.dispatchEvent(new w.Event('input', {bubbles:true}));
+    ok(F.rat_sleep.value==='22:30', 'sleep reminder follows the new bedtime');
+    // re-render (add a vitamin) keeps the typed reminder values
+    d.getElementById('nv').value = 'حديد'; d.querySelector('[data-act="add-vit"]').click(); await sleep(100);
+    F = d.querySelector('form[data-form="settings"]');
+    ok(F.ron_vitamins.checked && F.rat_vitamins.value==='09:15' && !F.ron_water.checked && F.rat_sleep.value==='22:30', 'reminder edits survive a re-render');
+    F.ron_wake.click();
+    F.requestSubmit(); await sleep(600);
+    var pp = (w.__db.profilePatch||{}).settings || {};
+    ok(pp.sleepAt==='22:30', 'settings saved');
+    ok(JSON.stringify(pp.reminders)==='{"wake":false,"vitamins":"09:15","gym":false,"breakfast":false,"lunch":"14:00","dinner":false,"water":false}', 'settings.reminders = ' + JSON.stringify(pp.reminders));
+    // ---- habits: task reminder
+    w.location.hash = '#habits'; await sleep(400);
+    var nf = d.querySelector('form[data-form="add-task"]');
+    ok(nf && nf.remind_at && nf.remind_at.type==='time' && /تذكير/.test(nf.textContent), 'new task form has an optional 🔔 time');
+    nf.title.value = 'أذاكر'; nf.remind_at.value = '16:30';
+    nf.querySelector('[data-act="daychip"][data-d="2"]').click(); nf.querySelector('[data-act="daychip"][data-d="4"]').click();
+    nf.requestSubmit(); await sleep(500);
+    var tp = w.__db.taskPosts[0] || {};
+    ok(tp.remind_at==='16:30' && JSON.stringify(tp.days)==='[2,4]' && tp.title==='أذاكر' && tp.user_id==='U1', 'jojo_tasks insert has remind_at + days (' + JSON.stringify(tp) + ')');
+    ok(/🔔/.test(d.querySelector('.item .days-s').textContent) && /٤:٣٠ م/.test(d.querySelector('.item .days-s').textContent), 'task list shows 🔔 ٤:٣٠ م');
+    var nf2 = d.querySelector('form[data-form="add-task"]');
+    nf2.title.value = 'بدون تذكير'; nf2.requestSubmit(); await sleep(500);
+    ok(w.__db.taskPosts[1] && w.__db.taskPosts[1].remind_at===null && w.__db.taskPosts[1].days===null, 'task without time → remind_at null, days null (every day)');
+    d.querySelector('[data-act="edit-task"]').click(); await sleep(100);
+    var ef = d.querySelector('form[data-form="edit-task"]');
+    ok(ef.remind_at.value==='16:30', 'edit form prefilled with the reminder time');
+    ef.remind_at.value = ''; ef.requestSubmit(); await sleep(500);
+    var tq = w.__db.taskPatches[0] || {};
+    ok('remind_at' in tq && tq.remind_at===null, 'clearing the time sends remind_at null');
+    // ---- stop
+    w.location.hash = '#settings'; await sleep(400);
+    d.querySelector('[data-act="push-off"]').click(); await sleep(500);
+    var last = w.__db.sync[w.__db.sync.length-1] || {};
+    ok(JSON.stringify(last.body)==='{"unsubscribe":true}' && w.__db.unsub===true && w.localStorage.getItem('jojo.push.U1')==='false', 'وقفيها → unsubscribes locally + jojo-sync {unsubscribe:true}');
+    ok(!!d.querySelector('#pushCard [data-act="push-on"]'), 'settings shows the enable button again');
+  }
+  out.push('--- requests ---'); out = out.concat(w.__log); document.getElementById('out').textContent = out.join('\n');
+  } catch (e) { out.push('ERROR ' + e.message + '\n' + e.stack); document.getElementById('out').textContent = out.join('\n'); }
+})();
+</script>
