@@ -51,11 +51,58 @@
     return Math.round((done / items.length) * 100);
   }
 
+  /* ---------- السلاسل والإنجازات ---------- */
+  function streak(days, key) {
+    var n = 0;
+    for (var i = (days || []).length - 1; i >= 0; i--) {
+      var d = days[i];
+      var req = (d.items || []).some(function (it) { return it.key === key; });
+      if (!req) continue;
+      var ctx = { waterGoal: d.waterGoal };
+      if (isDone(key, (d.checks || {})[key], ctx)) n++;
+      else break;
+    }
+    return n;
+  }
+
+  function unlocked(days) {
+    var out = [];
+    var list = days || [];
+    var full = list.some(function (d) { return dayScore(d.items, d.checks, { waterGoal: d.waterGoal }) === 100; });
+    if (full) out.push('full_day');
+    if (streak(list, 'sleep') >= 7) out.push('sleep_7');
+    if (streak(list, 'gym') >= 16) out.push('gym_4w');
+    if (list.some(function (d) { return d.checks && d.checks.coffee; })) out.push('first_recipe');
+    return out;
+  }
+
+  /* ---------- أوقات الصلاة (المكتبة تُمرَّر من برّا) ---------- */
+  var adhanLib = null;
+  function useAdhan(lib) { adhanLib = lib; }
+
+  function prayerTimes(dateISO, lat, lng, tz) {
+    if (!adhanLib) throw new Error('Jojo.useAdhan(adhan) must be called before prayerTimes (adhan library not set)');
+    var p = dateISO.split('-').map(Number);
+    var params = adhanLib.CalculationMethod.UmmAlQura();
+    var pt = new adhanLib.PrayerTimes(new adhanLib.Coordinates(lat, lng), new Date(p[0], p[1] - 1, p[2]), params);
+    var fmt = new Intl.DateTimeFormat('en-GB', { timeZone: tz || 'Asia/Riyadh', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' });
+    function f(d) {
+      var o = {};
+      fmt.formatToParts(d).forEach(function (x) { o[x.type] = x.value; });
+      return o.hour + ':' + o.minute;
+    }
+    return { fajr: f(pt.fajr), dhuhr: f(pt.dhuhr), asr: f(pt.asr), maghrib: f(pt.maghrib), isha: f(pt.isha) };
+  }
+
   return {
     localDate: localDate,
     weekday: weekday,
     requiredItems: requiredItems,
     isDone: isDone,
-    dayScore: dayScore
+    dayScore: dayScore,
+    streak: streak,
+    unlocked: unlocked,
+    useAdhan: useAdhan,
+    prayerTimes: prayerTimes
   };
 });
