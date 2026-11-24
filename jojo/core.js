@@ -66,6 +66,9 @@
     return n;
   }
 
+  /* كل إنجاز ممكن يطلع من unlocked() — صفحة صالح تكتب رسالة لكل واحد منها */
+  var ACHIEVEMENTS = ['full_day', 'sleep_7', 'gym_4w', 'first_recipe'];
+
   function unlocked(days) {
     var out = [];
     var list = days || [];
@@ -75,6 +78,34 @@
     if (streak(list, 'gym') >= 16) out.push('gym_4w');
     if (list.some(function (d) { return d.checks && d.checks.coffee; })) out.push('first_recipe');
     return out;
+  }
+
+  /* ---------- لصالح: النسبة اليومية ----------
+     فئة الحبة حسب النسبة: null = ما فيه نسبة، low < 50، mid 50–79، high ≥ 80 */
+  function pctBand(pct) {
+    if (typeof pct !== 'number' || isNaN(pct)) return 'none';
+    if (pct >= 80) return 'high';
+    if (pct >= 50) return 'mid';
+    return 'low';
+  }
+
+  /* أيام ورا بعض نسبتها ≥ min (افتراضي ٨٠)، تنتهي باليوم.
+     rows: [{date, pct}] من jojo_daily. اليوم لسه ما خلص: لو ما وصل ما يكسر السلسلة.
+     يوم بدون صف (ما فتحت التطبيق) يكسرها؛ يوم نسبته null (ما فيه بنود) يتخطّى. */
+  function dailyStreak(rows, todayISO, min) {
+    min = min == null ? 80 : min;
+    var by = {};
+    (rows || []).forEach(function (r) { if (r && r.date) by[r.date] = r; });
+    var n = 0, d = todayISO;
+    for (var i = 0; i < 400; i++, d = prevDate(d)) {
+      var r = by[d];
+      var has = !!r && typeof r.pct === 'number';
+      if (r && r.pct == null) continue;
+      if (has && r.pct >= min) { n++; continue; }
+      if (i === 0) continue;
+      break;
+    }
+    return n;
   }
 
   /* ---------- أوقات الصلاة (المكتبة تُمرَّر من برّا) ---------- */
@@ -181,6 +212,9 @@
     dayScore: dayScore,
     streak: streak,
     unlocked: unlocked,
+    ACHIEVEMENTS: ACHIEVEMENTS,
+    pctBand: pctBand,
+    dailyStreak: dailyStreak,
     useAdhan: useAdhan,
     prayerTimes: prayerTimes,
     GENERIC_DRIP: GENERIC_DRIP,

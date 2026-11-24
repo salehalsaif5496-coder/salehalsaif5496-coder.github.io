@@ -116,6 +116,10 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(w.__log.some(function(l){return /auth\/v1\/logout/.test(l)}), 'logout called');
   } else {
     ok(!!d.querySelector('.bracelet'), 'today rendered after login');
+    var SEE = 'صالح يشوف يومك وعاداتك ونسبتك — ونوتك الخاص 📝 لك بس 🔒';
+    ok(d.getElementById('seeLine') && d.getElementById('seeLine').textContent.indexOf(SEE) === 0, 'transparency line under the bracelet the first time');
+    d.querySelector('[data-act="see-ok"]').click();
+    ok(!d.getElementById('seeLine') && w.localStorage.getItem('jojo.seeLineOk') === 'true', 'transparency line dismissed with تمام and remembered');
     ok(w.__db.msgSeen && w.__db.msgSeen.seen_at && Object.keys(w.__db.msgSeen).length===1, 'daily message marked seen (only seen_at)');
     function click(k){ d.querySelector('[data-key="'+k+'"]').click(); }
     click('prayer:fajr'); click('meal:breakfast'); click('sleep');
@@ -191,6 +195,7 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(/جربتي|قيّمي/.test(d.querySelector('[aria-label="ذوقي"]').textContent), 'ذوقي card rendered');
     // sign-out clears timers / memory queue
     w.location.hash = '#settings'; await sleep(300);
+    ok(d.querySelector('.see-line') && d.querySelector('.see-line').textContent === SEE, 'transparency line shown in settings');
     d.querySelector('[data-act="signout"]').click(); await sleep(400);
     var n0 = w.__log.length; await sleep(6000);
     ok(!!d.querySelector('form[data-login]') && w.__log.length===n0, 'after sign-out: login shown, no background requests');

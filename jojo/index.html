@@ -82,6 +82,9 @@ input,textarea,select{font:inherit;color:inherit}
 .bead{position:relative;width:var(--b);height:var(--b);flex:none;border-radius:50%;background:var(--choc);border:2px solid #5A3B48;transition:background .3s var(--ease),border-color .3s}
 .bead.on{background:radial-gradient(circle at 35% 30%,#FFE3EC 0 18%,var(--pink) 45%,#E98BAA 100%);border-color:#E98BAA}
 .bead.charm{width:26px;height:26px;border:0;background:none}
+.see-line{font-size:13px;line-height:1.7;color:var(--ink-2);margin:10px 2px 14px}
+.bracelet .see-line{margin:10px 0 0;padding-top:10px;border-top:1px solid #5A3B48}
+.see-line .link{min-height:32px;margin-inline-start:4px}
 .bracelet .hint{font-size:13px;color:var(--ink-2);margin-top:10px}
 
 /* أقسام */
@@ -301,7 +304,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.5';
+var JOJO_VERSION = '2026-11-24.6';
 </script>
 <script>
 (function () {
@@ -340,6 +343,8 @@ var CITIES = [
   { id: 'jouf', name: 'الجوف — سكاكا', lat: 29.9697, lng: 40.2064 },
   { id: 'arar', name: 'عرعر', lat: 30.9753, lng: 41.0381 }
 ];
+/* سطر الشفافية: وش يشوف صالح (بموافقة جوجو) */
+var SEE_LINE = 'صالح يشوف يومك وعاداتك ونسبتك — ونوتك الخاص 📝 لك بس 🔒';
 var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
 var PRAYERS = [['fajr', 'الفجر'], ['dhuhr', 'الظهر'], ['asr', 'العصر'], ['maghrib', 'المغرب'], ['isha', 'العشاء']];
 var MEALS = [['breakfast', 'الفطور'], ['lunch', 'الغداء'], ['dinner', 'العشاء']];
@@ -1003,7 +1008,8 @@ function renderToday() {
     '<p class="pill" id="pending" role="status" hidden></p>' +
     msg +
     '<section class="bracelet" aria-label="نسبة الالتزام اليوم"><div class="bracelet-head"><h2>سوارة اليوم</h2><div class="num">' + (pct == null ? '—' : ar(pct) + '٪') + '</div></div>' +
-    '<div class="beads" style="--b:' + size + 'px" role="img" aria-label="' + ar(done) + ' من ' + ar(total) + ' مخلّصة">' + beads + '</div><p class="hint">' + hint + '</p></section>' +
+    '<div class="beads" style="--b:' + size + 'px" role="img" aria-label="' + ar(done) + ' من ' + ar(total) + ' مخلّصة">' + beads + '</div><p class="hint">' + hint + '</p>' +
+    (LS.get('seeLineOk', false) ? '' : '<p class="see-line" id="seeLine">' + SEE_LINE + ' <button class="link" data-act="see-ok">تمام</button></p>') + '</section>' +
     prayerBlock() +
     '<h2 class="sec">روتيني</h2><div class="group">' + routine + '</div>' +
     '<h2 class="sec">أكلي</h2><div class="group">' + meals + '</div>' +
@@ -1496,6 +1502,7 @@ function renderSettings(onboarding) {
     ? '<div class="login" style="min-height:auto;margin-bottom:10px">' + catSVG() + '<h1>هلا جوجو 🎀</h1><p class="lead">خلينا نرتب يومك على كيفك. تقدرين تغيرين أي شي بعدين.</p></div>'
     : '<header class="page-top"><button class="icon-btn" data-act="back" aria-label="رجوع ليومي">' + BACK + '</button><h1>إعداداتي</h1></header>';
   paint(head +
+    '<p class="see-line">' + SEE_LINE + '</p>' +
     '<form data-form="settings">' +
     '<div class="card"><h3>' + IC.moon + 'نومك وصحيانك</h3><div class="form-row">' +
     '<div><label class="f" for="sa">وقت النوم</label><input id="sa" class="in" type="time" name="sleepAt" value="' + esc(d.sleepAt) + '" required></div>' +
@@ -1631,6 +1638,7 @@ document.addEventListener('click', function (ev) {
   } else if (act === 'pick-photo') { var fi = $('#beanPhoto'); if (fi) fi.click(); }
   else if (act === 'photo-cancel') { if (C.photo) URL.revokeObjectURL(C.photo.url); C.photo = null; renderCoffee(); }
   else if (act === 'retry-coffee') { C.err = false; C.recipes = null; renderCoffee(); }
+  else if (act === 'see-ok') { LS.set('seeLineOk', true); var sl = $('#seeLine'); if (sl) sl.remove(); }
   else if (act === 'signout') { Auth.signOut().then(function () { location.hash = ''; showLogin(); }); }
 });
 document.addEventListener('keydown', function (ev) {

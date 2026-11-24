@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#141012">
+<meta name="color-scheme" content="dark">
+<meta name="robots" content="noindex">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="صفحة صالح">
+<title>صفحة صالح — جوجو</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/icon-192.png">
+<link rel="preload" href="../fonts/baloo-bhaijaan-2-arabic-800-normal.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="../fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+<!-- صفحة صالح المؤقتة (لين يُبنى Saleh OS). نفس دخول وألوان تطبيق جوجو، وبدون Service Worker:
+     الـ SW حق جوجو (../sw.js) يخزن واجهتها هي، وتسجيله من هنا يخلط الكاشين. -->
+<style>
+@font-face{font-family:"Baloo";src:url(../fonts/baloo-bhaijaan-2-arabic-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+@font-face{font-family:"Baloo";src:url(../fonts/baloo-bhaijaan-2-arabic-700-normal.woff2) format("woff2");font-weight:700;font-display:swap}
+@font-face{font-family:"Baloo";src:url(../fonts/baloo-bhaijaan-2-arabic-800-normal.woff2) format("woff2");font-weight:800;font-display:swap}
+@font-face{font-family:"Plex";src:url(../fonts/ibm-plex-sans-arabic-arabic-400-normal.woff2) format("woff2");font-weight:400;font-display:swap}
+@font-face{font-family:"Plex";src:url(../fonts/ibm-plex-sans-arabic-arabic-500-normal.woff2) format("woff2");font-weight:500;font-display:swap}
+@font-face{font-family:"Plex";src:url(../fonts/ibm-plex-sans-arabic-arabic-600-normal.woff2) format("woff2");font-weight:600;font-display:swap}
+/* ---- نفس ألوان ومقاسات تطبيق جوجو (jojo/index.html) ---- */
+:root{
+  color-scheme:dark;
+  --choc:#141012; --cream:#1F191C; --card-2:#2A2226;
+  --pink:#F4A7C0; --pink-soft:#3A2630; --rose:#F4A7C0;
+  --ink:#F6EEE3; --ink-2:#C7B4B9; --line:#33292D;
+  --choc-deep:#C9AE8E; --on-pink:#1A1214;
+  --r-lg:28px; --r-md:20px; --r-sm:14px;
+  --shadow:0 10px 28px -12px rgba(0,0,0,.7), 0 1px 0 rgba(255,255,255,.04) inset;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{background:var(--choc);color:var(--ink);font-family:"Plex",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+::selection{background:var(--pink);color:var(--on-pink)}
+body{min-height:100dvh;padding:calc(env(safe-area-inset-top) + 18px) 18px 120px;max-width:440px;margin:0 auto}
+body.bare{padding-bottom:40px}
+h1,h2,h3,.num{font-family:"Baloo","Plex",sans-serif}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--rose);outline-offset:3px;border-radius:12px}
+#view:focus{outline:none}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+[hidden]{display:none!important}
+
+/* الترويسة + شارة "صفحة صالح" */
+.page-top{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.page-top h1{font-size:28px;font-weight:800;flex:1;line-height:1.15}
+.page-top p{color:var(--ink-2);font-size:14px;margin-top:2px;font-family:"Plex"}
+.owner{flex:none;display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:5px 11px;border-radius:999px;background:var(--card-2);color:var(--choc-deep);border:1px solid #4A3D33}
+.owner svg{width:14px;height:14px}
+.icon-btn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--choc-deep);background:var(--cream);border:1.5px solid var(--line);flex:none}
+.icon-btn svg{width:22px;height:22px}
+.icon-btn[disabled]{opacity:.35;cursor:default}
+.cat{width:64px;height:64px;flex:none}
+
+/* السوارة */
+.bracelet{background:var(--pink-soft);border-radius:var(--r-lg);padding:18px 18px 16px;margin-bottom:22px}
+.bracelet-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin-bottom:12px}
+.bracelet-head h2{font-size:18px;font-weight:700}
+.bracelet-head .num{font-size:34px;font-weight:800;color:var(--rose);font-variant-numeric:tabular-nums}
+.bracelet .hint{font-size:13px;color:var(--ink-2);margin-top:10px;line-height:1.7}
+.beads{--b:19px;display:flex;flex-wrap:nowrap;justify-content:space-between;gap:3px;align-items:center;position:relative;padding:6px 2px}
+.beads::before{content:"";position:absolute;inset-inline:0;top:50%;height:2px;background:var(--choc-deep);opacity:.55;border-radius:2px}
+.bead{position:relative;width:var(--b);height:var(--b);flex:none;border-radius:50%;background:var(--choc);border:2px solid #5A3B48}
+.bead.on,.bead.high{background:radial-gradient(circle at 35% 30%,#FFE3EC 0 18%,var(--pink) 45%,#E98BAA 100%);border-color:#E98BAA}
+.bead.mid{background:radial-gradient(circle at 35% 30%,#E9C3CF 0 14%,#A8667E 60%,#8A4D64 100%);border-color:#8A4D64}
+.bead.low{background:#4A3A40;border-color:#6B5A60}
+.bead.none{background:transparent;border:2px dashed #6B4A58}
+.bead.charm{width:26px;height:26px;border:0;background:none}
+.yday{display:flex;justify-content:space-between;gap:10px;font-size:14px;color:var(--ink-2);margin-top:4px}
+.yday b{color:var(--ink);font-family:"Baloo";font-size:18px;font-weight:700}
+
+/* آخر ٧ أيام */
+.week{display:flex;justify-content:space-between;position:relative;padding:4px 0 2px}
+.week::before{content:"";position:absolute;inset-inline:6%;top:38px;height:2px;background:var(--choc-deep);opacity:.55;border-radius:2px}
+.wd{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0;font-size:12px;color:var(--ink-2)}
+.wd .bead{--b:28px}
+.wd .p{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600}
+.wd.today .d{color:var(--rose);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--ink-2);margin-top:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend .bead{--b:12px;border-width:1.5px}
+
+/* أقسام وبطاقات */
+h2.sec{font-size:19px;font-weight:700;margin:4px 4px 10px;display:flex;align-items:center;gap:8px}
+h2.sec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--choc-deep);flex:none}
+.card{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.card h3{font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.card h3 .ic{width:22px;height:22px;flex:none;color:var(--choc-deep)}
+.muted{color:var(--ink-2);font-size:14px;line-height:1.7}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
+.stat{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px;display:block;text-decoration:none;color:inherit}
+.stat .num{font-size:30px;font-weight:800;color:var(--rose);line-height:1.1}
+.stat .l{font-size:13px;color:var(--ink-2);margin-top:2px;line-height:1.6}
+a.stat:active{background:var(--card-2)}
+.group{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:56px;width:100%;text-align:start}
+.row+.row,.sub+.row{border-top:1px solid var(--line)}
+.row .ic{width:26px;height:26px;flex:none;color:var(--choc-deep)}
+.row .t{flex:1;font-size:16px;font-weight:500;min-width:0;overflow-wrap:anywhere}
+.row .s{font-size:13px;color:var(--ink-2);font-weight:400}
+.tick{width:28px;height:28px;border-radius:50%;border:2px solid #5C4A50;display:grid;place-items:center;flex:none}
+.tick svg{width:16px;height:16px;opacity:0}
+.row.done .tick{background:var(--pink);border-color:var(--pink)}
+.row.done .tick svg{opacity:1}
+.prayers{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 14px 16px}
+.pr{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:10px 4px;min-height:64px;border-radius:var(--r-sm);background:var(--card-2);font-size:13px}
+.pr b{font-weight:600;font-size:14px}
+.pr span{color:var(--choc-deep);font-variant-numeric:tabular-nums}
+.pr.done{background:var(--pink)}
+.pr.done,.pr.done b{color:var(--on-pink)}
+.pr.done span{color:#3A2630}
+.sub{padding:4px 16px 14px}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{min-height:36px;padding:6px 14px;border-radius:999px;background:var(--card-2);border:1.5px solid #4A3D42;font-size:14px;display:inline-flex;align-items:center;gap:6px}
+.chip.done{background:var(--pink);border-color:var(--pink);color:var(--on-pink);font-weight:600}
+.cups{display:flex;flex-wrap:wrap;gap:6px;padding:0 16px 14px}
+.cup{width:22px;height:28px}
+.cup path{fill:var(--card-2);stroke:#5C4A50;stroke-width:2}
+.cup path.w{fill:transparent;stroke:none}
+.cup.full path.w{fill:#8FC6E3}
+.cup.full path.o{stroke:#8FC6E3}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:8px 14px;font-size:15px;align-items:baseline}
+.kv dt{color:var(--ink-2);font-size:13px}
+.kv dd{overflow-wrap:anywhere}
+.ro{font-size:12px;color:var(--ink-2);text-align:center;margin:-8px 0 16px}
+
+.btn{min-height:48px;padding:12px 22px;border-radius:999px;background:var(--pink);color:var(--on-pink);font-weight:600;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s var(--ease),opacity .2s}
+.btn:active{transform:scale(.97)}
+.btn[disabled]{opacity:.6;cursor:progress}
+.btn.block{width:100%}
+.btn.ghost{background:transparent;color:var(--ink);border:1.5px solid #4A3D42}
+.btn.small{min-height:44px;padding:8px 16px;font-size:14px}
+.link{color:var(--rose);text-decoration:underline;text-underline-offset:3px;min-height:44px;display:inline-flex;align-items:center}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:999px;font-size:12px;font-weight:600;font-family:"Plex";background:var(--card-2);color:var(--ink-2);border:1px solid #4A3D42}
+.badge.seen{background:var(--pink-soft);color:var(--rose);border-color:#5A3B48}
+.badge.new{background:var(--pink);color:var(--on-pink);border-color:var(--pink)}
+label.f{display:block;font-size:14px;color:var(--ink-2);margin:14px 2px 6px}
+.in,textarea.in{width:100%;min-height:48px;padding:12px 14px;border-radius:var(--r-sm);background:var(--card-2);border:1.5px solid #4A3D42;font-size:16px;color:var(--ink)}
+textarea.in{min-height:110px;resize:vertical;line-height:1.7}
+.in::placeholder{color:#9C8A90}
+.in:focus{border-color:var(--rose);outline:none}
+.actions{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;align-items:center}
+.status{font-size:13px;color:var(--ink-2);margin-top:8px;line-height:1.6}
+
+/* رسالة اليوم: ظرف */
+.letter{position:relative;background:var(--cream);border:1.5px solid #4A3D33;border-radius:var(--r-lg);padding:22px 18px 18px;box-shadow:var(--shadow);margin-bottom:22px}
+.letter .bow{position:absolute;top:-16px;inset-inline-start:22px;width:46px;height:30px}
+
+/* رسائل التشجيع */
+.win{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
+.win-head{display:flex;gap:12px;align-items:flex-start}
+.win .medal{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--choc-deep)}
+.win .medal .ic{width:24px;height:24px}
+.win.open{border-color:#5A3B48;background:linear-gradient(180deg,#2A1C23,var(--cream) 60%)}
+.win.open .medal{background:var(--pink);color:var(--on-pink)}
+.win h3{font-size:17px;font-weight:700}
+.win textarea.in{min-height:90px;margin-top:12px}
+
+/* نوتها */
+.note{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
+.note.unread{border-color:#5A3B48;background:linear-gradient(180deg,#2A1C23,var(--cream))}
+.note>button{display:flex;align-items:center;gap:10px;width:100%;text-align:start;padding:14px 16px;min-height:56px}
+.note>button .ic{width:24px;height:24px;color:var(--choc-deep);flex:none}
+.note .pv{flex:1;min-width:0}
+.note .pv b{display:block;font-size:15px;font-weight:600}
+.note .pv span{display:block;font-size:13px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.note .body{padding:0 16px 14px;font-size:16px;line-height:1.8;white-space:pre-wrap;overflow-wrap:anywhere}
+.note .meta{padding:0 16px 14px;font-size:12px;color:var(--ink-2)}
+
+/* ذوقها */
+.shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.bean{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:8px;min-width:0}
+.bean .ph{display:block;width:100%;aspect-ratio:3/4;border-radius:14px;background:var(--card-2);object-fit:cover}
+.bean .n{font-size:15px;font-weight:600;margin-top:8px;overflow-wrap:anywhere}
+.bean .rs{font-size:12px;color:var(--ink-2);overflow-wrap:anywhere}
+.bean .lk{font-size:13px;margin-top:4px;color:var(--ink)}
+.bean .chips{gap:4px;margin-top:6px}
+.tag{display:inline-flex;align-items:center;min-height:28px;padding:2px 10px;border-radius:999px;background:var(--pink-soft);color:var(--rose);border:1px solid #5A3B48;font-weight:600;font-size:13px}
+.tag.no{background:var(--card-2);color:var(--ink-2);border-color:#4A3D42}
+.taste{display:flex;flex-direction:column;gap:10px}
+.taste .line{display:flex;gap:6px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--ink-2)}
+
+/* الدخول والحالات */
+.login{min-height:calc(100dvh - 60px);display:flex;flex-direction:column;justify-content:center}
+.login .cat{width:96px;height:96px;margin:0 auto 10px;display:block}
+.login h1{font-size:32px;font-weight:800;text-align:center}
+.login .lead{text-align:center;color:var(--ink-2);margin:6px 0 18px}
+.login .owner{align-self:center;margin-bottom:12px}
+.alert{border-radius:var(--r-sm);padding:12px 14px;font-size:14px;line-height:1.6;margin-top:12px;background:#3A1F28;border:1px solid #6B3446;color:#FFD9E5}
+.empty{text-align:center;padding:26px 18px;border:1.5px dashed var(--line);border-radius:var(--r-md);color:var(--ink-2);font-size:15px;line-height:1.8;margin-bottom:16px}
+.loading{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:var(--ink-2);text-align:center}
+.loading .cat{animation:breathe 1.6s ease-in-out infinite}
+.toast{position:fixed;inset-inline:18px;bottom:calc(env(safe-area-inset-bottom) + 92px);max-width:404px;margin:0 auto;background:var(--ink);color:var(--choc);padding:12px 16px;border-radius:16px;font-size:15px;font-weight:500;box-shadow:var(--shadow);z-index:30;animation:rise .3s var(--ease)}
+.foot{font-size:12px;color:var(--ink-2);text-align:center;margin-top:8px}
+@keyframes breathe{50%{transform:scale(1.06)}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+
+nav.tabs{position:fixed;inset-inline:0;bottom:0;padding:8px 4px calc(env(safe-area-inset-bottom) + 8px);background:rgba(20,16,18,.94);backdrop-filter:saturate(1.2) blur(8px);border-top:1.5px solid var(--line);z-index:20}
+nav.tabs ul{display:flex;justify-content:space-around;list-style:none;max-width:440px;margin:0 auto}
+nav.tabs li{flex:1;min-width:0;display:flex;justify-content:center}
+nav.tabs a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--ink-2);text-decoration:none;padding:4px 2px;width:100%;max-width:72px;min-height:48px;border-radius:14px;white-space:nowrap;position:relative}
+nav.tabs a svg{width:23px;height:23px}
+nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weight:600}
+nav.tabs .dot{position:absolute;top:2px;inset-inline-end:14px;width:8px;height:8px;border-radius:50%;background:var(--pink)}
+</style>
+</head>
+<body>
+<main id="view" tabindex="-1"></main>
+<nav class="tabs" id="tabs" aria-label="التنقل" hidden>
+  <ul>
+    <li><a href="#home" data-tab="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-7 8 7v9H4z"/><path d="M10 20v-5h4v5"/></svg>الرئيسية</a></li>
+    <li><a href="#day" data-tab="day"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/></svg>يومها</a></li>
+    <li><a href="#msg" data-tab="msg"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/></svg>رسالتي</a></li>
+    <li><a href="#wins" data-tab="wins"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9z"/></svg>التشجيع</a></li>
+    <li><a href="#letters" data-tab="letters"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20C4.5 14.5 3.5 9.5 6.2 7 8.4 5 10.8 6 12 8c1.2-2 3.6-3 5.8-1 2.7 2.5 1.7 7.5-5.8 13z"/></svg>نوتها<i class="dot" id="lettersDot" hidden></i></a></li>
+    <li><a href="#taste" data-tab="taste"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M9 3c0 1.5 1 1.5 1 3M13 3c0 1.5 1 1.5 1 3"/></svg>ذوقها</a></li>
+  </ul>
+</nav>
+<div id="live" class="sr" aria-live="polite"></div>
+
+<script>
+/* رقم النسخة: غيّره مع كل نشر (يجدد ../core.js و ../vendor/) */
+var SALEH_VERSION = '2026-11-24.1';
+</script>
+<script>
+(function () {
+'use strict';
+var V = SALEH_VERSION;
+
+/* ============================================================ إعدادات ثابتة
+   نفس مشروع جوجو. الحماية كلها من RLS (jojo/server/schema.sql): صالح يقرأ يومها وعاداتها ونسبتها وذوقها ونوتها له،
+   ويكتب رسائله (jojo_messages)، ويعلّم نوتها مقروءة (read_at بس). نوتها الخاص (jojo_notes) ما ينطلب أبد. */
+var SB_URL = 'https://lpsifrdiangpfcwhjeim.supabase.co';
+var SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxwc2lmcmRpYW5ncGZjd2hqZWltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ0MjQ5MDgsImV4cCI6MjExMDAwMDkwOH0.SbQyshCXUagRaHSVDztTYaV-8rKTJVipq-t2Bovilm4';
+var TZ = 'Asia/Riyadh';
+/* ?demo=1 بيانات تجربة بالذاكرة (للقطات الشاشة فقط، ما تلمس الشبكة) */
+var DEMO = (function () { try { return new URLSearchParams(location.search).get('demo'); } catch (e) { return null; } })();
+
+var PRAYERS = [['fajr', 'الفجر'], ['dhuhr', 'الظهر'], ['asr', 'العصر'], ['maghrib', 'المغرب'], ['isha', 'العشاء']];
+var MEALS = [['breakfast', 'الفطور'], ['lunch', 'الغداء'], ['dinner', 'العشاء']];
+var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
+var DAYS_SHORT = ['أحد', 'اثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت'];
+/* عناوين الإنجازات (المعرّفات نفسها تجي من Jojo.ACHIEVEMENTS في core.js) */
+var WIN_INFO = {
+  full_day: { icon: 'bow', title: 'أول سوارة كاملة', how: 'تنفتح لها لما تكمّل كل حبات السوارة بيوم واحد' },
+  sleep_7: { icon: 'moon', title: '٧ أيام نوم بوقتها', how: 'لما تنام بوقتها ٧ أيام ورا بعض' },
+  gym_4w: { icon: 'gym', title: '٤ أسابيع نادي', how: 'لما تكمّل ١٦ حصة نادي ورا بعض بأيامها' },
+  first_recipe: { icon: 'cup', title: 'أول وصفة قهوة', how: 'لما تجرب أول وصفة من قهوتي' }
+};
+
+/* ============================================================ أدوات صغيرة */
+var PFX = DEMO ? 'jojo-saleh-demo.' : 'jojo-saleh.';      // غير مفاتيح جوجو (jojo.) عشان الجهازين/الحسابين ما يتداخلون
+var LS = {
+  get: function (k, d) { try { var v = localStorage.getItem(PFX + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set: function (k, v) { try { localStorage.setItem(PFX + k, JSON.stringify(v)); return true; } catch (e) { return false; } },
+  del: function (k) { try { localStorage.removeItem(PFX + k); } catch (e) { /* ignore */ } }
+};
+function $(sel, root) { return (root || document).querySelector(sel); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function ar(x) { return String(x).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); }
+function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
+function addDays(iso, n) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10); }
+function todayISO() { return Jojo.localDate(new Date(), TZ); }
+function herTz() { return (S.her && S.her.settings && S.her.settings.tz) || TZ; }
+function nowHM() {
+  var o = {};
+  new Intl.DateTimeFormat('en-GB', { timeZone: herTz(), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).forEach(function (x) { o[x.type] = x.value; });
+  return o.hour + ':' + o.minute;
+}
+function t12(hm, suffix) {
+  if (!hm) return '—';
+  var p = String(hm).split(':').map(Number), h = p[0] % 12 || 12;
+  return ar(h + ':' + String(p[1] || 0).padStart(2, '0')) + (suffix ? (p[0] < 12 ? ' ص' : ' م') : '');
+}
+function dateLabel(iso) {
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-arab', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(iso + 'T12:00:00Z')); }
+  catch (e) { return ar(iso); }
+}
+function whenLabel(ts) {
+  if (!ts) return '';
+  try { return new Intl.DateTimeFormat('ar-SA-u-ca-gregory-nu-arab', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', timeZone: TZ }).format(new Date(ts)); }
+  catch (e) { return ''; }
+}
+function countWord(n, one, two, few, many) {
+  if (n === 1) return one;
+  if (n === 2) return two;
+  if (n >= 3 && n <= 10) return ar(n) + ' ' + few;
+  return ar(n) + ' ' + many;
+}
+function pctText(p) { return typeof p === 'number' ? ar(p) + '٪' : '—'; }
+function toast(msg) {
+  var old = $('.toast'); if (old) old.remove();
+  var d = document.createElement('div'); d.className = 'toast'; d.setAttribute('role', 'status'); d.textContent = msg;
+  document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2600);
+}
+
+/* ============================================================ رسومات (نفس أسلوب تطبيق جوجو) */
+function catSVG(cls) {
+  return '<svg class="' + (cls || 'cat') + '" viewBox="0 0 64 64" aria-hidden="true">' +
+    '<path d="M14 26 L12 8 L26 18 Q32 16 38 18 L52 8 L50 26 Q56 34 52 44 Q46 56 32 56 Q18 56 12 44 Q8 34 14 26Z" fill="#F6EEE3" stroke="#F6EEE3" stroke-width="2.2" stroke-linejoin="round"/>' +
+    '<path d="M15 12 L22 18" stroke="#F4A7C0" stroke-width="3" stroke-linecap="round"/><path d="M49 12 L42 18" stroke="#F4A7C0" stroke-width="3" stroke-linecap="round"/>' +
+    '<path d="M23 35 q3 -3 6 0" fill="none" stroke="#141012" stroke-width="2.2" stroke-linecap="round"/><path d="M35 35 q3 -3 6 0" fill="none" stroke="#141012" stroke-width="2.2" stroke-linecap="round"/>' +
+    '<path d="M30 41 l2 2 l2 -2" fill="none" stroke="#141012" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+    '<circle cx="21" cy="42" r="3" fill="#F4A7C0" opacity=".7"/><circle cx="43" cy="42" r="3" fill="#F4A7C0" opacity=".7"/>' +
+    '<path d="M44 10 l-6 4 l6 4 z M52 10 l6 4 l-6 4z" fill="#F4A7C0" stroke="#C2557A" stroke-width="1.5" stroke-linejoin="round" transform="translate(-4 -6)"/>' +
+    '<circle cx="44" cy="8" r="2.4" fill="#C2557A"/></svg>';
+}
+var BOW = '<svg class="bow" viewBox="0 0 46 30" aria-hidden="true"><path d="M23 15 C14 2 2 4 4 14 C6 24 16 22 23 15Z M23 15 C32 2 44 4 42 14 C40 24 30 22 23 15Z" fill="#F4A7C0" stroke="#C2557A" stroke-width="1.6" stroke-linejoin="round"/><path d="M23 15 L16 29 M23 15 L30 29" stroke="#C2557A" stroke-width="1.8" stroke-linecap="round"/><circle cx="23" cy="15" r="4" fill="#C2557A"/></svg>';
+var HEART = '<svg viewBox="0 0 26 26" aria-hidden="true"><path d="M13 22 C4 15 3 9 7 6 C10 4 12 6 13 8 C14 6 16 4 19 6 C23 9 22 15 13 22Z" fill="#F4A7C0" stroke="#C2557A" stroke-width="1.6"/></svg>';
+var TICK = '<span class="tick" aria-hidden="true"><svg viewBox="0 0 16 16" fill="none" stroke="#1A1A1A" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 8.5l3.2 3L13 4.5"/></svg></span>';
+function ic(d) { return '<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>'; }
+var IC = {
+  moon: ic('<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5Z"/>'),
+  sun: ic('<circle cx="12" cy="13" r="4"/><path d="M12 3v3M4.9 6.9l2 2M19.1 6.9l-2 2M3 17h18M7 21h10"/>'),
+  gym: ic('<path d="M6.5 6.5v11M17.5 6.5v11M3.5 9v6M20.5 9v6M6.5 12h11"/>'),
+  breakfast: ic('<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 4c0 2 2 2 2 4M14 4c0 2 2 2 2 4"/>'),
+  lunch: ic('<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M12 4v4"/>'),
+  dinner: ic('<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M16 4a3 3 0 0 1-3 3"/>'),
+  pill: ic('<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 8.3l5 7.4"/>'),
+  drop: ic('<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>'),
+  task: ic('<path d="M4 5h16v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M8 9h8M8 13h5"/>'),
+  mosque: ic('<path d="M12 4c2.5 2 5 3.5 5 6.5V12H7v-1.5C7 7.5 9.5 6 12 4z"/><path d="M5 12h14v8H5zM10 20v-3.5a2 2 0 0 1 4 0V20"/><path d="M13.2 1.8a1.6 1.6 0 1 0 1.2 2.6"/>'),
+  cup: ic('<path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M9 3c0 1.5 1 1.5 1 3M13 3c0 1.5 1 1.5 1 3"/>'),
+  lock: ic('<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+  bow: ic('<path d="M12 12C8.5 6.5 3 7.5 3.8 11.5 4.5 15.5 9 14.8 12 12zM12 12c3.5-5.5 9-4.5 8.2-.5-.7 4-5.2 3.3-8.2.5z"/><path d="M12 12l-3 7M12 12l3 7"/>'),
+  heart: ic('<path d="M12 20C4.5 14.5 3.5 9.5 6.2 7 8.4 5 10.8 6 12 8c1.2-2 3.6-3 5.8-1 2.7 2.5 1.7 7.5-5.8 13z"/>'),
+  mail: ic('<rect x="3" y="5.5" width="18" height="13" rx="2.5"/><path d="M3.5 7l8.5 6 8.5-6"/>'),
+  open: ic('<path d="M3 10l9-6 9 6v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19z"/><path d="M3.5 10.5l8.5 5.5 8.5-5.5"/>'),
+  flame: ic('<path d="M12 21a6 6 0 0 0 6-6c0-4-3.5-6-3-11-3 1.5-5 4-5 7-1-.5-1.6-1.6-1.8-2.8C6.8 9.6 6 11.6 6 15a6 6 0 0 0 6 6z"/>'),
+  user: ic('<circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>'),
+  cal: ic('<rect x="4" y="5" width="16" height="15" rx="2.5"/><path d="M4 10h16M9 3v4M15 3v4"/>')
+};
+var ARROW_R = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+var ARROW_L = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>';
+function cupSVG(full) { return '<svg class="cup' + (full ? ' full' : '') + '" viewBox="0 0 26 32" aria-hidden="true"><path class="o" d="M3 3h20l-2.5 26h-15z"/><path class="w" d="M4.6 11h16.8l-1.8 16.5H6.4z"/></svg>'; }
+var OWNER = '<span class="owner">' + IC.user.replace('class="ic"', '') + 'صفحة صالح</span>';
+function head(title, sub, extra) {
+  return '<header class="page-top"><div style="flex:1;min-width:0"><h1>' + title + '</h1>' + (sub ? '<p>' + sub + '</p>' : '') + '</div>' + (extra || '') + OWNER + '</header>';
+}
+
+/* ============================================================ الجلسة (نفس تطبيق جوجو: fetch مباشر لـ Supabase Auth) */
+function NetError(msg) { this.name = 'NetError'; this.message = msg || 'offline'; }
+function HttpError(status, body) { this.name = 'HttpError'; this.status = status; this.message = body; }
+function AuthError(msg) { this.name = 'AuthError'; this.message = msg; }
+function isOffline(e) { return e instanceof NetError && (e.message === 'offline' || e.message === 'refresh_unreachable'); }
+
+var Auth = {
+  sess: null,
+  load: function () { this.sess = LS.get('session', null); return !!(this.sess && this.sess.access_token); },
+  save: function (s) {
+    if (!s.expires_at) s.expires_at = Math.floor(Date.now() / 1000) + (s.expires_in || 3600);
+    this.sess = s; LS.set('session', s);
+  },
+  uid: function () { return this.sess && this.sess.user && this.sess.user.id; },
+  signIn: async function (email, password) {
+    var r;
+    try {
+      r = await fetch(SB_URL + '/auth/v1/token?grant_type=password', {
+        method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: email, password: password })
+      });
+    } catch (e) { throw new NetError(); }
+    if (!r.ok) {
+      var b = {}; try { b = await r.json(); } catch (e) { /* not json */ }
+      var code = b.error_code || b.error || '';
+      if (r.status === 429) throw new AuthError('rate_limited');
+      if (r.status === 400 || code === 'invalid_credentials' || code === 'invalid_grant') throw new AuthError('bad_credentials');
+      throw new AuthError('auth_' + r.status);
+    }
+    this.save(await r.json());
+  },
+  /* فشل نهائي بس (الرمز نفسه مرفوض) يطلّعه؛ أي شي ثاني مؤقت. طلب تحديث واحد بنفس الوقت. */
+  _refreshing: null,
+  refresh: function () {
+    var self = this;
+    if (!self._refreshing) {
+      self._refreshing = self._doRefresh().then(function (v) { self._refreshing = null; return v; }, function (e) { self._refreshing = null; throw e; });
+    }
+    return self._refreshing;
+  },
+  _doRefresh: async function () {
+    if (!this.sess || !this.sess.refresh_token) throw new AuthError('expired');
+    var r, ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctl && setTimeout(function () { ctl.abort(); }, 15000);
+    try {
+      r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
+        method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refresh_token: this.sess.refresh_token }), signal: ctl ? ctl.signal : undefined
+      });
+    } catch (e) { throw new NetError('refresh_unreachable'); }
+    finally { if (timer) clearTimeout(timer); }
+    if (r.ok) return this.save(await r.json());
+    var text = ''; try { text = await r.text(); } catch (e) { /* ignore */ }
+    if ((r.status === 400 || r.status === 401) && /invalid_grant|refresh_token_not_found|refresh_token_already_used|session_not_found|session_expired/.test(text)) throw new AuthError('expired');
+    throw new NetError('refresh_' + r.status);
+  },
+  token: async function () {
+    if (!this.sess) throw new AuthError('expired');
+    if (this.sess.expires_at && this.sess.expires_at - 60 < Date.now() / 1000) await this.refresh();
+    return this.sess.access_token;
+  },
+  signOut: async function () {
+    var s = this.sess; this.sess = null;
+    stopBackground();
+    LS.del('session');
+    if (s && s.access_token && !DEMO) {
+      try { await fetch(SB_URL + '/auth/v1/logout', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + s.access_token } }); } catch (e) { /* offline: the token just expires */ }
+    }
+  }
+};
+
+async function api(path, opt, retried) {
+  opt = opt || {};
+  var h = { apikey: SB_KEY, Authorization: 'Bearer ' + await Auth.token(), 'Content-Type': 'application/json' };
+  if (opt.prefer) h.Prefer = opt.prefer;
+  var r;
+  try {
+    r = await fetch(SB_URL + path, { method: opt.method || 'GET', headers: h, body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined });
+  } catch (e) { throw new NetError(); }
+  if (r.status === 401 && !retried) { await Auth.refresh(); return api(path, opt, true); }
+  if (r.status >= 500 || r.status === 429 || r.status === 408) throw new NetError('http_' + r.status);
+  if (!r.ok) throw new HttpError(r.status, await r.text());
+  var t = await r.text(); return t ? JSON.parse(t) : null;
+}
+function q(v) { return encodeURIComponent(v); }
+
+/* ============================================================ مخزن البيانات: Supabase الحقيقي
+   قراءة بس لكل شي يخص جوجو. الكتابة الوحيدة: jojo_messages (رسايله)، و PATCH {read_at} على jojo_letters. */
+var MSG_COLS = 'id,kind,for_date,achievement,body,seen_at,created_at';
+var Remote = {
+  myRole: function () {
+    return api('/rest/v1/jojo_profiles?select=role&user_id=eq.' + q(Auth.uid())).then(function (r) { return r && r[0] ? r[0].role : null; });
+  },
+  her: function () {
+    return api('/rest/v1/jojo_profiles?select=user_id,settings,created_at&role=eq.jojo&limit=1').then(function (r) { return r && r[0] || null; });
+  },
+  tasks: function () { return api('/rest/v1/jojo_tasks?select=id,title,days,created_at&order=created_at.asc'); },
+  checks: function (from, to) { return api('/rest/v1/jojo_checks?select=date,key,value&date=gte.' + from + '&date=lte.' + to); },
+  daily: function (from, to) { return api('/rest/v1/jojo_daily?select=date,pct&date=gte.' + from + '&date=lte.' + to + '&order=date.asc'); },
+  dailyMsgs: function (dates) {
+    return api('/rest/v1/jojo_messages?select=' + MSG_COLS + '&kind=eq.daily&for_date=in.(' + dates.join(',') + ')&order=created_at.desc');
+  },
+  winMsgs: function () { return api('/rest/v1/jojo_messages?select=' + MSG_COLS + '&kind=eq.achievement&order=created_at.desc'); },
+  addMsg: function (row) {
+    return api('/rest/v1/jojo_messages?select=' + MSG_COLS, { method: 'POST', body: row, prefer: 'return=representation' }).then(function (r) { return r && r[0]; });
+  },
+  /* تعديل النص يرجّع seen_at فاضي عشان تطلع لها الرسالة الجديدة (وتعرف أنت متى شافتها) */
+  editMsg: function (id, body) {
+    return api('/rest/v1/jojo_messages?id=eq.' + q(id) + '&select=' + MSG_COLS, { method: 'PATCH', body: { body: body, seen_at: null }, prefer: 'return=representation' }).then(function (r) { return r && r[0]; });
+  },
+  letters: function () { return api('/rest/v1/jojo_letters?select=id,body,created_at,read_at&order=created_at.desc'); },
+  markRead: function (id, at) { return api('/rest/v1/jojo_letters?id=eq.' + q(id), { method: 'PATCH', body: { read_at: at }, prefer: 'return=minimal' }); },
+  beans: function () { return api('/rest/v1/jojo_beans?select=id,photo_path,name,roaster,origin,process,roast,created_at&order=created_at.desc'); },
+  ratings: function () { return api('/rest/v1/jojo_ratings?select=bean_id,liked,notes,date,created_at&order=created_at.desc&limit=500'); },
+  signUrls: function (paths) {
+    return api('/storage/v1/object/sign/jojo-beans', { method: 'POST', body: { expiresIn: 3600, paths: paths } }).then(function (r) {
+      var out = {};
+      (r || []).forEach(function (x) { if (x && x.signedURL && !x.error && x.signedURL.charAt(0) === '/') out[x.path] = SB_URL + '/storage/v1' + x.signedURL; });
+      return out;
+    });
+  }
+};
+
+/* ============================================================ مخزن التجربة (?demo=1) — بالذاكرة فقط */
+function makeDemo() {
+  var today = todayISO(), H = 'demo-jojo';
+  var ago = function (d) { return new Date(Date.now() - d * 864e5).toISOString(); };
+  var settings = {
+    sleepAt: '23:00', wakeAt: '06:30', gymDays: [0, 2, 4], vitamins: ['فيتامين د', 'ب١٢', 'حديد'], waterGoal: 8,
+    city: { id: 'riyadh', name: 'الرياض', lat: 24.7136, lng: 46.6753 }, tz: 'Asia/Riyadh', wins: ['full_day', 'sleep_7']
+  };
+  var tasks = [
+    { id: 't1', title: 'مذاكرة الكيمياء', days: [0, 1, 2, 3, 4], created_at: ago(70) },
+    { id: 't2', title: 'أقرأ ١٠ صفحات', days: null, created_at: ago(70) },
+    { id: 't3', title: 'أرتب غرفتي', days: [5], created_at: ago(70) }
+  ];
+  var checks = [];
+  function put(d, k, v) { checks.push({ date: d, key: k, value: v }); }
+  for (var i = 59; i >= 1; i--) {
+    var d = addDays(today, -i), wd = Jojo.weekday(d), full = i === 3;
+    PRAYERS.forEach(function (p, j) { if (full || (i + j) % 4 !== 0 || i <= 2) put(d, 'prayer:' + p[0], true); });
+    if (full || i <= 9 || i % 3 === 0) put(d, 'sleep', true);
+    if (full || i % 2 === 0 || i <= 2) put(d, 'wake', true);
+    MEALS.forEach(function (m, j) { if (full || (i + j) % 3 !== 0 || i <= 2) put(d, 'meal:' + m[0], true); });
+    if (full || i % 2 === 1 || i <= 2) { put(d, 'vitamins', true); settings.vitamins.forEach(function (v) { put(d, 'vit:' + v, true); }); }
+    put(d, 'water', full || i <= 2 ? 8 : 3 + (i % 6));
+    if (settings.gymDays.indexOf(wd) !== -1 && (full || i < 12)) put(d, 'gym', true);
+    tasks.forEach(function (t) { if (full || i % 2 === 0) put(d, 'task:' + t.id, true); });
+  }
+  ['prayer:fajr', 'prayer:dhuhr', 'sleep', 'wake', 'meal:breakfast', 'vit:فيتامين د', 'vit:ب١٢', 'task:t2'].forEach(function (k) { put(today, k, true); });
+  put(today, 'water', 5);
+  /* نسبة كل يوم من نفس الحسبة اللي يسويها تطبيقها */
+  var daily = [];
+  for (var k = 59; k >= 0; k--) {
+    var dd = addDays(today, -k), its = Jojo.requiredItems(settings, tasks, dd), c = {};
+    checks.forEach(function (x) { if (x.date === dd) c[x.key] = x.value; });
+    if (k !== 6) daily.push({ date: dd, pct: Jojo.dayScore(its, c, { waterGoal: settings.waterGoal }) });     // قبل ٦ أيام: ما فتحت التطبيق
+  }
+  var msgs = [
+    { id: 'm1', kind: 'daily', for_date: today, achievement: null, body: 'صباح الورد يا جوجو، أمس نمتي بوقتك وهذا يكفيني أعرف إنك قدها. اليوم خذيه على راحتك ولا تنسين مويتك 🤍', seen_at: new Date(Date.now() - 2 * 3600e3).toISOString(), created_at: ago(0.6) },
+    { id: 'm2', kind: 'achievement', for_date: null, achievement: 'full_day', body: 'أول سوارة كاملة! والله إني فخور فيك، وهذي البداية بس 🎀', seen_at: ago(3), created_at: ago(20) },
+    { id: 'm3', kind: 'achievement', for_date: null, achievement: 'sleep_7', body: 'أسبوع كامل تنامين بوقتك؟ جسمك يشكرك وأنا أكثر 🌙', seen_at: null, created_at: ago(20) },
+    { id: 'm4', kind: 'achievement', for_date: null, achievement: 'gym_4w', body: 'أربع أسابيع نادي ورا بعض! هذي مو صدفة، هذا إنتِ 💪', seen_at: null, created_at: ago(20) }
+  ];
+  var letters = [
+    { id: 'l1', body: 'اليوم كملت الصلوات كلها وأنا مبسوطة 🤍\nوجربت الوصفة الباردة، طلعت حلوة!', created_at: new Date(Date.now() - 2 * 3600e3).toISOString(), read_at: null },
+    { id: 'l2', body: 'أبي نروح نتمشى الجمعة لو فاضي', created_at: ago(1.2), read_at: null },
+    { id: 'l3', body: 'شكرًا على رسالة الصباح، فرّحتني', created_at: ago(2), read_at: ago(1.9) }
+  ];
+  function bag(body, band, dot) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 400"><rect width="300" height="400" fill="#2A2226"/>' +
+      '<path d="M70 70h160l18 300H52z" fill="' + body + '"/><path d="M70 70h160v-22H70z" fill="' + band + '"/>' +
+      '<rect x="95" y="160" width="110" height="130" rx="14" fill="#F6EEE3"/>' +
+      '<ellipse cx="150" cy="215" rx="26" ry="36" fill="' + dot + '" transform="rotate(-20 150 215)"/>' +
+      '<rect x="112" y="262" width="76" height="8" rx="4" fill="' + band + '"/></svg>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+  }
+  var beans = [
+    { id: 'b1', photo_path: H + '/1.jpg', name: 'إثيوبيا غوجي', roaster: 'محمصة الورد', created_at: ago(2) },
+    { id: 'b2', photo_path: H + '/2.jpg', name: 'كولومبيا', roaster: null, created_at: ago(9) },
+    { id: 'b3', photo_path: H + '/3.jpg', name: 'برازيل غامق', roaster: null, created_at: ago(15) },
+    { id: 'b4', photo_path: H + '/4.jpg', name: null, roaster: null, created_at: ago(20) }
+  ];
+  var photos = {};
+  photos[H + '/1.jpg'] = bag('#F4A7C0', '#C2557A', '#6B3A2A'); photos[H + '/2.jpg'] = bag('#C9AE8E', '#8C6A4A', '#4A2E20');
+  photos[H + '/3.jpg'] = bag('#3A3034', '#F4A7C0', '#2A1A14'); photos[H + '/4.jpg'] = bag('#8FC6E3', '#3F7FA0', '#5A3A28');
+  var ratings = [
+    ['b1', true, ['حلو', 'خفيف'], 1], ['b1', true, ['حلو', 'حامض'], 3], ['b2', true, ['حلو', 'ثقيل'], 5], ['b3', false, ['مر', 'ثقيل'], 7],
+    ['b3', false, ['مر'], 8], ['b4', true, ['خفيف'], 11], ['b1', true, ['حلو', 'خفيف'], 13]
+  ].map(function (x) { return { bean_id: x[0], liked: x[1], notes: x[2], date: addDays(today, -x[3]), created_at: ago(x[3]) }; });
+  var n = 100;
+  function later(v) { return sleep(80).then(function () { return JSON.parse(JSON.stringify(v === undefined ? null : v)); }); }
+  return {
+    myRole: function () { return later('saleh'); },
+    her: function () { return later({ user_id: H, settings: settings, created_at: ago(70) }); },
+    tasks: function () { return later(tasks); },
+    checks: function (from, to) { return later(checks.filter(function (c) { return c.date >= from && c.date <= to; })); },
+    daily: function (from, to) { return later(daily.filter(function (r) { return r.date >= from && r.date <= to; })); },
+    dailyMsgs: function (dates) { return later(msgs.filter(function (m) { return m.kind === 'daily' && dates.indexOf(m.for_date) !== -1; })); },
+    winMsgs: function () { return later(msgs.filter(function (m) { return m.kind === 'achievement'; })); },
+    addMsg: function (row) { var m = Object.assign({ id: 'd' + (n++), seen_at: null, created_at: new Date().toISOString(), for_date: null, achievement: null }, row); msgs.unshift(m); return later(m); },
+    editMsg: function (id, body) { var x = null; msgs.forEach(function (m) { if (m.id === id) { m.body = body; m.seen_at = null; x = m; } }); return later(x); },
+    letters: function () { return later(letters); },
+    markRead: function (id, at) { letters.forEach(function (l) { if (l.id === id) l.read_at = at; }); return later(); },
+    beans: function () { return later(beans); },
+    ratings: function () { return later(ratings); },
+    signUrls: function (paths) { var o = {}; paths.forEach(function (p) { if (photos[p]) o[p] = photos[p]; }); return later(o); }
+  };
+}
+
+/* ============================================================ الحالة */
+var S = {
+  role: null, today: '',
+  her: null, tasks: null, herErr: false,           // ملفها (إعداداتها) ومهامها — قراءة بس
+  home: null, homeErr: false,                      // { daily, msgs, letters }
+  day: { date: null, checks: {}, err: false },     // يومها
+  msgs: null, msgsErr: false,                      // { daily: {date: msg}, wins: {id: msg} }
+  wins: null, winsErr: false,                      // { unlocked: [] }
+  letters: null, lettersErr: false, open: {},
+  beans: null, ratings: null, tasteErr: false, urls: {}, urlsExp: 0
+};
+window.SalehApp = { state: S };
+var store = null, route = 'home', loadGen = 0;
+var TABS = ['home', 'day', 'msg', 'wins', 'letters', 'taste'];
+
+/* إعادة محاولة تلقائية بتأخير متزايد لما يفشل التحميل بسبب النت (٥ ثواني ← ٥ دقايق) */
+var retryTimer = null, backoff = 0;
+function scheduleRetry() {
+  clearTimeout(retryTimer);
+  backoff = Math.min(backoff ? backoff * 2 : 5000, 300000);
+  retryTimer = setTimeout(function () { if (S.role) { clearErrors(); render(); } }, backoff);
+}
+function clearErrors() { S.herErr = S.homeErr = S.msgsErr = S.winsErr = S.lettersErr = S.tasteErr = false; S.day.err = false; }
+function stopBackground() { clearTimeout(retryTimer); retryTimer = null; backoff = 0; loadGen++; }
+async function guard(fn, errKey) {
+  var gen = loadGen;
+  try { await fn(); if (gen === loadGen) backoff = 0; }
+  catch (e) {
+    if (gen !== loadGen) return;
+    if (e instanceof AuthError) return sessionExpired();
+    if (errKey === 'day') S.day.err = true; else S[errKey] = true;
+    if (e instanceof NetError) scheduleRetry();
+  }
+  if (gen === loadGen && S.role) render();
+}
+
+/* ============================================================ التنقل والرسم */
+function go() {
+  var h = (location.hash || '#home').slice(1);
+  route = TABS.indexOf(h) === -1 ? 'home' : h;
+  render(true);
+}
+function render(nav) {
+  if (!S.role) return;
+  var tabs = $('#tabs');
+  tabs.hidden = false; document.body.classList.remove('bare');
+  tabs.querySelectorAll('a').forEach(function (a) { if (a.dataset.tab === route) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  var unread = (S.letters || (S.home && S.home.letters) || []).some(function (l) { return !l.read_at; });
+  $('#lettersDot').hidden = !unread;
+  ({ home: renderHome, day: renderDay, msg: renderMsg, wins: renderWins, letters: renderLetters, taste: renderTaste })[route]();
+  if (nav) { window.scrollTo(0, 0); $('#view').focus({ preventScroll: true }); }
+}
+function paint(html) {
+  var a = document.activeElement, fid = a && a.getAttribute && a.getAttribute('data-fid');
+  var drafts = keepDrafts();
+  $('#view').innerHTML = html;
+  restoreDrafts(drafts);
+  if (fid) { var b = $('[data-fid="' + CSS.escape(fid) + '"]'); if (b) b.focus({ preventScroll: true }); }
+}
+/* ما يضيع اللي يكتبه لو انرسمت الشاشة (تحديث بالخلفية) */
+function keepDrafts() {
+  var o = {};
+  document.querySelectorAll('textarea[data-draft]').forEach(function (t) { if (t.dataset.dirty === '1') o[t.dataset.draft] = t.value; });
+  return o;
+}
+function restoreDrafts(o) {
+  Object.keys(o).forEach(function (k) { var t = $('textarea[data-draft="' + CSS.escape(k) + '"]'); if (t) { t.value = o[k]; t.dataset.dirty = '1'; } });
+}
+function loadingBox(t) { return '<div class="loading" role="status">' + catSVG() + (t || 'لحظة…') + '</div>'; }
+function errBox(t) {
+  return '<div class="empty" role="alert">' + t + ' تأكد من النت، وبجرب مرة ثانية لحالي.<div class="actions" style="justify-content:center"><button class="btn small" data-act="retry">جرب الحين</button></div></div>';
+}
+
+/* ============================================================ مشترك: ملفها ومهامها */
+async function loadHer() {
+  var r = await Promise.all([store.her(), store.tasks()]);
+  S.her = r[0] || { settings: {} }; S.her.settings = S.her.settings || {};
+  S.tasks = r[1] || [];
+}
+function tasksOn(date) {
+  return (S.tasks || []).filter(function (t) { return !t.created_at || Jojo.localDate(new Date(t.created_at), herTz()) <= date; });
+}
+
+/* ============================================================ الرئيسية */
+function loadHome() {
+  return guard(async function () {
+    var t = S.today, r = await Promise.all([store.daily(addDays(t, -59), t), store.dailyMsgs([t]), store.letters()]);
+    S.home = { daily: r[0] || [], msg: (r[1] || [])[0] || null, letters: r[2] || [] };
+  }, 'homeErr');
+}
+function renderHome() {
+  var hour = +nowHM().slice(0, 2);
+  var hello = hour < 12 ? 'صباح الخير يا صالح' : 'مساء الخير يا صالح';
+  var top = head(hello, dateLabel(S.today));
+  if (S.homeErr) return paint(top + errBox('ما قدرت أجيب نسبتها.'));
+  if (!S.home) { loadHome(); return paint(top + loadingBox('لحظة أجيب يومها…')); }
+  var by = {};
+  S.home.daily.forEach(function (r) { by[r.date] = r; });
+  var tRow = by[S.today], yRow = by[addDays(S.today, -1)];
+  var tp = tRow ? tRow.pct : null, yp = yRow ? yRow.pct : null;
+  var streak = Jojo.dailyStreak(S.home.daily, S.today);
+  var hint = !tRow ? 'لسه ما فتحت التطبيق اليوم.' : tp == null ? 'ما عندها شي مطلوب اليوم.' : tp === 100 ? 'كمّلت سوارة اليوم كلها 🎀' : 'اليوم لسه ما خلص، النسبة تتحدث أول بأول.';
+
+  var week = '';
+  for (var i = 6; i >= 0; i--) {
+    var d = addDays(S.today, -i), row = by[d], p = row ? row.pct : null, band = Jojo.pctBand(p);
+    var lbl = DAYS[Jojo.weekday(d)] + ': ' + (row ? (p == null ? 'ما فيه بنود' : ar(p) + '٪') : 'ما فتحت التطبيق');
+    week += '<div class="wd' + (i === 0 ? ' today' : '') + '" role="listitem" aria-label="' + lbl + '"><span class="d" aria-hidden="true">' + (i === 0 ? 'اليوم' : DAYS_SHORT[Jojo.weekday(d)]) + '</span>' +
+      '<i class="bead ' + band + '" data-band="' + band + '" aria-hidden="true"></i><span class="p" aria-hidden="true">' + (row && p != null ? ar(p) : '—') + '</span></div>';
+  }
+  var unread = S.home.letters.filter(function (l) { return !l.read_at; }).length;
+  var m = S.home.msg;
+  var msgState = !m ? 'ما كتبت رسالة اليوم لسه' : m.seen_at ? 'شافتها ' + whenLabel(m.seen_at) : 'وصلت، لسه ما شافتها';
+
+  paint(top +
+    '<section class="bracelet" aria-label="التزام جوجو اليوم"><div class="bracelet-head"><h2>التزام جوجو اليوم</h2><div class="num" id="todayPct">' + pctText(tp) + '</div></div>' +
+    '<div class="yday"><span>أمس</span><b id="ydayPct">' + pctText(yp) + '</b></div><p class="hint">' + hint + ' <a class="link" href="#day" style="min-height:0">شوف يومها</a></p></section>' +
+    '<h2 class="sec">آخر ٧ أيام</h2><div class="card"><div class="week" id="week" role="list">' + week + '</div>' +
+    '<div class="legend" aria-hidden="true"><span><i class="bead high"></i>٨٠٪ وفوق</span><span><i class="bead mid"></i>٥٠–٧٩٪</span><span><i class="bead low"></i>أقل من ٥٠٪</span><span><i class="bead none"></i>ما فيه نسبة</span></div></div>' +
+    '<div class="stats">' +
+    '<div class="stat"><div class="num" id="streak">' + ar(streak) + '</div><div class="l">' + (streak === 1 ? 'يوم' : streak === 2 ? 'يومين' : streak <= 10 ? 'أيام' : 'يوم') + ' ورا بعض فوق ٨٠٪</div></div>' +
+    '<a class="stat" href="#letters"><div class="num">' + ar(unread) + '</div><div class="l">' + (unread ? 'نوت جديدة لك 💌' : 'ما فيه نوت جديدة') + '</div></a>' +
+    '</div>' +
+    '<a class="card" href="#msg" style="display:block;text-decoration:none;color:inherit"><h3>' + IC.mail + 'رسالة اليوم</h3><p class="muted">' + msgState + '</p></a>' +
+    '<div class="actions" style="justify-content:center;margin-top:22px"><button class="btn ghost small" data-act="signout">تسجيل خروج</button></div>'
+  );
+}
+
+/* ============================================================ يومها (قراءة بس — نفس شاشة يومي عندها) */
+function loadDay(date) {
+  return guard(async function () {
+    if (!S.her) await loadHer();
+    var rows = await store.checks(date, date);
+    var c = {}; (rows || []).forEach(function (x) { c[x.key] = x.value; });
+    if (S.day.date === date) { S.day.checks = c; S.day.loaded = true; }
+  }, 'day');
+}
+function roRow(done, icon, label, sub) {
+  return '<div class="row' + (done ? ' done' : '') + '" role="listitem">' + icon + '<span class="t">' + esc(label) + (sub ? '<br><span class="s">' + sub + '</span>' : '') +
+    '</span>' + TICK + '<span class="sr">' + (done ? 'سوّتها' : 'ما سوّتها') + '</span></div>';
+}
+function renderDay() {
+  if (!S.day.date) S.day.date = S.today;
+  var date = S.day.date, isToday = date === S.today;
+  var nav = '<button class="icon-btn" data-act="day-prev" aria-label="اليوم اللي قبله">' + ARROW_R + '</button>' +
+    '<button class="icon-btn" data-act="day-next" aria-label="اليوم اللي بعده"' + (isToday ? ' disabled' : '') + '>' + ARROW_L + '</button>';
+  var top = head('يومها', (isToday ? 'اليوم · ' : '') + dateLabel(date)) + '<div class="actions" style="margin:-6px 0 16px;justify-content:space-between"><span class="muted">' + IC.cal.replace('class="ic"', 'style="width:18px;height:18px;vertical-align:-3px"') + ' غيّر اليوم</span><span style="display:flex;gap:8px">' + nav + '</span></div>';
+  if (S.day.err || S.herErr) return paint(top + errBox('ما قدرت أجيب يومها.'));
+  if (!S.her || !S.day.loaded) { loadDay(date); return paint(top + loadingBox('لحظة أجيب يومها…')); }
+  var s = S.her.settings, ch = S.day.checks, ctx = { waterGoal: s.waterGoal };
+  var its = Jojo.requiredItems(s, tasksOn(date), date), pct = Jojo.dayScore(its, ch, ctx);
+  var done = its.filter(function (i) { return Jojo.isDone(i.key, ch[i.key], ctx); }).length, total = its.length;
+  var wd = Jojo.weekday(date), gymDay = (s.gymDays || []).indexOf(wd) !== -1;
+  var beads = '', half = Math.floor(total / 2);
+  for (var i = 0; i < total; i++) { if (i === half) beads += '<span class="bead charm">' + HEART + '</span>'; beads += '<i class="bead' + (i < done ? ' on' : '') + '"></i>'; }
+  var room = Math.min(window.innerWidth || 390, 440) - 76 - 26 - 3 * total;
+  var size = Math.max(8, Math.min(19, Math.floor(room / Math.max(total, 1))));
+  var left = total - done;
+  var hint = !total ? 'ما عندها شي مطلوب بهذا اليوم.' : left === 0 ? 'كمّلت السوارة كلها 🎀' : 'سوّت ' + ar(done) + ' من ' + ar(total) + '.';
+
+  var times = null, city = s.city;
+  if (city && window.adhan) { try { times = Jojo.prayerTimes(date, city.lat, city.lng, herTz()); } catch (e) { times = null; } }
+  var prayers = '<h2 class="sec">الصلاة</h2><div class="group"><div class="prayers" role="list">' + PRAYERS.map(function (p) {
+    var on = ch['prayer:' + p[0]] === true;
+    return '<div class="pr' + (on ? ' done' : '') + '" role="listitem" aria-label="صلاة ' + p[1] + ': ' + (on ? 'صلّتها' : 'ما تأشرت') + '"><b>' + p[1] + '</b><span>' + (times ? t12(times[p[0]]) : '—') + '</span></div>';
+  }).join('') + '</div></div>';
+  var routine = roRow(ch.sleep === true, IC.moon, 'نامت بوقتها', s.sleepAt ? 'هدفها ' + t12(s.sleepAt, true) : '') +
+    roRow(ch.wake === true, IC.sun, 'صحيت بوقتها', s.wakeAt ? 'هدفها ' + t12(s.wakeAt, true) : '') +
+    (gymDay ? roRow(ch.gym === true, IC.gym, 'النادي', 'يوم نادي') : '');
+  var meals = MEALS.map(function (m) { return roRow(ch['meal:' + m[0]] === true, IC[m[0]], m[1]); }).join('');
+  var care = '', vits = s.vitamins || [];
+  if (vits.length) {
+    var vOn = vits.filter(function (v) { return ch['vit:' + v] === true; }).length;
+    care += roRow(ch.vitamins === true, IC.pill, 'الفيتامينات', ar(vOn) + ' من ' + ar(vits.length)) +
+      '<div class="sub"><div class="chips">' + vits.map(function (v) { var on = ch['vit:' + v] === true; return '<span class="chip' + (on ? ' done' : '') + '">' + (on ? '✓ ' : '') + esc(v) + '</span>'; }).join('') + '</div></div>';
+  }
+  var goal = s.waterGoal || 0;
+  if (goal > 0) {
+    var w = typeof ch.water === 'number' ? ch.water : 0, cups = '';
+    for (var c = 1; c <= Math.max(goal, w); c++) cups += cupSVG(c <= w);
+    care += roRow(Jojo.isDone('water', ch.water, ctx), IC.drop, 'الماء', ar(w) + ' من ' + ar(goal) + ' أكواب') + '<div class="cups" aria-hidden="true">' + cups + '</div>';
+  }
+  var mine = tasksOn(date).filter(function (t) { return !t.days || !t.days.length || t.days.indexOf(wd) !== -1; });
+  var tasksHtml = mine.length ? '<div class="group" role="list">' + mine.map(function (t) { return roRow(ch['task:' + t.id] === true, IC.task, t.title); }).join('') + '</div>'
+    : '<p class="empty" style="padding:16px">ما عندها مهام بهذا اليوم.</p>';
+  var coffee = ch.coffee ? '<p class="muted" style="margin:-6px 4px 16px">☕ جربت وصفة قهوة هذا اليوم (بونص).</p>' : '';
+
+  paint(top +
+    '<section class="bracelet" aria-label="سوارة يومها"><div class="bracelet-head"><h2>سوارة ' + (isToday ? 'اليوم' : 'هاليوم') + '</h2><div class="num" id="dayPct">' + pctText(pct) + '</div></div>' +
+    '<div class="beads" style="--b:' + size + 'px" role="img" aria-label="' + ar(done) + ' من ' + ar(total) + '">' + beads + '</div><p class="hint">' + hint + '</p></section>' +
+    '<p class="ro">للعرض بس — ما تقدر تغيّر شي من هنا</p>' +
+    prayers +
+    '<h2 class="sec">روتينها</h2><div class="group" role="list">' + routine + '</div>' +
+    '<h2 class="sec">أكلها</h2><div class="group" role="list">' + meals + '</div>' +
+    (care ? '<h2 class="sec">عنايتها</h2><div class="group" role="list">' + care + '</div>' : '') +
+    '<h2 class="sec">مهامها</h2>' + tasksHtml + coffee +
+    settingsSummary()
+  );
+}
+function settingsSummary() {
+  var s = S.her.settings, gd = (s.gymDays || []).slice().sort();
+  var all = (S.tasks || []).map(function (t) {
+    var days = !t.days || !t.days.length || t.days.length === 7 ? 'كل يوم' : t.days.slice().sort().map(function (d) { return DAYS[d]; }).join('، ');
+    return '<li class="row" style="min-height:48px">' + IC.task + '<span class="t">' + esc(t.title) + '<br><span class="s">' + days + '</span></span></li>';
+  }).join('');
+  return '<h2 class="sec">إعداداتها</h2><div class="card"><dl class="kv" id="herSettings">' +
+    '<dt>النوم</dt><dd>' + t12(s.sleepAt, true) + '</dd>' +
+    '<dt>الصحيان</dt><dd>' + t12(s.wakeAt, true) + '</dd>' +
+    '<dt>أيام النادي</dt><dd>' + (gd.length ? gd.map(function (d) { return DAYS[d]; }).join('، ') : 'بدون نادي') + '</dd>' +
+    '<dt>الفيتامينات</dt><dd>' + ((s.vitamins || []).length ? s.vitamins.map(esc).join('، ') : 'ما فيه') + '</dd>' +
+    '<dt>هدف الماء</dt><dd>' + (s.waterGoal ? ar(s.waterGoal) + ' أكواب' : '—') + '</dd>' +
+    '<dt>المدينة</dt><dd>' + esc((s.city && s.city.name) || '—') + '</dd></dl></div>' +
+    '<h2 class="sec">كل مهامها</h2>' + (all ? '<ul class="group" style="list-style:none">' + all + '</ul>' : '<p class="empty" style="padding:16px">ما أضافت مهام لسه.</p>');
+}
+
+/* ============================================================ رسالة اليوم */
+function loadMsgs() { return guard(loadMsgsRaw, 'msgsErr'); }
+function seenBadge(m) {
+  if (!m) return '<span class="badge">ما كتبتها لسه</span>';
+  return m.seen_at ? '<span class="badge seen">✓✓ شافتها · ' + whenLabel(m.seen_at) + '</span>' : '<span class="badge">✓ وصلت، لسه ما شافتها</span>';
+}
+function msgForm(kind, key, m, label, placeholder, btn) {
+  return '<form data-form="msg" data-kind="' + kind + '" data-key="' + esc(key) + '">' +
+    '<label class="sr" for="t-' + esc(key) + '">' + label + '</label>' +
+    '<textarea id="t-' + esc(key) + '" class="in" name="body" maxlength="2000" data-draft="' + kind + ':' + esc(key) + '" placeholder="' + placeholder + '">' + esc(m ? m.body : '') + '</textarea>' +
+    '<div class="actions"><button class="btn small" data-fid="save-' + esc(key) + '">' + (m ? 'عدّلها' : btn) + '</button>' +
+    (m ? '<span class="status">التعديل يرجّعها "لسه ما شافتها" لين تفتحها</span>' : '') + '</div></form>';
+}
+function renderMsg() {
+  var top = head('رسالة اليوم', 'تطلع لها أول ما تفتح التطبيق');
+  if (S.msgsErr) return paint(top + errBox('ما قدرت أجيب رسايلك.'));
+  if (!S.msgs) { loadMsgs(); return paint(top + loadingBox()); }
+  var t = S.today, tm = addDays(t, 1), mt = S.msgs.daily[t], mm = S.msgs.daily[tm];
+  paint(top +
+    '<article class="letter" aria-labelledby="mt">' + BOW + '<h3 id="mt" style="font-size:18px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap">💌 اليوم <span class="muted" style="font-family:Plex;font-weight:400">' + dateLabel(t) + '</span></h3>' +
+    '<div style="margin-top:6px" id="todaySeen">' + seenBadge(mt) + '</div>' +
+    msgForm('daily', t, mt, 'رسالة اليوم', 'اكتب لها شي يفرّحها اليوم…', 'أرسلها') + '</article>' +
+    '<h2 class="sec">جدولها لبكرة</h2><div class="card"><p class="muted">' + dateLabel(tm) + ' — ما تشوفها إلا بكرة.</p>' +
+    (mm ? '<div style="margin-top:6px"><span class="badge seen">مجدولة ✓</span></div>' : '') +
+    msgForm('daily', tm, mm, 'رسالة بكرة', 'رسالة بكرة الصبح…', 'جدولها') + '</div>'
+  );
+}
+
+/* ============================================================ رسائل التشجيع */
+function loadWins() {
+  return guard(async function () {
+    if (!S.her) await loadHer();
+    if (!S.msgs) await loadMsgsRaw();
+    /* نفس حسبة تطبيقها: اللي محفوظ بإعداداتها + اللي ينفتح من آخر ٦٠ يوم */
+    var from = addDays(S.today, -59), rows = await store.checks(from, S.today), by = {}, days = [], s = S.her.settings;
+    (rows || []).forEach(function (c) { (by[c.date] = by[c.date] || {})[c.key] = c.value; });
+    for (var d = from; d <= S.today; d = addDays(d, 1)) days.push({ date: d, items: Jojo.requiredItems(s, tasksOn(d), d), checks: by[d] || {}, waterGoal: s.waterGoal });
+    var kept = s.wins || [], un = Jojo.unlocked(days);
+    S.wins = { unlocked: kept.concat(un.filter(function (k) { return kept.indexOf(k) === -1; })) };
+  }, 'winsErr');
+}
+async function loadMsgsRaw() {
+  var t = S.today, r = await Promise.all([store.dailyMsgs([t, addDays(t, 1)]), store.winMsgs()]);
+  var daily = {}, wins = {};
+  (r[0] || []).forEach(function (m) { if (!daily[m.for_date]) daily[m.for_date] = m; });   // الأحدث أول (نفس اللي تشوفه هي)
+  (r[1] || []).forEach(function (m) { if (!wins[m.achievement]) wins[m.achievement] = m; });
+  S.msgs = { daily: daily, wins: wins };
+}
+function renderWins() {
+  var top = head('رسائل التشجيع', 'تنفتح لها رسالتك لما توصل الإنجاز');
+  if (S.winsErr || S.msgsErr) return paint(top + errBox('ما قدرت أجيب الإنجازات.'));
+  if (!S.wins || !S.msgs) { loadWins(); return paint(top + loadingBox()); }
+  var un = S.wins.unlocked;
+  var list = Jojo.ACHIEVEMENTS.map(function (id) {
+    var info = WIN_INFO[id] || { icon: 'bow', title: id, how: '' }, m = S.msgs.wins[id], open = un.indexOf(id) !== -1;
+    var state = open ? (m ? (m.seen_at ? '<span class="badge seen">انفتح ✓ وشافت رسالتك · ' + whenLabel(m.seen_at) + '</span>' : '<span class="badge seen">انفتح ✓ لسه ما شافت رسالتك</span>') : '<span class="badge new">انفتح ✓ وما فيه رسالة! اكتب لها</span>')
+      : (m ? '<span class="badge">مقفل — رسالتك تنتظرها</span>' : '<span class="badge">مقفل — ما كتبت رسالة لسه</span>');
+    return '<article class="win' + (open ? ' open' : '') + '" data-win="' + esc(id) + '"><div class="win-head"><div class="medal" aria-hidden="true">' + (open ? IC[info.icon] : IC.lock) + '</div>' +
+      '<div style="flex:1;min-width:0"><h3>' + esc(info.title) + '</h3><p class="muted">' + esc(info.how) + '</p><div style="margin-top:6px">' + state + '</div></div></div>' +
+      msgForm('achievement', id, m, 'رسالة ' + info.title, 'اكتب لها لما توصل…', 'احفظها') + '</article>';
+  }).join('');
+  paint(top + list);
+}
+
+/* حفظ رسالة: موجودة ← PATCH للنص، مو موجودة ← POST. قبل الـ POST نتأكد من الخادم عشان ما تتكرر. */
+async function saveMsg(form) {
+  var kind = form.dataset.kind, key = form.dataset.key, body = form.body.value.trim(), btn = form.querySelector('button');
+  if (!body) { toast('اكتب شي أول ✍️'); form.body.focus(); return; }
+  if (kind === 'daily' && key !== S.today && key !== addDays(S.today, 1)) { toast('اليوم تغيّر، حدّث الصفحة'); return; }
+  if (kind === 'achievement' && Jojo.ACHIEVEMENTS.indexOf(key) === -1) return;
+  var bag = kind === 'daily' ? S.msgs.daily : S.msgs.wins, cur = bag[key];
+  if (cur && cur.body === body) { toast('ما تغيّر شي'); return; }
+  btn.disabled = true;
+  try {
+    if (!cur) {
+      var fresh = kind === 'daily' ? await store.dailyMsgs([key]) : (await store.winMsgs()).filter(function (m) { return m.achievement === key; });
+      cur = (fresh || [])[0] || null;
+    }
+    var saved = cur ? await store.editMsg(cur.id, body) : await store.addMsg(kind === 'daily' ? { kind: 'daily', for_date: key, body: body } : { kind: 'achievement', achievement: key, body: body });
+    bag[key] = saved || Object.assign({}, cur, { body: body, seen_at: null });
+    if (S.home && kind === 'daily' && key === S.today) S.home.msg = bag[key];
+    form.body.dataset.dirty = '';
+    render();
+    toast(kind === 'daily' ? (key === S.today ? 'وصلت لها 💌' : 'تجدولت لبكرة 💌') : 'انحفظت، تنفتح لها لما توصل 🎀');
+  } catch (e) {
+    btn.disabled = false;
+    if (e instanceof AuthError) return sessionExpired();
+    toast(isOffline(e) ? 'النت مقطوع، جرب لما يرجع' : 'ما انحفظت، جرب مرة ثانية');
+  }
+}
+
+/* ============================================================ نوتها لك */
+function loadLetters() {
+  return guard(async function () { S.letters = await store.letters() || []; if (S.home) S.home.letters = S.letters; }, 'lettersErr');
+}
+function renderLetters() {
+  var top = head('نوتها لك', 'اللي كتبته لك بقسم 💌 لصالح');
+  if (S.lettersErr) return paint(top + errBox('ما قدرت أجيب نوتها.'));
+  if (!S.letters) { loadLetters(); return paint(top + loadingBox()); }
+  var list = S.letters.length ? S.letters.map(function (l) {
+    var open = !!S.open[l.id], first = String(l.body || '').split('\n')[0];
+    return '<article class="note' + (l.read_at ? '' : ' unread') + '" data-letter="' + esc(l.id) + '">' +
+      '<button data-act="letter" data-id="' + esc(l.id) + '" data-fid="l-' + esc(l.id) + '" aria-expanded="' + open + '">' + (open || l.read_at ? IC.open : IC.mail) +
+      '<span class="pv"><b>' + (l.read_at ? 'نوت من جوجو' : 'نوت جديدة من جوجو') + '</b><span>' + whenLabel(l.created_at) + (l.read_at && !open ? ' · ' + esc(first) : '') + '</span></span>' +
+      (l.read_at ? '' : '<span class="badge new">جديد</span>') + '</button>' +
+      (open ? '<div class="body">' + esc(l.body) + '</div><div class="meta">' + (l.read_at ? 'قريتها ' + whenLabel(l.read_at) + ' — ويطلع لها إنك قريتها' : '') + '</div>' : '') + '</article>';
+  }).join('') : '<p class="empty">ما كتبت لك شي لسه 💌</p>';
+  paint(top + '<p class="muted" style="margin:-8px 4px 14px">أول ما تفتح نوت، يطلع لها إنك قريتها.</p>' + list);
+}
+async function openLetter(id) {
+  var l = (S.letters || []).filter(function (x) { return x.id === id; })[0];
+  if (!l) return;
+  S.open[id] = !S.open[id];
+  if (S.open[id] && !l.read_at) {
+    var at = new Date().toISOString();
+    l.read_at = at;
+    store.markRead(id, at).catch(function (e) {
+      l.read_at = null;
+      if (e instanceof AuthError) return sessionExpired();
+      toast('ما قدرت أعلّمها مقروءة، بجرب المرة الجاية');
+      if (route === 'letters') render();
+    });
+  }
+  render();
+}
+
+/* ============================================================ ذوقها */
+function loadTaste() {
+  return guard(async function () {
+    var r = await Promise.all([store.beans(), store.ratings()]);
+    S.beans = r[0] || []; S.ratings = r[1] || [];
+    await ensureUrls();
+  }, 'tasteErr');
+}
+async function ensureUrls() {
+  var now = Date.now();
+  if (now > S.urlsExp) { S.urls = {}; S.urlsExp = 0; }
+  var need = (S.beans || []).map(function (b) { return b.photo_path; }).filter(function (p, i, a) { return p && !S.urls[p] && a.indexOf(p) === i; });
+  if (!need.length) return;
+  try {
+    var m = await store.signUrls(need);                         // طلب واحد لكل الصور
+    Object.assign(S.urls, m);
+    if (!S.urlsExp) S.urlsExp = now + 50 * 60e3;               // الروابط صالحة ساعة، نجددها قبلها
+  } catch (e) { if (e instanceof AuthError) throw e; /* الصور تطلع فاضية، الباقي يشتغل */ }
+}
+function beanName(b) { return b.name || 'كيس بدون اسم'; }
+function renderTaste() {
+  var top = head('ذوقها', 'أكياس القهوة اللي صوّرتها وتقييمها');
+  if (S.tasteErr) return paint(top + errBox('ما قدرت أجيب ذوقها.'));
+  if (!S.beans) { loadTaste(); return paint(top + loadingBox()); }
+  if (S.urlsExp && Date.now() > S.urlsExp) ensureUrls().then(function () { if (route === 'taste') render(); });
+  var rs = S.ratings, p = Jojo.tasteProfile(rs.map(function (r) { return { beanId: r.bean_id, liked: r.liked === true, notes: r.notes || [] }; }));
+  var fav = null, best = 1;
+  S.beans.forEach(function (b) { var n = rs.filter(function (r) { return r.bean_id === b.id && r.liked; }).length; if (n > best) { best = n; fav = b; } });
+  var sum = p.total < 2 ? '<p class="muted">لسه ما قيّمت كفاية عشان يبان ذوقها. كل ما تقيّم أكثر، يوضح هنا.</p>'
+    : '<div class="taste"><p class="muted">جربت ' + countWord(p.total, 'كوب واحد', 'كوبين', 'أكواب', 'كوب') + '، وعجبها منها ' + ar(p.liked) + '.</p>' +
+      '<div class="line">تحب: ' + (p.likes.length ? p.likes.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') : 'لسه ما بان') + '</div>' +
+      (p.dislikes.length ? '<div class="line">ما تحب: ' + p.dislikes.map(function (t) { return '<span class="tag no">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+      (fav ? '<div class="line">كيسها المفضل: <b style="color:var(--ink)">' + esc(beanName(fav)) + '</b></div>' : '') + '</div>';
+  var grid = S.beans.length ? '<div class="shelf" id="shelf">' + S.beans.map(function (b) {
+    var of = rs.filter(function (r) { return r.bean_id === b.id; }), liked = of.filter(function (r) { return r.liked === true; }).length;
+    var counts = {}, order = [];
+    of.forEach(function (r) { (r.notes || []).forEach(function (n) { if (!counts[n]) { counts[n] = 0; order.push(n); } counts[n]++; }); });
+    var u = S.urls[b.photo_path];
+    var meta = [b.roaster, b.origin, b.process, b.roast].filter(Boolean).map(esc).join(' · ');
+    return '<figure class="bean"><img class="ph" alt="كيس ' + esc(beanName(b)) + '"' + (u ? ' src="' + esc(u) + '"' : '') + ' loading="lazy">' +
+      '<figcaption><div class="n">' + esc(beanName(b)) + '</div>' + (meta ? '<div class="rs">' + meta + '</div>' : '') +
+      '<div class="lk">' + (of.length ? '👍 عجبها ' + ar(liked) + ' من ' + ar(of.length) : 'ما قيّمته لسه') + '</div>' +
+      (order.length ? '<div class="chips">' + order.map(function (n) { return '<span class="tag">' + esc(n) + (counts[n] > 1 ? ' ×' + ar(counts[n]) : '') + '</span>'; }).join('') + '</div>' : '') +
+      '</figcaption></figure>';
+  }).join('') + '</div>' : '<p class="empty">ما صوّرت أكياس لسه ☕</p>';
+  paint(top + '<h2 class="sec">ملخص ذوقها</h2><section class="card" aria-label="ملخص ذوقها">' + sum + '</section><h2 class="sec">أكياسها</h2>' + grid);
+}
+
+/* ============================================================ الأحداث */
+document.addEventListener('click', function (ev) {
+  var b = ev.target.closest && ev.target.closest('[data-act]'); if (!b || !S.role) return;
+  var act = b.dataset.act;
+  if (act === 'retry') { clearTimeout(retryTimer); backoff = 0; clearErrors(); render(); }
+  else if (act === 'letter') openLetter(b.dataset.id);
+  else if (act === 'day-prev' || act === 'day-next') {
+    var d = addDays(S.day.date || S.today, act === 'day-prev' ? -1 : 1);
+    if (d > S.today) return;
+    S.day = { date: d, checks: {}, err: false, loaded: false }; render();
+  }
+  else if (act === 'signout') { Auth.signOut().then(function () { location.hash = ''; showLogin(); }); }
+});
+document.addEventListener('input', function (ev) { if (ev.target.matches && ev.target.matches('textarea[data-draft]')) ev.target.dataset.dirty = '1'; });
+document.addEventListener('submit', function (ev) {
+  var f = ev.target;
+  if (f.getAttribute('data-form') === 'msg') { ev.preventDefault(); if (S.role) saveMsg(f); }
+});
+window.addEventListener('hashchange', function () { if (S.role) go(); });
+/* رجع للصفحة أو تغيّر اليوم: نجيب الجديد */
+function refreshAll() {
+  if (!S.role) return;
+  var t = todayISO();
+  if (t !== S.today) { S.today = t; S.msgs = null; S.day = { date: null, checks: {}, err: false }; }
+  S.home = null; S.letters = null; S.wins = null; S.msgs = null; S.her = null; S.tasks = null; S.beans = null; S.ratings = null;
+  if (S.day.date) S.day.loaded = false;
+  clearErrors(); render();
+}
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && !document.querySelector('textarea[data-dirty="1"]')) refreshAll(); });
+setInterval(function () { if (S.role && todayISO() !== S.today) refreshAll(); }, 60000);
+window.addEventListener('online', function () { if (S.role) { backoff = 0; clearErrors(); render(); } });
+
+/* ============================================================ الدخول */
+function latinDigits(v) {
+  return String(v == null ? '' : v).replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); })
+    .replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); });
+}
+function usernameToEmail(u) {
+  u = latinDigits(u).trim().toLowerCase();
+  if (!u) return '';
+  return u.indexOf('@') === -1 ? u + '@jojo.invalid' : u;
+}
+function resetState() {
+  S.role = null; S.her = S.tasks = S.home = S.msgs = S.wins = S.letters = S.beans = S.ratings = null;
+  S.urls = {}; S.urlsExp = 0; S.open = {}; S.day = { date: null, checks: {}, err: false }; clearErrors();
+}
+function showLogin(errMsg) {
+  resetState();
+  $('#tabs').hidden = true; document.body.classList.add('bare');
+  $('#view').innerHTML =
+    '<section class="login"><form data-login novalidate style="display:flex;flex-direction:column">' + OWNER + catSVG() + '<h1>هلا صالح</h1><p class="lead">سجّل دخولك عشان تشوف جوجو وتكتب لها</p>' +
+    '<label class="f" for="em">اسم المستخدم</label><input id="em" class="in" type="text" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" dir="ltr" required>' +
+    '<label class="f" for="pw">كلمة المرور</label><input id="pw" class="in" type="password" name="password" autocomplete="current-password" dir="ltr" required>' +
+    '<div class="actions"><button class="btn block" id="loginBtn">دخول</button></div>' +
+    '<div id="loginErr" role="alert">' + (errMsg ? '<p class="alert">' + esc(errMsg) + '</p>' : '') + '</div></form></section>';
+}
+document.addEventListener('submit', async function (ev) {
+  var f = ev.target; if (!f.hasAttribute('data-login')) return;
+  ev.preventDefault();
+  var email = usernameToEmail(f.username.value), pw = latinDigits(f.password.value), err = $('#loginErr'), btn = $('#loginBtn');
+  if (!email || !pw) { err.innerHTML = '<p class="alert">اكتب اسم المستخدم وكلمة المرور</p>'; return; }
+  btn.disabled = true; btn.textContent = 'لحظة…'; err.innerHTML = '';
+  try { await Auth.signIn(email, pw); await start(); }
+  catch (e) {
+    btn.disabled = false; btn.textContent = 'دخول';
+    err.innerHTML = '<p class="alert">' + (isOffline(e) ? 'النت مقطوع، جرب لما يرجع' : e.message === 'rate_limited' ? 'محاولات كثير ورا بعض، استنى دقيقة وجرب' : e.message === 'bad_credentials' ? 'اسم المستخدم أو كلمة المرور غلط' : 'صار شي غلط، جرب بعد شوي') + '</p>';
+  }
+});
+async function sessionExpired() {
+  await Auth.signOut();
+  showLogin('انتهت الجلسة، سجّل دخولك مرة ثانية');
+}
+
+/* ============================================================ التشغيل */
+var bootTimer = null, bootTry = 0;
+async function start() {
+  clearTimeout(bootTimer);
+  if (!Auth.sess) return;
+  $('#view').innerHTML = loadingBox();
+  try {
+    var role = await store.myRole();
+    if (role !== 'saleh') {                     // جوجو (أو أي حساب ثاني) ما تفتح صفحة صالح
+      await Auth.signOut();
+      return showLogin('هذي الصفحة لصالح');
+    }
+    bootTry = 0;
+    S.role = 'saleh'; S.today = todayISO();
+    go();
+  } catch (e) {
+    if (e instanceof AuthError) return sessionExpired();
+    $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>' + (isOffline(e) ? 'النت مقطوع. بجرب مرة ثانية أول ما يرجع.' : 'ما قدرت أفتح الصفحة، بجرب بعد شوي.') + '</p><button class="btn small" onclick="location.reload()">جرب الحين</button></div>';
+    bootTimer = setTimeout(start, Math.min(5000 * Math.pow(2, bootTry++), 300000));
+  }
+}
+function loadScript(src) {
+  return new Promise(function (res, rej) {
+    var sc = document.createElement('script'); sc.src = src; sc.async = true; sc.onload = res; sc.onerror = rej; document.head.appendChild(sc);
+  });
+}
+function boot() {
+  if (!window.Jojo || !Jojo.ACHIEVEMENTS) { $('#view').innerHTML = '<p class="alert">ما قدرت أحمّل الصفحة، حدّثها.</p>'; return; }
+  loadScript('../vendor/adhan.umd.min.js?v=' + V).then(function () {
+    if (!window.adhan) return;
+    Jojo.useAdhan(window.adhan);
+    if (S.role && route === 'day') render();
+  }).catch(function () { /* أوقات الأذان تطلع "—" */ });
+  if (DEMO) {
+    store = makeDemo();
+    Auth.sess = { access_token: 'demo', user: { id: 'demo-saleh' } };
+    return start();
+  }
+  store = Remote;
+  if (Auth.load()) start(); else showLogin();
+}
+loadScript('../core.js?v=' + V).then(boot, function () {
+  $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>ما قدرت أحمّل الصفحة، تأكد من النت وحدّثها.</p><button class="btn small" onclick="location.reload()">حدّث</button></div>';
+});
+})();
+</script>
+</body>
+</html>

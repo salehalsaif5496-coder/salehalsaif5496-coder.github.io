@@ -52,6 +52,8 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;                 // ولا شي من برّا (Supabase من الشبكة دايمًا)
+  // صفحة صالح (/jojo/saleh/) داخل نطاق هذا الـ SW: ما نلمسها، وإلا تنحفظ مكان index.html حق جوجو
+  if (url.pathname.indexOf(new URL('./saleh/', self.location.href).pathname) === 0) return;
 
   if (req.mode === 'navigate' || /\/index\.html$/.test(url.pathname)) {
     e.respondWith(networkFirst(req, './index.html'));

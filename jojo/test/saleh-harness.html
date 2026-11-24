@@ -1,0 +1,199 @@
+<!doctype html><meta charset="utf-8"><body><pre id="out">RUNNING</pre><iframe id="f" style="width:390px;height:844px"></iframe>
+<!-- Browser check for jojo/saleh/index.html against a mocked Supabase (no network). Serve repo root: python3 -m http.server 8765, then
+     open http://localhost:8765/jojo/test/saleh-harness.html?role=saleh (or role=jojo) in Chrome and wait for "--- requests ---"
+     (~10 s; headless puppeteer works too). -->
+<script>
+var ROLE = new URLSearchParams(location.search).get('role') || 'saleh';
+var MOCK = `<script>
+(function(){
+  var db = { patches: [], posts: [], refreshed: 0, first401: true }; window.__db = db; window.__log = [];
+  function J(x){ return new Response(x===undefined?'':JSON.stringify(x), {status:200, headers:{'Content-Type':'application/json'}}); }
+  function qs(u){ var o={}; (u.split('?')[1]||'').split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); o[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); return o; }
+  function riyadh(off){ var p={}; new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).forEach(function(x){p[x.type]=x.value;}); var d=new Date(Date.UTC(+p.year,+p.month-1,+p.day+(off||0))); return d.toISOString().slice(0,10); }
+  var T = riyadh(0); db.today = T; db.tomorrow = riyadh(1);
+  var XSS = '<img src=x onerror="window.top.__xss=1">';
+  var settings = {sleepAt:'23:00',wakeAt:'06:30',gymDays:[],vitamins:['د'],waterGoal:8,city:{id:'riyadh',name:'الرياض',lat:24.7136,lng:46.6753},tz:'Asia/Riyadh',wins:['full_day']};
+  var msgs = [
+    {id:'m1',kind:'daily',for_date:T,achievement:null,body:'صباح الورد',seen_at:'2026-11-24T05:00:00Z',created_at:'2026-11-24T04:00:00Z'},
+    {id:'a1',kind:'achievement',for_date:null,achievement:'sleep_7',body:'أسبوع نوم!',seen_at:null,created_at:'2026-11-20T04:00:00Z'}
+  ];
+  var letters = [
+    {id:'L1',body:XSS+'\\nسطر ثاني',created_at:'2026-11-24T08:00:00Z',read_at:null},
+    {id:'L2',body:'قديمة',created_at:'2026-11-20T08:00:00Z',read_at:'2026-11-21T08:00:00Z'}
+  ];
+  window.fetch = async function(url, opt){
+    opt = opt||{}; var m = opt.method||'GET';
+    if (url.indexOf('supabase.co')===-1) throw new TypeError('blocked');
+    var body = opt.body ? JSON.parse(opt.body) : null, h = opt.headers||{};
+    window.__log.push(m+' '+url.split('.co')[1]+(h.Prefer?' ['+h.Prefer+']':'')+(body?' '+JSON.stringify(body):''));
+    if (!h.apikey) return new Response('no apikey',{status:401});
+    if (url.indexOf('/auth/v1/token?grant_type=password')!==-1) return J({access_token:'AT',refresh_token:'RT',expires_in:3600,user:{id:'U1',user_metadata:{}}});
+    if (url.indexOf('/auth/v1/token?grant_type=refresh_token')!==-1) { db.refreshed++; return J({access_token:'AT2',refresh_token:'RT2',expires_in:3600,user:{id:'U1',user_metadata:{}}}); }
+    if (url.indexOf('/auth/v1/logout')!==-1) return J();
+    if (h.Authorization!=='Bearer AT' && h.Authorization!=='Bearer AT2') return new Response('bad token',{status:401});
+    var q = qs(url);
+    if (url.indexOf('/storage/v1/object/sign/jojo-beans')!==-1) { db.sign = (db.sign||[]).concat([body.paths]); return J(body.paths.map(function(p){ return {path:p, signedURL:'/object/sign/jojo-beans/'+p+'?token=T', error:null}; })); }
+    if (url.indexOf('jojo_profiles')!==-1) {
+      if (m!=='GET') return new Response('42501',{status:403});
+      if (q.user_id==='eq.U1') return J([{role:'${ROLE}'}]);
+      if (q.role==='eq.jojo') return J([{user_id:'J1',settings:settings,created_at:'2026-01-01T00:00:00Z'}]);
+      return J([]);
+    }
+    if (url.indexOf('jojo_daily')!==-1) {
+      if (db.first401) { db.first401 = false; return new Response('JWT expired',{status:401}); }
+      return J([{date:riyadh(-5),pct:30},{date:riyadh(-4),pct:55},{date:riyadh(-3),pct:40},{date:riyadh(-2),pct:90},{date:riyadh(-1),pct:88},{date:T,pct:62}]);
+    }
+    if (url.indexOf('jojo_tasks')!==-1) return J([{id:'t1',title:XSS,days:null,created_at:'2026-01-01T00:00:00Z'}]);
+    if (url.indexOf('jojo_checks')!==-1) {
+      if (m!=='GET') return new Response('42501',{status:403});
+      var g = (url.match(/date=gte\.([0-9-]+)/)||[])[1], le = (url.match(/date=lte\.([0-9-]+)/)||[])[1];
+      if (g===T && le===T) return J([{date:T,key:'prayer:fajr',value:true},{date:T,key:'sleep',value:true},{date:T,key:'water',value:8},{date:T,key:'task:t1',value:true}]);
+      if (g===le) return J([]);
+      return J([{date:T,key:'sleep',value:true}]);
+    }
+    if (url.indexOf('jojo_messages')!==-1) {
+      if (m==='GET') {
+        return J(msgs.filter(function(x){
+          if (q.kind==='eq.daily') { var ds = q.for_date.replace(/^in\\.\\(|\\)$/g,'').split(','); return x.kind==='daily' && ds.indexOf(x.for_date)!==-1; }
+          if (q.kind==='eq.achievement') return x.kind==='achievement';
+          return false;
+        }));
+      }
+      if (m==='POST') { db.posts.push(body); var row = Object.assign({id:'n'+db.posts.length,seen_at:null,created_at:new Date().toISOString(),for_date:null,achievement:null}, body); msgs.unshift(row); return J([row]); }
+      if (m==='PATCH') { db.patches.push({url:url, body:body}); var id=q.id.slice(3), r=null; msgs.forEach(function(x){ if(x.id===id){ Object.assign(x, body); r=x; } }); return J(r?[r]:[]); }
+    }
+    if (url.indexOf('jojo_letters')!==-1) {
+      if (m==='GET') return J(letters);
+      if (m==='PATCH') { db.patches.push({url:url, body:body}); var lid=q.id.slice(3); letters.forEach(function(x){ if(x.id===lid) x.read_at=body.read_at; }); return J(); }
+    }
+    if (url.indexOf('jojo_beans')!==-1) return J([
+      {id:'B1',photo_path:'J1/1.jpg',name:XSS,roaster:'"><script>window.top.__xss=2<\\/script>',origin:null,process:null,roast:null,created_at:'2026-11-20T00:00:00Z'},
+      {id:'B2',photo_path:'J1/2.jpg',name:null,roaster:null,created_at:'2026-11-19T00:00:00Z'}]);
+    if (url.indexOf('jojo_ratings')!==-1) return J([
+      {bean_id:'B1',liked:true,notes:['حلو','<b>x</b>'],date:T},{bean_id:'B1',liked:true,notes:['حلو'],date:T},{bean_id:'B2',liked:false,notes:['مر'],date:T}]);
+    return new Response('unhandled '+url,{status:404});
+  };
+})();
+<\/script>`;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var out = [];
+function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementById("out").textContent = out.join("\n"); }
+(async function(){
+  try { localStorage.clear(); } catch(e){}
+  try {
+  var html = await (await fetch('/jojo/saleh/index.html')).text();
+  html = html.replace('<head>', '<head><base href="/jojo/saleh/">'+MOCK);
+  var f = document.getElementById('f'); f.srcdoc = html;
+  await new Promise(function(r){ f.onload = r; });
+  var w = f.contentWindow, d = f.contentDocument;
+  async function until(fn, ms){ for (var i=0;i<(ms||4000)/50;i++){ try { if (fn()) return true; } catch(e){} await sleep(50); } return false; }
+  async function nav(h){ w.location.hash = h; await sleep(50); }
+  await until(function(){ return d.querySelector('form[data-login]'); });
+  ok(!!d.querySelector('form[data-login]') && /صفحة صالح/.test(d.body.textContent), 'login screen shown, labelled صفحة صالح');
+  d.getElementById('em').value = ' Saleh '; d.getElementById('pw').value = '١٢٣٤';
+  d.querySelector('form[data-login]').requestSubmit();
+  await until(function(){ return w.__log.some(function(l){ return /jojo_profiles/.test(l); }); });
+  ok(w.__log.some(function(l){ return l === 'POST /auth/v1/token?grant_type=password {"email":"saleh@jojo.invalid","password":"1234"}'; }), 'username "Saleh" -> saleh@jojo.invalid, Arabic digits -> latin');
+
+  if (ROLE !== 'saleh') {
+    await until(function(){ return /هذي الصفحة لصالح/.test(d.body.textContent); });
+    ok(/هذي الصفحة لصالح/.test(d.body.textContent) && !!d.querySelector('form[data-login]'), 'non-saleh role sees "هذي الصفحة لصالح" on the login screen');
+    ok(!w.localStorage.getItem('jojo-saleh.session'), 'non-saleh session cleared');
+    ok(w.__log.some(function(l){ return /auth\/v1\/logout/.test(l); }), 'logout called');
+    ok(!w.__log.some(function(l){ return /jojo_(daily|messages|letters|beans|ratings|checks|tasks|notes)/.test(l); }), 'no data requested for a non-saleh account');
+  } else {
+    var db = w.__db;
+    /* ---- الرئيسية ---- */
+    await until(function(){ return d.getElementById('todayPct'); });
+    ok(db.refreshed === 1 && !!d.getElementById('todayPct'), '401 on first data call -> one token refresh, then retried');
+    ok(d.getElementById('todayPct').textContent === '٦٢٪' && d.getElementById('ydayPct').textContent === '٨٨٪', 'home: today 62% and yesterday 88%');
+    var bands = [].map.call(d.querySelectorAll('#week .bead'), function(b){ return b.dataset.band; });
+    ok(bands.join(',') === 'none,low,mid,low,high,high,mid', 'home: 7 beads oldest->today coloured by band (' + bands.join(',') + ')');
+    ok(d.getElementById('streak').textContent === '٢', 'home: streak of days >= 80% = 2 (today in progress does not break it)');
+    ok(!d.querySelector('a[href*="jojo/"]') , 'no link back into Jojo app');
+
+    /* ---- يومها (قراءة بس) ---- */
+    await nav('#day');
+    await until(function(){ return d.getElementById('dayPct'); });
+    var v = d.getElementById('view');
+    ok(!!d.getElementById('dayPct') && /للعرض بس/.test(v.textContent), 'day: her day rendered read-only');
+    ok(!v.querySelector('input,textarea,select,form') && [].every.call(v.querySelectorAll('button'), function(b){ return /^day-(prev|next)$/.test(b.dataset.act); }), 'day: no write controls (only prev/next date buttons)');
+    ok(v.querySelectorAll('.pr.done').length === 1 && v.querySelectorAll('.row.done').length >= 3, 'day: done/not-done from her checks (fajr, sleep, water, task)');
+    ok(/الرياض/.test(v.textContent) && /١١:٠٠ م/.test(v.textContent) && /٨ أكواب/.test(v.textContent), 'day: her settings summary shown');
+    ok(!v.querySelector('img') && v.textContent.indexOf('<img src=x') !== -1, 'day: task title with HTML rendered as text');
+    ok(d.querySelector('[data-act="day-next"]').disabled, 'day: cannot go past today');
+    var nChecks = function(){ return w.__log.filter(function(l){ return /jojo_checks/.test(l); }).length; }, c0 = nChecks();
+    d.querySelector('[data-act="day-prev"]').click();
+    await until(function(){ return nChecks() > c0; });
+    await sleep(200);
+    ok(/date=gte\.(\d{4}-\d\d-\d\d)&date=lte\.\1/.test(w.__log.filter(function(l){ return /jojo_checks/.test(l); }).pop()) && !d.querySelector('[data-act="day-next"]').disabled, 'day: previous-day arrow loads that date');
+
+    /* ---- رسالة اليوم ---- */
+    await nav('#msg');
+    await until(function(){ return d.querySelector('form[data-key="' + db.today + '"]'); });
+    ok(/شافتها/.test(d.getElementById('todaySeen').textContent), 'msg: shows that she saw today\'s message');
+    var ft = d.querySelector('form[data-key="' + db.today + '"]');
+    ok(ft.body.value === 'صباح الورد', 'msg: today\'s text prefilled');
+    ft.body.value = 'صباحك سكر'; ft.requestSubmit();
+    await until(function(){ return db.patches.length === 1; });
+    ok(db.patches[0] && /jojo_messages\?id=eq\.m1&/.test(db.patches[0].url) && JSON.stringify(db.patches[0].body) === '{"body":"صباحك سكر","seen_at":null}', 'msg: editing today PATCHes {body, seen_at:null} on the existing row');
+    await sleep(100);
+    ok(/لسه ما شافتها/.test(d.getElementById('todaySeen').textContent), 'msg: after edit shows not seen yet');
+    var fm = d.querySelector('form[data-key="' + db.tomorrow + '"]');
+    fm.body.value = 'بكرة أحلى'; fm.requestSubmit();
+    await until(function(){ return db.posts.length === 1; });
+    ok(JSON.stringify(db.posts[0]) === JSON.stringify({kind:'daily', for_date: db.tomorrow, body:'بكرة أحلى'}), 'msg: tomorrow POST is exactly {kind:daily, for_date:tomorrow, body}');
+    var fm2 = d.querySelector('form[data-key="' + db.tomorrow + '"]');
+    fm2.body.value = 'بكرة أحلى وأحلى'; fm2.requestSubmit();
+    await until(function(){ return db.patches.length === 2; });
+    ok(db.posts.length === 1 && /id=eq\.n1&/.test(db.patches[1].url), 'msg: second save for tomorrow updates (no duplicate row)');
+
+    /* ---- رسائل التشجيع ---- */
+    await nav('#wins');
+    await until(function(){ return d.querySelectorAll('[data-win]').length; });
+    var ids = [].map.call(d.querySelectorAll('[data-win]'), function(a){ return a.dataset.win; });
+    ok(ids.join(',') === w.Jojo.ACHIEVEMENTS.join(',') && ids.join(',') === 'full_day,sleep_7,gym_4w,first_recipe', 'wins: one card per Jojo.ACHIEVEMENTS id');
+    ok(d.querySelector('[data-win="full_day"]').classList.contains('open') && !d.querySelector('[data-win="gym_4w"]').classList.contains('open'), 'wins: unlocked state from her settings.wins / checks');
+    var fs = d.querySelector('[data-win="sleep_7"] form'); fs.body.value = 'أسبوع نوم كامل!'; fs.requestSubmit();
+    await until(function(){ return db.patches.length === 3; });
+    ok(/id=eq\.a1&/.test(db.patches[2].url) && JSON.stringify(db.patches[2].body) === '{"body":"أسبوع نوم كامل!","seen_at":null}', 'wins: existing achievement message edited via PATCH');
+    var fg = d.querySelector('[data-win="gym_4w"] form'); fg.body.value = 'كفو!'; fg.requestSubmit();
+    await until(function(){ return db.posts.length === 2; });
+    ok(JSON.stringify(db.posts[1]) === JSON.stringify({kind:'achievement', achievement:'gym_4w', body:'كفو!'}), 'wins: new achievement POST is exactly {kind:achievement, achievement, body}');
+
+    /* ---- نوتها ---- */
+    await nav('#letters');
+    await until(function(){ return d.querySelector('[data-act="letter"][data-id="L1"]'); });
+    var before = db.patches.length;
+    ok(!d.querySelector('[data-letter="L1"] .body'), 'letters: unread note is closed (no preview)');
+    d.querySelector('[data-act="letter"][data-id="L1"]').click();
+    await until(function(){ return db.patches.length === before + 1; });
+    var lp = db.patches[before];
+    ok(lp && /\/rest\/v1\/jojo_letters\?id=eq\.L1$/.test(lp.url) && Object.keys(lp.body).join(',') === 'read_at' && !isNaN(Date.parse(lp.body.read_at)), 'letters: opening marks read with PATCH body exactly {read_at}');
+    var lb = d.querySelector('[data-letter="L1"] .body');
+    ok(lb && lb.textContent.indexOf('<img src=x onerror=') === 0 && !lb.querySelector('img'), 'letters: her note HTML rendered as text');
+    d.querySelector('[data-act="letter"][data-id="L2"]').click(); await sleep(300);
+    ok(db.patches.length === before + 1, 'letters: opening an already-read note sends nothing');
+
+    /* ---- ذوقها ---- */
+    await nav('#taste');
+    await until(function(){ return d.getElementById('shelf'); });
+    ok(db.sign && db.sign.length === 1 && db.sign[0].join(',') === 'J1/1.jpg,J1/2.jpg', 'taste: one batched sign request for all photos');
+    var sh = d.getElementById('shelf');
+    ok(sh.querySelectorAll('img').length === 2 && [].every.call(sh.querySelectorAll('img'), function(i){ return /\/storage\/v1\/object\/sign\/jojo-beans\/J1\/\d\.jpg\?token=T$/.test(i.src) && !i.hasAttribute('onerror'); }), 'taste: photos use signed URLs; no injected attributes');
+    ok(sh.textContent.indexOf('<img src=x onerror=') !== -1 && sh.textContent.indexOf('"><script>') !== -1 && !sh.querySelector('script,b'), 'taste: bean name/roaster/notes HTML rendered as text');
+    ok(/عجبها ٢ من ٢/.test(sh.textContent) && /حلو ×٢/.test(sh.textContent) && /كيس بدون اسم/.test(sh.textContent), 'taste: per-bean liked count + note chips');
+
+    await sleep(300);
+    var L = w.__log;
+    ok(!L.some(function(l){ return /jojo_notes/.test(l); }), 'privacy: jojo_notes never requested');
+    ok(!L.some(function(l){ return /^(POST|PATCH|PUT|DELETE) .*jojo_(checks|tasks|profiles|daily|beans|ratings|notes|push|config|recipes)/.test(l); }), 'privacy: no write to checks/tasks/profiles/daily/beans/ratings');
+    ok(!L.some(function(l){ return /^DELETE /.test(l); }), 'no DELETE requests at all');
+    ok(L.filter(function(l){ return /^PATCH .*jojo_letters/.test(l); }).every(function(l){ return /\{"read_at":"[^"]+"\}$/.test(l); }), 'every jojo_letters PATCH body is only {read_at}');
+    ok(!L.some(function(l){ return /^(POST|PATCH) .*storage\/v1\/object\/jojo-beans/.test(l); }), 'no storage uploads');
+    ok(w.top.__xss === undefined, 'no injected script/handler ran');
+  }
+  out.push('--- requests ---'); out = out.concat(w.__log); document.getElementById('out').textContent = out.join('\n');
+  } catch (e) { out.push('ERROR ' + e.message + '\n' + e.stack); document.getElementById('out').textContent = out.join('\n'); }
+})();
+</script>
