@@ -67,7 +67,7 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(w.__db.checks[S.today+'|prayer:fajr']===true && w.__db.checks[S.today+'|sleep']===true, '3 ticks written to jojo_checks');
     w.__offline = true; w.dispatchEvent(new Event('offline'));
     click('wake'); await sleep(300);
-    var qd = JSON.parse(w.localStorage.getItem('jojo.queue')||'{}');
+    var qd = JSON.parse(w.localStorage.getItem('jojo.queue.U1')||'{}');
     ok(qd['c|'+S.today+'|wake'] && qd['c|'+S.today+'|wake'].value===true, 'offline tick queued in localStorage');
     ok(!(S.today+'|wake' in w.__db.checks), 'offline tick not on server yet');
     ok(/بدون نت/.test(d.getElementById('pending').textContent), 'offline pill shown');
@@ -79,7 +79,7 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     var expect = w.Jojo.dayScore(items, S.checks, {waterGoal:S.settings.waterGoal});
     ok(w.__db.checks[S.today+'|wake']===true && w.__db.checks[S.today+'|vitamins']===true, 'queued ticks replayed after online');
     ok(w.__db.daily[S.today]===expect, 'jojo_daily.pct ('+w.__db.daily[S.today]+') == dayScore ('+expect+')');
-    ok(Object.keys(JSON.parse(w.localStorage.getItem('jojo.queue')||'{}')).length===0, 'queue empty after replay');
+    ok(Object.keys(JSON.parse(w.localStorage.getItem('jojo.queue.U1')||'{}')).length===0, 'queue empty after replay');
     // untick + replay twice → idempotent, value false
     click('sleep'); await sleep(500); 
     ok(w.__db.checks[S.today+'|sleep']===false, 'untick writes value=false');

@@ -113,8 +113,8 @@ button.row:active{background:var(--card-2)}
 .pr-note{font-size:12px;color:var(--ink-2);padding:0 16px 12px}
 
 /* الماء */
-.cups{display:grid;grid-template-columns:repeat(auto-fill,minmax(42px,1fr));padding:0 6px 10px}
-.cup-b{width:100%;height:48px;display:grid;place-items:center;border-radius:12px}
+.cups{display:grid;padding:0 6px 10px}
+.cup-b{width:100%;min-width:44px;height:48px;display:grid;place-items:center;border-radius:12px}
 .cup{width:26px;height:32px}
 .cup path{fill:var(--card-2);stroke:#5C4A50;stroke-width:2}
 .cup path.w{fill:transparent;stroke:none}
@@ -180,9 +180,10 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 .streak .num{font-size:30px;font-weight:800;color:var(--rose);line-height:1.1}
 .streak .l{font-size:13px;color:var(--ink-2);margin-top:2px}
 .win{display:flex;gap:12px;align-items:flex-start;background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
-.win .medal{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--card-2);font-size:22px}
+.win .medal{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--choc-deep)}
+.win .medal .ic{width:24px;height:24px}
 .win.open{border-color:#5A3B48;background:linear-gradient(180deg,#2A1C23,var(--cream))}
-.win.open .medal{background:var(--pink)}
+.win.open .medal{background:var(--pink);color:var(--on-pink)}
 .win h3{font-size:17px;font-weight:700}
 .win .msg{margin-top:8px;padding:12px 14px;border-radius:var(--r-sm);background:var(--choc);border:1px solid #4A3D33;font-size:15px;line-height:1.75;white-space:pre-line}
 .win .msg .sig{display:block;margin-top:6px;font-family:"Baloo";font-weight:700;color:var(--choc-deep)}
@@ -252,12 +253,15 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 </nav>
 <div id="live" class="sr" aria-live="polite"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/adhan@4/lib/bundles/adhan.umd.min.js" defer></script>
-<script src="core.js" defer></script>
 <script>
-/* يشتغل بعد core.js و adhan (DOMContentLoaded) */
+/* ============================================================ رقم النسخة
+   غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
+var JOJO_VERSION = '2026-11-24.2';
+</script>
+<script>
 (function () {
 'use strict';
+var V = JOJO_VERSION;
 
 /* ============================================================ إعدادات ثابتة
    مفتاح anon عام (نفس مشروع الخزنة). الحماية كلها من RLS في jojo/server/schema.sql. */
@@ -295,10 +299,10 @@ var DAYS = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعا�
 var PRAYERS = [['fajr', 'الفجر'], ['dhuhr', 'الظهر'], ['asr', 'العصر'], ['maghrib', 'المغرب'], ['isha', 'العشاء']];
 var MEALS = [['breakfast', 'الفطور'], ['lunch', 'الغداء'], ['dinner', 'العشاء']];
 var WINS = [
-  { key: 'full_day', medal: '🎀', title: 'أول سوارة كاملة', how: 'تنفتح لما تكملين كل حبات السوارة بيوم واحد' },
-  { key: 'sleep_7', medal: '🌙', title: '٧ أيام نوم بوقتك', how: 'نامي بوقتك ٧ أيام ورا بعض', goal: 7, streakKey: 'sleep' },
-  { key: 'gym_4w', medal: '💪', title: '٤ أسابيع نادي', how: '١٦ حصة نادي ورا بعض بأيامك', goal: 16, streakKey: 'gym' },
-  { key: 'first_recipe', medal: '☕', title: 'أول وصفة قهوة', how: 'جربي أول وصفة من قهوتي' }
+  { key: 'full_day', icon: 'bow', title: 'أول سوارة كاملة', how: 'تنفتح لما تكملين كل حبات السوارة بيوم واحد' },
+  { key: 'sleep_7', icon: 'moon', title: '٧ أيام نوم بوقتك', how: 'نامي بوقتك ٧ أيام ورا بعض', goal: 7, streakKey: 'sleep' },
+  { key: 'gym_4w', icon: 'gym', title: '٤ أسابيع نادي', how: '١٦ حصة نادي ورا بعض بأيامك', goal: 16, streakKey: 'gym' },
+  { key: 'first_recipe', icon: 'cup', title: 'أول وصفة قهوة', how: 'جربي أول وصفة من قهوتي' }
 ];
 
 /* ============================================================ أدوات صغيرة */
@@ -374,16 +378,24 @@ var IC = {
   pill: ic('<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-35 12 12)"/><path d="M9.5 8.3l5 7.4"/>'),
   drop: ic('<path d="M12 3s6 7 6 11a6 6 0 0 1-12 0c0-4 6-11 6-11z"/>'),
   task: ic('<path d="M4 5h16v11a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3z"/><path d="M8 9h8M8 13h5"/>'),
-  mosque: ic('<path d="M12 3c2.5 2 5 3.5 5 6.5V11H7V9.5C7 6.5 9.5 5 12 3z"/><path d="M5 11h14v9H5zM10 20v-4a2 2 0 0 1 4 0v4"/>')
+  mosque: ic('<path d="M12 4c2.5 2 5 3.5 5 6.5V12H7v-1.5C7 7.5 9.5 6 12 4z"/><path d="M5 12h14v8H5zM10 20v-3.5a2 2 0 0 1 4 0V20"/><path d="M13.2 1.8a1.6 1.6 0 1 0 1.2 2.6"/>'),
+  bowl: ic('<path d="M4 12h16a8 8 0 0 1-16 0z"/><path d="M9 4c0 2 2 2 2 4M14 4c0 2 2 2 2 4"/>'),
+  cup: ic('<path d="M5 9h12v5a5 5 0 0 1-5 5h-2a5 5 0 0 1-5-5z"/><path d="M17 10h1.5a2.5 2.5 0 0 1 0 5H17M9 3c0 1.5 1 1.5 1 3M13 3c0 1.5 1 1.5 1 3"/>'),
+  lock: ic('<rect x="5" y="11" width="14" height="9" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+  bow: ic('<path d="M12 12C8.5 6.5 3 7.5 3.8 11.5 4.5 15.5 9 14.8 12 12zM12 12c3.5-5.5 9-4.5 8.2-.5-.7 4-5.2 3.3-8.2.5z"/><path d="M12 12l-3 7M12 12l3 7"/>')
 };
 var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 var BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
+/* أعمدة الأكواب: ٧ كحد أقصى بالصف (٧×٤٤ يدخل بعرض ٣٩٠)، والصفوف متساوية: ٨ أكواب = ٤+٤ */
+function cupCols(n) { var rows = Math.ceil(n / 7) || 1; return Math.ceil(n / rows) || 1; }
 function cupSVG() { return '<svg class="cup" viewBox="0 0 26 32" aria-hidden="true"><path class="o" d="M3 3h20l-2.5 26h-15z"/><path class="w" d="M4.6 11h16.8l-1.8 16.5H6.4z"/></svg>'; }
 
 /* ============================================================ الجلسة (Supabase Auth عبر fetch، نفس نمط lab/index.html) */
 function NetError(msg) { this.name = 'NetError'; this.message = msg || 'offline'; }
 function HttpError(status, body) { this.name = 'HttpError'; this.status = status; this.message = body; }
 function AuthError(msg) { this.name = 'AuthError'; this.message = msg; }
+/* ما فيه اتصال أصلًا (مو خطأ من الخادم) */
+function isOffline(e) { return e instanceof NetError && (e.message === 'offline' || e.message === 'refresh_unreachable'); }
 
 var Auth = {
   sess: null,
@@ -401,19 +413,42 @@ var Auth = {
         body: JSON.stringify({ email: email, password: password })
       });
     } catch (e) { throw new NetError(); }
-    if (!r.ok) throw new AuthError(r.status === 400 ? 'bad_credentials' : 'auth_' + r.status);
+    if (!r.ok) {
+      var b = {}; try { b = await r.json(); } catch (e) { /* not json */ }
+      var code = b.error_code || b.error || '';
+      if (code === 'email_not_confirmed') throw new AuthError('email_not_confirmed');
+      if (r.status === 429) throw new AuthError('rate_limited');
+      if (r.status === 400 || code === 'invalid_credentials' || code === 'invalid_grant') throw new AuthError('bad_credentials');
+      throw new AuthError('auth_' + r.status);
+    }
     this.save(await r.json());
   },
-  refresh: async function () {
-    var r;
+  /* تحديث الجلسة. فشل نهائي بس (الرمز نفسه مرفوض) يطلعها؛ أي شي ثاني (نت، 5xx، 429، مهلة) = مؤقت ونجرب بعدين.
+     طلب واحد بنفس الوقت عشان ما ينصرف نفس refresh_token مرتين. */
+  _refreshing: null,
+  refresh: function () {
+    var self = this;
+    if (!self._refreshing) {
+      self._refreshing = self._doRefresh().then(function (v) { self._refreshing = null; return v; }, function (e) { self._refreshing = null; throw e; });
+    }
+    return self._refreshing;
+  },
+  _doRefresh: async function () {
+    var r, ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+    var timer = ctl && setTimeout(function () { ctl.abort(); }, 15000);
     try {
       r = await fetch(SB_URL + '/auth/v1/token?grant_type=refresh_token', {
         method: 'POST', headers: { apikey: SB_KEY, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refresh_token: this.sess.refresh_token })
+        body: JSON.stringify({ refresh_token: this.sess.refresh_token }), signal: ctl ? ctl.signal : undefined
       });
-    } catch (e) { throw new NetError(); }
-    if (!r.ok) throw new AuthError('expired');
-    this.save(await r.json());
+    } catch (e) { throw new NetError('refresh_unreachable'); }
+    finally { if (timer) clearTimeout(timer); }
+    if (r.ok) return this.save(await r.json());
+    var text = ''; try { text = await r.text(); } catch (e) { /* ignore */ }
+    if ((r.status === 400 || r.status === 401) && /invalid_grant|refresh_token_not_found|refresh_token_already_used|session_not_found|session_expired/.test(text)) {
+      throw new AuthError('expired');
+    }
+    throw new NetError('refresh_' + r.status);              // مؤقت: نبقى على الجلسة والكاش
   },
   token: async function () {
     if (this.sess.expires_at && this.sess.expires_at - 60 < Date.now() / 1000) await this.refresh();
@@ -421,7 +456,7 @@ var Auth = {
   },
   signOut: async function () {
     var s = this.sess; this.sess = null;
-    LS.del('session'); LS.del('cache'); LS.del('queue');
+    LS.del('session'); LS.del('cache');      // الطابور ما ينحذف أبد: محفوظ باسم المستخدم ويترفع لما ترجع تدخل
     if (s && s.access_token && !DEMO) {
       try { await fetch(SB_URL + '/auth/v1/logout', { method: 'POST', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + s.access_token } }); } catch (e) { /* offline: the token just expires */ }
     }
@@ -437,6 +472,7 @@ async function api(path, opt, retried) {
     r = await fetch(SB_URL + path, { method: opt.method || 'GET', headers: h, body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined });
   } catch (e) { throw new NetError(); }
   if (r.status === 401 && !retried) { await Auth.refresh(); return api(path, opt, true); }
+  if (r.status >= 500 || r.status === 429 || r.status === 408) throw new NetError('http_' + r.status);
   if (!r.ok) throw new HttpError(r.status, await r.text());
   var t = await r.text(); return t ? JSON.parse(t) : null;
 }
@@ -494,7 +530,12 @@ var Remote = {
   dailyMessage: function (date) {
     return api('/rest/v1/jojo_messages?select=id,body,seen_at,created_at&kind=eq.daily&for_date=eq.' + date + '&order=created_at.desc&limit=1').then(function (r) { return r && r[0] || null; });
   },
-  winMessages: function () { return api('/rest/v1/jojo_messages?select=id,achievement,body,seen_at&kind=eq.achievement&order=created_at.desc'); },
+  /* نجيب نص رسائل الإنجاز المفتوحة بس — المقفلة ما تنزل للجهاز أصلًا */
+  winMessages: function (keys) {
+    keys = (keys || []).filter(function (k) { return /^[a-z0-9_]+$/.test(k); });
+    if (!keys.length) return Promise.resolve([]);
+    return api('/rest/v1/jojo_messages?select=id,achievement,body,seen_at&kind=eq.achievement&achievement=in.(' + keys.join(',') + ')&order=created_at.desc');
+  },
   /* جوجو تقدر تغيّر seen_at بس (jojo_messages_guard) */
   markSeen: function (id) { return api('/rest/v1/jojo_messages?id=eq.' + id, { method: 'PATCH', body: { seen_at: new Date().toISOString() }, prefer: 'return=minimal' }); }
 };
@@ -567,7 +608,7 @@ function makeDemo(onboard) {
     addLetter: function (body) { var x = { id: nid(), body: body, created_at: new Date().toISOString(), read_at: null }; letters.unshift(x); return later(x); },
     deleteLetter: function (id) { letters = letters.filter(function (t) { return t.id !== id; }); return later(); },
     dailyMessage: function (date) { return later(msgs.filter(function (m) { return m.kind === 'daily' && m.for_date === date; })[0] || null); },
-    winMessages: function () { return later(msgs.filter(function (m) { return m.kind === 'achievement'; })); },
+    winMessages: function (keys) { return later(msgs.filter(function (m) { return m.kind === 'achievement' && (keys || []).indexOf(m.achievement) !== -1; })); },
     markSeen: function (id) { msgs.forEach(function (m) { if (m.id === id) m.seen_at = new Date().toISOString(); }); return later(); }
   };
 }
@@ -580,6 +621,7 @@ var S = {
   notes: null, letters: null, notesErr: false,
   wins: null, winsErr: false,
   online: navigator.onLine !== false,
+  synced: false,
   booting: true
 };
 window.JojoApp = { state: S };
@@ -611,13 +653,19 @@ function loadCache() {
 /* ============================================================ طابور التأشير بدون نت
    queue = { 'c|<date>|<key>': {t:'c', date, key, value, seq}, 'd|<date>': {t:'d', date, pct, seq} }
    مفتاح لكل بند → آخر قيمة بس، فإعادة الرفع ما تكرر شي. */
-var flushing = false, retryTimer = null, seq = 0;
-function queue() { return LS.get('queue', {}); }
+var flushing = false, retryTimer = null, seq = 0, backoff = 0;
+function dequeue(id, s) {
+  var cur = queue();
+  if (cur[id] && cur[id].seq === s) { delete cur[id]; LS.set(qkey(), cur); }
+  if (memQueue[id] && memQueue[id].seq === s) delete memQueue[id];
+}
+function qkey() { return 'queue.' + (Auth.uid() || 'anon'); }
+function queue() { return LS.get(qkey(), {}); }
 function enqueue(entry) {
   var qd = queue(), id = entry.t === 'c' ? 'c|' + entry.date + '|' + entry.key : 'd|' + entry.date;
   entry.seq = Date.now() + '-' + (seq++);
   qd[id] = entry;
-  if (!LS.set('queue', qd)) memQueue[id] = entry;   // لو localStorage مقفل، نخليه بالذاكرة
+  if (!LS.set(qkey(), qd)) memQueue[id] = entry;   // لو localStorage مقفل، نخليه بالذاكرة
 }
 var memQueue = {};
 function allQueued() { return Object.assign({}, queue(), memQueue); }
@@ -630,7 +678,7 @@ function pendingCount() { return Object.keys(allQueued()).filter(function (k) { 
 async function flush() {
   if (flushing || !store) return;
   flushing = true;
-  var failed = false, hadNet = true;
+  var failed = false, hadNet = true, poison = 0;
   try {
     var qd = allQueued();
     var ids = Object.keys(qd).sort(function (a, b) { return a.charAt(0) === b.charAt(0) ? 0 : a.charAt(0) === 'c' ? -1 : 1; }); // البنود قبل النسبة
@@ -640,19 +688,27 @@ async function flush() {
         if (e.t === 'c') await store.setCheck(e.date, e.key, e.value);
         else await store.setDaily(e.date, e.pct);
         var cur = queue();
-        if (cur[id] && cur[id].seq === e.seq) { delete cur[id]; LS.set('queue', cur); }
-        if (memQueue[id] && memQueue[id].seq === e.seq) delete memQueue[id];
+        dequeue(id, e.seq);
       } catch (err) {
         if (err instanceof AuthError) { flushing = false; return sessionExpired(); }
-        failed = true; hadNet = !(err instanceof NetError);
+        if (err instanceof HttpError && err.status !== 401) {
+          // رفض نهائي من الخادم (4xx): نشيل هالبند بس ونكمل الباقي بدل ما يوقف الطابور كله
+          if (window.console) console.warn('jojo: dropped queue entry', id, err.status, err.message);
+          dequeue(id, e.seq); poison++;
+          continue;
+        }
+        failed = true; hadNet = !isOffline(err);
         break;
       }
     }
   } finally { flushing = false; }
+  if (!failed) backoff = 0;
   setOnline(!(failed && !hadNet));
+  if (poison) toast('ما قدرت أحفظ ' + (poison === 1 ? 'تأشيرة' : 'كم تأشيرة') + '، أشريها مرة ثانية');
   if (failed) {
     if (hadNet) toast('ما قدرت أحفظ، بجرب مرة ثانية');
-    clearTimeout(retryTimer); retryTimer = setTimeout(flush, 15000);
+    backoff = Math.min(backoff ? backoff * 2 : 5000, 300000);   // ٥ ثواني ← ٥ دقايق
+    clearTimeout(retryTimer); retryTimer = setTimeout(flush, backoff);
   } else if (Object.keys(allQueued()).length) {
     setTimeout(flush, 0);                      // تأشيرات صارت أثناء الرفع → نكمل
   }
@@ -672,9 +728,11 @@ function updatePending() {
 }
 
 /* تأشير بند: تحديث فوري + طابور + رفع */
+var touchGen = 0, touchedAt = {};   // متى آخر مرة تأشر كل بند (للدمج مع لقطة الخادم)
 function setCheck(key, value, extra) {
   var before = score();
-  S.checks[key] = value;
+  S.checks[key] = value; touchedAt[key] = ++touchGen;
+  (extra || []).forEach(function (x) { touchedAt[x[0]] = ++touchGen; });
   enqueue({ t: 'c', date: S.today, key: key, value: value });
   (extra || []).forEach(function (x) { S.checks[x[0]] = x[1]; enqueue({ t: 'c', date: S.today, key: x[0], value: x[1] }); });
   queueDaily();
@@ -683,6 +741,15 @@ function setCheck(key, value, extra) {
   if (route === 'today') renderToday();
   if (after === 100 && before !== 100) celebrateDay();
   flush();
+}
+/* حبة الفيتامينات = كل الفيتامينات الحالية متأشرة (تتعدل لو تغيرت القائمة) */
+function syncVitamins() {
+  var v = S.settings.vitamins || [];
+  var all = v.length > 0 && v.every(function (x) { return S.checks['vit:' + x] === true; });
+  if ((S.checks.vitamins === true) !== all && v.length) {
+    S.checks.vitamins = all; touchedAt.vitamins = ++touchGen;
+    enqueue({ t: 'c', date: S.today, key: 'vitamins', value: all });
+  }
 }
 function queueDaily() { enqueue({ t: 'd', date: S.today, pct: score() }); }
 
@@ -778,7 +845,7 @@ function renderToday() {
       cups += '<button class="cup-b" data-act="water" data-n="' + c + '" data-fid="cup' + c + '" aria-pressed="' + (c <= w) + '" aria-label="كوب ' + ar(c) + '">' + cupSVG() + '</button>';
     }
     care += '<div class="row" style="padding-bottom:6px">' + IC.drop + '<span class="t">الماء<br><span class="s">' + ar(w) + ' من ' + ar(goal) + ' أكواب' + (w >= goal ? ' — وصلتِ هدفك 💧' : '') + '</span></span></div>' +
-      '<div class="cups" role="group" aria-label="أكواب الماء: ' + ar(w) + ' من ' + ar(goal) + '">' + cups + '</div>';
+      '<div class="cups" style="grid-template-columns:repeat(' + cupCols(Math.max(goal, w)) + ',minmax(44px,1fr))" role="group" aria-label="أكواب الماء: ' + ar(w) + ' من ' + ar(goal) + '">' + cups + '</div>';
   }
 
   var mine = tasksOn(S.today).filter(function (t) { return !t.days || !t.days.length || t.days.indexOf(wd) !== -1; });
@@ -817,13 +884,13 @@ var draftDays = [];
 function renderHabits() {
   var s = S.settings;
   var core = [
-    ['🕌', 'الصلوات الخمس', 'كل صلاة حبة بالسوارة'],
-    ['🌙', 'نمت بوقتي', s.sleepAt ? 'هدفك ' + t12(s.sleepAt, true) : ''],
-    ['🌅', 'صحيت بوقتي', s.wakeAt ? 'هدفك ' + t12(s.wakeAt, true) : ''],
-    ['🥗', 'الفطور والغداء والعشاء', 'كل وجبة حبة'],
-    (s.vitamins || []).length ? ['💊', 'الفيتامينات', (s.vitamins || []).join(' · ')] : null,
-    s.waterGoal ? ['💧', 'الماء', ar(s.waterGoal) + ' أكواب'] : null,
-    (s.gymDays || []).length ? ['🏋️‍♀️', 'النادي', daysText(s.gymDays)] : null
+    [IC.mosque, 'الصلوات الخمس', 'كل صلاة حبة بالسوارة'],
+    [IC.moon, 'نمت بوقتي', s.sleepAt ? 'هدفك ' + t12(s.sleepAt, true) : ''],
+    [IC.sun, 'صحيت بوقتي', s.wakeAt ? 'هدفك ' + t12(s.wakeAt, true) : ''],
+    [IC.bowl, 'الفطور والغداء والعشاء', 'كل وجبة حبة'],
+    (s.vitamins || []).length ? [IC.pill, 'الفيتامينات', (s.vitamins || []).join(' · ')] : null,
+    s.waterGoal ? [IC.drop, 'الماء', ar(s.waterGoal) + ' أكواب'] : null,
+    (s.gymDays || []).length ? [IC.gym, 'النادي', daysText(s.gymDays)] : null
   ].filter(Boolean);
   var list = S.tasks.length ? S.tasks.map(function (t) {
     if (editingTask === t.id) {
@@ -838,7 +905,7 @@ function renderHabits() {
   paint(
     '<header class="page-top"><h1>عاداتي</h1>' + catSVG() + '</header>' +
     '<h2 class="sec">الأساسية</h2><div class="group">' + core.map(function (c) {
-      return '<div class="row"><span aria-hidden="true" style="font-size:20px;width:26px;text-align:center">' + c[0] + '</span><span class="t">' + c[1] + (c[2] ? '<br><span class="s">' + esc(c[2]) + '</span>' : '') + '</span></div>';
+      return '<div class="row">' + c[0] + '<span class="t">' + c[1] + (c[2] ? '<br><span class="s">' + esc(c[2]) + '</span>' : '') + '</span></div>';
     }).join('') + '</div>' +
     '<p class="muted" style="margin:-6px 4px 22px">تعدلين أوقاتها وأيام النادي والفيتامينات من <a class="link" href="#settings">إعداداتي</a>.</p>' +
     '<h2 class="sec">مهامي الخاصة</h2>' + list +
@@ -917,9 +984,9 @@ async function loadWins() {
   S.winsErr = false;
   try {
     var from = addDays(S.today, -59);
-    var r = await Promise.all([store.checks(from, S.today), store.winMessages()]);
+    var rows = await store.checks(from, S.today);
     var by = {};
-    (r[0] || []).forEach(function (c) { (by[c.date] = by[c.date] || {})[c.key] = c.value; });
+    (rows || []).forEach(function (c) { (by[c.date] = by[c.date] || {})[c.key] = c.value; });
     by[S.today] = Object.assign({}, by[S.today] || {}, S.checks);            // اليوم: الحالة المحلية (فيها اللي بالطابور)
     var days = [];
     for (var d = from; d <= S.today; d = addDays(d, 1)) {
@@ -930,7 +997,8 @@ async function loadWins() {
     var kept = S.settings.wins || [];
     var all = kept.concat(unlocked.filter(function (k) { return kept.indexOf(k) === -1; }));
     if (all.length !== kept.length) { S.settings.wins = all; saveCache(); store.saveSettings(S.settings).catch(function () { /* next time */ }); }
-    S.wins = { days: days, unlocked: all, msgs: r[1] || [] };
+    var msgs = await store.winMessages(all);
+    S.wins = { days: days, unlocked: all, msgs: msgs || [] };
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
     S.winsErr = true;
@@ -970,8 +1038,8 @@ function renderWins() {
     }
     var body = open
       ? (m ? '<div class="msg">' + esc(m.body) + '<span class="sig">— صالح</span></div>' : '<p class="muted">انفتح! 🎀</p>')
-      : '<p class="muted">' + x.how + (m ? ' — ومعها رسالة من صالح 💌' : '') + '</p>' + prog;
-    return '<article class="win' + (open ? ' open' : '') + '"><div class="medal" aria-hidden="true">' + (open ? x.medal : '🔒') + '</div><div style="flex:1;min-width:0"><h3>' + x.title + '</h3>' + body + '</div></article>';
+      : '<p class="muted">' + x.how + '</p>' + prog;
+    return '<article class="win' + (open ? ' open' : '') + '"><div class="medal" aria-hidden="true">' + (open ? IC[x.icon] : IC.lock) + '</div><div style="flex:1;min-width:0"><h3>' + x.title + '</h3>' + body + '</div></article>';
   }).join('');
 
   var anyOpen = un.length > 0;
@@ -1043,7 +1111,9 @@ async function saveSettingsForm(form) {
   try {
     await store.saveSettings(next);
     var first = isEmptySettings(S.settings);
-    S.settings = next; draft = null; saveCache();
+    S.settings = next; draft = null;
+    syncVitamins();
+    saveCache();
     queueDaily(); flush();                     // البنود تغيرت → النسبة تتغير
     S.wins = null;
     toast(first ? 'تم! يومك جاهز 🎀' : 'حفظت إعداداتك 🤍');
@@ -1051,7 +1121,7 @@ async function saveSettingsForm(form) {
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
     btn.disabled = false; btn.textContent = 'احفظي';
-    toast(e instanceof NetError ? 'النت مقطوع، الإعدادات تحتاج نت. جربي لما يرجع' : 'ما قدرت أحفظ، جربي مرة ثانية');
+    toast(isOffline(e) ? 'النت مقطوع، الإعدادات تحتاج نت. جربي لما يرجع' : 'ما قدرت أحفظ، جربي مرة ثانية');
   }
 }
 
@@ -1165,7 +1235,7 @@ document.addEventListener('submit', async function (ev) {
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
     btn.disabled = false; btn.textContent = label;
-    if (e !== 0) toast(e instanceof NetError ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحفظ، جربي مرة ثانية');
+    if (e !== 0) toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحفظ، جربي مرة ثانية');
   }
 });
 async function delTask(id) {
@@ -1174,31 +1244,37 @@ async function delTask(id) {
     await store.deleteTask(id);
     S.tasks = S.tasks.filter(function (t) { return t.id !== id; });
     saveCache(); queueDaily(); flush(); S.wins = null; renderHabits(); toast('انحذفت');
-  } catch (e) { if (e instanceof AuthError) return sessionExpired(); toast(e instanceof NetError ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحذفها، جربي مرة ثانية'); }
+  } catch (e) { if (e instanceof AuthError) return sessionExpired(); toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحذفها، جربي مرة ثانية'); }
 }
 async function delItem(list, id, fn, ask) {
   if (!confirm(ask)) return;
   try {
     await fn(id);
     S[list] = S[list].filter(function (x) { return x.id !== id; }); renderNotes(); toast('انحذفت');
-  } catch (e) { if (e instanceof AuthError) return sessionExpired(); toast(e instanceof NetError ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحذفها، جربي مرة ثانية'); }
+  } catch (e) { if (e instanceof AuthError) return sessionExpired(); toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحذفها، جربي مرة ثانية'); }
 }
 
 /* ============================================================ اليوم الجديد (منتصف الليل / رجوع للتطبيق) */
 async function refreshToday() {
   var t = computeToday();
   var changed = t !== S.today;
-  if (changed) { S.today = t; S.checks = {}; S.msg = null; S.wins = null; applyQueue(); }
+  if (changed) { S.today = t; S.checks = {}; S.msg = null; S.wins = null; touchedAt = {}; applyQueue(); }
+  var gen = touchGen, day = S.today;
   try {
     var r = await Promise.all([store.checks(S.today, S.today), store.dailyMessage(S.today)]);
+    if (S.today !== day) return;                       // اليوم تغيّر أثناء الطلب — التحديث الجديد يتكفل
     var c = {}; (r[0] || []).forEach(function (x) { c[x.key] = x.value; });
+    // اللقطة من الخادم أقدم من أي تأشير صار أثناء الطلب: المحلي يغلب، والطابور يغلب
+    var overrides = 0;
+    Object.keys(touchedAt).forEach(function (k) { if (touchedAt[k] > gen) { c[k] = S.checks[k]; overrides++; } });
     S.checks = c; applyQueue();
+    if (overrides || pendingCount()) queueDaily();     // النسبة من الحالة المدموجة
     S.msg = r[1] ? Object.assign({ date: S.today }, r[1]) : null;
     if (S.msg && !S.msg.seen_at) { S.msg.seen_at = new Date().toISOString(); store.markSeen(S.msg.id).catch(function () { S.msg.seen_at = null; }); }
     setOnline(true);
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
-    if (e instanceof NetError) setOnline(false);
+    if (isOffline(e)) setOnline(false);
   }
   saveCache();
   if (route === 'today' && !isEmptySettings(S.settings) && !$('.party')) renderToday();
@@ -1206,13 +1282,17 @@ async function refreshToday() {
 }
 document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && S.role) refreshToday(); });
 setInterval(function () { if (S.role && computeToday() !== S.today) refreshToday(); }, 30000);
-window.addEventListener('online', function () { setOnline(true); flush(); });
+window.addEventListener('online', function () {
+  setOnline(true); backoff = 0;                     // رجع النت: نبدأ المحاولات من أول
+  if (!S.role) return;
+  if (!S.synced) syncFromServer(true, 0); else refreshToday();   // refreshToday يرفع الطابور بعدها
+});
 window.addEventListener('offline', function () { setOnline(false); });
 window.addEventListener('hashchange', function () { if (S.role) { if (location.hash !== '#settings') draft = null; go(); } });
 
 /* ============================================================ الدخول */
 function showLogin(errMsg) {
-  S.role = null; S.notes = S.letters = S.wins = S.msg = null; S.tasks = []; S.checks = {}; S.settings = {};
+  S.role = null; S.synced = false; touchedAt = {}; S.notes = S.letters = S.wins = S.msg = null; S.tasks = []; S.checks = {}; S.settings = {};
   $('#tabs').hidden = true; document.body.classList.add('bare');
   $('#view').innerHTML =
     '<section class="login"><form data-login novalidate>' + catSVG() + '<h1>هلا جوجو 🎀</h1><p class="lead">سجّلي دخولك عشان نكمل يومك سوا</p>' +
@@ -1230,7 +1310,7 @@ document.addEventListener('submit', async function (ev) {
   try { await Auth.signIn(email, pw); await start(); }
   catch (e) {
     btn.disabled = false; btn.textContent = 'دخول';
-    err.innerHTML = '<p class="alert">' + (e instanceof NetError ? 'النت مقطوع، جربي لما يرجع' : e.message === 'bad_credentials' ? 'الإيميل أو كلمة المرور مو صحيحة، جربي مرة ثانية' : 'صار شي غلط، جربي بعد شوي') + '</p>';
+    err.innerHTML = '<p class="alert">' + (isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : e.message === 'email_not_confirmed' ? 'إيميلك لسه ما تأكد، افتحي رسالة التأكيد بإيميلك وبعدين ادخلي' : e.message === 'rate_limited' ? 'محاولات كثير ورا بعض، استني دقيقة وجربي' : e.message === 'bad_credentials' ? 'الإيميل أو كلمة المرور مو صحيحة، جربي مرة ثانية' : 'صار شي غلط، جربي بعد شوي') + '</p>';
   }
 });
 async function sessionExpired() {
@@ -1243,6 +1323,11 @@ async function start() {
   $('#view').innerHTML = '<div class="loading" role="status">' + catSVG() + 'لحظة…</div>';
   var cached = !DEMO && loadCache();
   if (cached) { S.role = 'jojo'; go(); }
+  return syncFromServer(cached, 0);
+}
+var bootTimer = null;
+async function syncFromServer(cached, attempt) {
+  clearTimeout(bootTimer);
   try {
     var p = await store.profile();
     if (!p || p.role !== 'jojo') {
@@ -1252,35 +1337,51 @@ async function start() {
     S.role = 'jojo'; S.settings = p.settings || {}; S.profileCreated = p.created_at;
     S.today = computeToday();
     S.tasks = await store.tasks() || [];
+    S.synced = true;
     await refreshToday();
     go();
   } catch (e) {
     if (e instanceof AuthError) return sessionExpired();
-    if (cached) { setOnline(false); return; }
-    $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>' + (e instanceof NetError ? 'النت مقطوع وما عندي نسخة محفوظة لسه. جربي لما يرجع النت.' : 'ما قدرت أفتح يومك، جربي بعد شوي.') + '</p><button class="btn small" onclick="location.reload()">جربي مرة ثانية</button></div>';
+    if (cached) {
+      // نبقى على الكاش ونجرب مرة ثانية بتأخير متزايد (أو أول ما يرجع النت)
+      if (isOffline(e)) setOnline(false);
+      bootTimer = setTimeout(function () { syncFromServer(true, attempt + 1); }, Math.min(5000 * Math.pow(2, attempt), 300000));
+      return;
+    }
+    $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>' + (isOffline(e) ? 'النت مقطوع وما عندي نسخة محفوظة لسه. جربي لما يرجع النت.' : 'ما قدرت أفتح يومك، جربي بعد شوي.') + '</p><button class="btn small" onclick="location.reload()">جربي مرة ثانية</button></div>';
   }
 }
 
+function loadScript(src) {
+  return new Promise(function (res, rej) {
+    var sc = document.createElement('script');
+    sc.src = src; sc.async = true; sc.onload = res; sc.onerror = rej;
+    document.head.appendChild(sc);
+  });
+}
+/* adhan (محلي، بدون أي سكربت خارجي) يتحمل بدون ما يوقف التشغيل؛ لو فشل تطلع أوقات الأذان "—" */
+function loadAdhan() {
+  loadScript('vendor/adhan.umd.min.js?v=' + V).then(function () {
+    if (!window.adhan) return;
+    Jojo.useAdhan(window.adhan);
+    if (S.role && route === 'today' && !isEmptySettings(S.settings) && !$('.party')) renderToday();
+  }).catch(function () { /* prayer cells stay "—" */ });
+}
 function boot() {
   if (!window.Jojo) { $('#view').innerHTML = '<p class="alert">ما قدرت أحمّل التطبيق، حدّثي الصفحة.</p>'; return; }
-  if (window.adhan) Jojo.useAdhan(window.adhan);
+  loadAdhan();
   if (DEMO) {
-    // تجربة فقط: لو ما وصلنا CDN (مثل بيئة الاختبار)، نجيب adhan من node_modules المحلي (ما ينرفع للموقع)
-    if (!window.adhan) {
-      var sc = document.createElement('script');
-      sc.src = '../node_modules/adhan/lib/bundles/adhan.umd.min.js';
-      sc.onload = function () { Jojo.useAdhan(window.adhan); if (route === 'today' && S.role) renderToday(); };
-      document.head.appendChild(sc);
-    }
     store = makeDemo(DEMO === 'onboard');
     Auth.sess = { access_token: 'demo', user: { id: 'demo' } };
     return start();
   }
   store = Remote;
   if (Auth.load()) start(); else showLogin();
-  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* ok without offline */ });
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js?v=' + encodeURIComponent(V)).catch(function () { /* ok without offline */ });
 }
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+loadScript('core.js?v=' + V).then(boot, function () {
+  $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>ما قدرت أحمّل التطبيق، تأكدي من النت وحدّثي الصفحة.</p><button class="btn small" onclick="location.reload()">حدّثي</button></div>';
+});
 })();
 </script>
 </body>
