@@ -1,6 +1,7 @@
 -- جوجو — schema + row-level security.  Idempotent; safe to re-run.
 -- Privacy model (docs/superpowers/specs/2026-11-24-jojo-design.md "المستخدمين والخصوصية"):
---   * checks / tasks / notes ............ Jojo only. Saleh NEVER.
+--   * notes ............................. Jojo only. Saleh NEVER.
+--   * checks / tasks / profiles(settings) Jojo full; Saleh READ only (her consent, 2026-11-24).
 --   * letters (💌 نوت لصالح) ............ Jojo full; Saleh reads all + may set read_at only.
 --   * daily % ........................... Jojo upserts; Saleh reads.
 --   * beans / ratings (taste) ........... Jojo full; Saleh reads.
@@ -272,6 +273,16 @@ create policy jojo_profiles_update_own on public.jojo_profiles for update to aut
   using (user_id = auth.uid()) with check (user_id = auth.uid());
 
 -- owner-only tables (Jojo's private data): one ALL policy each, no Saleh policy at all
+-- صالح 2026-11-24: جوجو تسمح له يشوف كل شي إلا نوتها الخاص → قراءة فقط للتأشيرات والمهام وإعداداتها
+drop policy if exists jojo_checks_saleh_select on public.jojo_checks;
+create policy jojo_checks_saleh_select on public.jojo_checks for select to authenticated
+  using (public.jojo_is_saleh());
+drop policy if exists jojo_tasks_saleh_select on public.jojo_tasks;
+create policy jojo_tasks_saleh_select on public.jojo_tasks for select to authenticated
+  using (public.jojo_is_saleh());
+drop policy if exists jojo_profiles_saleh_select on public.jojo_profiles;
+create policy jojo_profiles_saleh_select on public.jojo_profiles for select to authenticated
+  using (public.jojo_is_saleh());
 drop policy if exists jojo_checks_owner on public.jojo_checks;
 create policy jojo_checks_owner on public.jojo_checks for all to authenticated
   using (user_id = auth.uid() and public.jojo_is_jojo())

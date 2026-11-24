@@ -85,8 +85,11 @@ set local request.jwt.claims = '{"sub":"22222222-2222-2222-2222-222222222222","r
 select jt.ok(public.jojo_is_saleh() = true, 'saleh: jojo_is_saleh() true');
 -- private data: never visible, never writable
 select jt.ok(jt.see('select * from public.jojo_notes')  = 0, 'saleh: sees 0 jojo_notes');
-select jt.ok(jt.see('select * from public.jojo_checks') = 0, 'saleh: sees 0 jojo_checks');
-select jt.ok(jt.see('select * from public.jojo_tasks')  = 0, 'saleh: sees 0 jojo_tasks');
+select jt.ok(jt.see('select * from public.jojo_checks') = 1, 'saleh: reads jojo_checks (read-only)');
+select jt.ok(jt.see('select * from public.jojo_tasks')  = 1, 'saleh: reads jojo_tasks (read-only)');
+select jt.ok(jt.try($q$update public.jojo_tasks set title='x'$q$) in ('ok:0','denied'), 'saleh: cannot edit tasks');
+select jt.ok(jt.try($q$update public.jojo_checks set value='false'$q$) in ('ok:0','denied'), 'saleh: cannot edit checks');
+select jt.ok(jt.try($q$update public.jojo_profiles set settings='{}' where role='jojo'$q$) in ('ok:0','denied'), 'saleh: cannot edit her settings');
 select jt.ok(jt.try($q$update public.jojo_notes set body='x'$q$) in ('ok:0','denied'), 'saleh: cannot update notes');
 select jt.ok(jt.try($q$delete from public.jojo_notes$q$) in ('ok:0','denied'), 'saleh: cannot delete notes');
 select jt.ok(jt.try($q$delete from public.jojo_checks$q$) in ('ok:0','denied'), 'saleh: cannot delete checks');
@@ -116,8 +119,8 @@ select jt.ok(jt.try($q$update public.jojo_ratings set liked=false$q$) in ('ok:0'
 select jt.ok(jt.try($q$delete from public.jojo_beans$q$) in ('ok:0','denied'), 'saleh: cannot delete beans');
 select jt.ok(jt.try($q$insert into public.jojo_beans(user_id,name) values ('11111111-1111-1111-1111-111111111111','x')$q$) = 'denied', 'saleh: cannot insert beans');
 -- profiles: own row only
-select jt.ok(jt.see('select * from public.jojo_profiles') = 1, 'saleh: sees exactly 1 profile');
-select jt.ok(jt.see($q$select * from public.jojo_profiles where user_id='11111111-1111-1111-1111-111111111111'$q$) = 0, 'saleh: cannot read jojo profile/settings');
+select jt.ok(jt.see('select * from public.jojo_profiles') = 2, 'saleh: sees own + jojo profile');
+select jt.ok(jt.see($q$select * from public.jojo_profiles where user_id='11111111-1111-1111-1111-111111111111'$q$) = 1, 'saleh: reads jojo settings (read-only)');
 select jt.ok(jt.try($q$update public.jojo_profiles set settings='{}' where user_id='11111111-1111-1111-1111-111111111111'$q$) in ('ok:0','denied'), 'saleh: cannot update jojo settings');
 -- server-only
 select jt.ok(jt.see('select * from public.jojo_config') = -1, 'saleh: jojo_config denied');
