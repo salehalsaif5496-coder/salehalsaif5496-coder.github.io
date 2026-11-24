@@ -6,6 +6,7 @@
 // verify_jwt = false: التحقق هنا (عشان طلب CORS المبدئي يعدي)، والجداول service role بس.
 import { createClient } from "npm:@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
+import { allowedEndpoint } from "./endpoint.ts";
 
 const ORIGIN = "https://salehalsaif5496-coder.github.io";
 const CORS = {
@@ -21,7 +22,7 @@ const json = (b: unknown, status = 200) =>
 function cleanSub(s: any) {
   if (!s || typeof s !== "object") return null;
   const endpoint = s.endpoint, p256dh = s.keys && s.keys.p256dh, auth = s.keys && s.keys.auth;
-  if (typeof endpoint !== "string" || !/^https:\/\//.test(endpoint) || endpoint.length > 1024) return null;
+  if (typeof endpoint !== "string" || endpoint.length > 1024 || !allowedEndpoint(endpoint)) return null;
   if (typeof p256dh !== "string" || typeof auth !== "string" || p256dh.length > 256 || auth.length > 64) return null;
   return { endpoint, expirationTime: typeof s.expirationTime === "number" ? s.expirationTime : null, keys: { p256dh, auth } };
 }
@@ -49,14 +50,14 @@ Deno.serve(async (req) => {
 
   if (body.unsubscribe) {
     const { error } = await db.from("jojo_push").delete().eq("user_id", uid);
-    if (error) return json({ error: error.message }, 500);
+    if (error) { console.error("unsubscribe", error.message); return json({ error: "db" }, 500); }
     return json({ ok: true, subscribed: false });
   }
 
   const sub = cleanSub(body.subscription);
   if (!sub) return json({ error: "bad subscription" }, 400);
   const { error } = await db.from("jojo_push").upsert({ user_id: uid, subscription: sub, tz: validTz(body.tz), updated_at: new Date().toISOString() });
-  if (error) return json({ error: error.message }, 500);
+  if (error) { console.error("upsert", error.message); return json({ error: "db" }, 500); }
 
   if (body.test) {
     const { data: cfg } = await db.from("jojo_config").select("key,value").in("key", ["vapid_public", "vapid_private"]);
