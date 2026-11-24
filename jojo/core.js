@@ -60,6 +60,7 @@
       if (!req) continue;
       var ctx = { waterGoal: d.waterGoal };
       if (isDone(key, (d.checks || {})[key], ctx)) n++;
+      else if (i === days.length - 1) continue; // آخر يوم (اليوم) لسه ما خلص — ما يكسر السلسلة
       else break;
     }
     return n;
@@ -158,8 +159,8 @@
     var pick = recipePick(recipes, ratings, dateISO);
     if (recipes.length === 1) return pick;
     var yest = recipePick(recipes, ratings, prevDate(dateISO));
-    if (pick.id !== yest.id) return pick;
-    var rest = recipes.filter(function (x) { return x.id !== yest.id; });
+    if (pick !== yest) return pick;
+    var rest = recipes.filter(function (x) { return x !== yest; });
     return recipePick(rest, ratings, dateISO);
   }
 
