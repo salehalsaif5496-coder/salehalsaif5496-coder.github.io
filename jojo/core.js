@@ -94,6 +94,75 @@
     return { fajr: f(pt.fajr), dhuhr: f(pt.dhuhr), asr: f(pt.asr), maghrib: f(pt.maghrib), isha: f(pt.isha) };
   }
 
+  /* ---------- القهوة ---------- */
+  var GENERIC_DRIP = { dose: 15, water: 240, tempC: 93, targetSec: 180, approved: false };
+
+  function grindAdvice(actualSec, targetSec) {
+    if (actualSec < targetSec - 10) return 'finer';
+    if (actualSec > targetSec + 10) return 'coarser';
+    return 'ok';
+  }
+
+  function tasteProfile(ratings) {
+    var r = ratings || [];
+    var likedR = r.filter(function (x) { return x.liked; });
+    var dislikedR = r.filter(function (x) { return !x.liked; });
+    function pick(list) {
+      var counts = {}, order = [];
+      list.forEach(function (x) {
+        var seen = {};
+        (x.notes || []).forEach(function (n) {
+          if (seen[n]) return;
+          seen[n] = true;
+          if (!counts[n]) { counts[n] = 0; order.push(n); }
+          counts[n]++;
+        });
+      });
+      return order.filter(function (n) { return counts[n] >= 2 && counts[n] / list.length >= 0.6; });
+    }
+    return { likes: pick(likedR), dislikes: pick(dislikedR), liked: likedR.length, total: r.length };
+  }
+
+  function hashStr(s) {
+    var h = 5381;
+    for (var i = 0; i < s.length; i++) h = ((h * 33) ^ s.charCodeAt(i)) >>> 0;
+    return h;
+  }
+
+  /* الاختيار الخام (بدون قاعدة تجنب أمس) */
+  function recipePick(recipes, ratings, dateISO) {
+    if (!recipes || !recipes.length) return null;
+    var rs = ratings || [];
+    var weights = recipes.map(function (rc) {
+      var of = rs.filter(function (x) { return x.beanId === rc.beanId; });
+      if (!of.length) return 1;
+      var likes = of.filter(function (x) { return x.liked; }).length;
+      return likes / of.length >= 0.5 ? 2 : 1;
+    });
+    var total = weights.reduce(function (a, b) { return a + b; }, 0);
+    var t = hashStr(dateISO) % total;
+    for (var i = 0; i < recipes.length; i++) {
+      if (t < weights[i]) return recipes[i];
+      t -= weights[i];
+    }
+    return recipes[recipes.length - 1];
+  }
+
+  function prevDate(dateISO) {
+    var p = dateISO.split('-').map(Number);
+    return new Date(Date.UTC(p[0], p[1] - 1, p[2] - 1)).toISOString().slice(0, 10);
+  }
+
+  function recipeOfDay(recipes, ratings, dateISO) {
+    if (!recipes || !recipes.length) return null;
+    var pick = recipePick(recipes, ratings, dateISO);
+    if (recipes.length === 1) return pick;
+    var yest = recipePick(recipes, ratings, prevDate(dateISO));
+    if (pick.id !== yest.id) return pick;
+    var rest = recipes.filter(function (x) { return x.id !== yest.id; });
+    return recipePick(rest, ratings, dateISO);
+  }
+
   return {
     localDate: localDate,
     weekday: weekday,
@@ -103,6 +172,11 @@
     streak: streak,
     unlocked: unlocked,
     useAdhan: useAdhan,
-    prayerTimes: prayerTimes
+    prayerTimes: prayerTimes,
+    GENERIC_DRIP: GENERIC_DRIP,
+    grindAdvice: grindAdvice,
+    tasteProfile: tasteProfile,
+    recipeOfDay: recipeOfDay,
+    _recipePick: recipePick
   };
 });
