@@ -358,3 +358,17 @@ create policy jojo_recipes_read on public.jojo_recipes for select to authenticat
 -- added later on khazna (migration jojo_task_reminder_time):
 alter table public.jojo_tasks add column if not exists remind_at text
   check (remind_at is null or remind_at ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
+
+-- صالح 2026-11-25: جوجو تقدر تضيف وصفاتها الخاصة وتعتمدها عندها (migration jojo_own_recipes)
+alter table public.jojo_recipes add column if not exists owner uuid references auth.users(id) on delete cascade;
+alter table public.jojo_recipes add column if not exists ice_cubes text;   -- مثل '٤ حبات بالسيرفر + ٤ بالكوب'
+grant insert, update, delete on public.jojo_recipes to authenticated;
+drop policy if exists jojo_recipes_jojo_insert on public.jojo_recipes;
+create policy jojo_recipes_jojo_insert on public.jojo_recipes for insert to authenticated
+  with check (owner = auth.uid() and public.jojo_is_jojo());
+drop policy if exists jojo_recipes_jojo_update on public.jojo_recipes;
+create policy jojo_recipes_jojo_update on public.jojo_recipes for update to authenticated
+  using (owner = auth.uid() and public.jojo_is_jojo()) with check (owner = auth.uid() and public.jojo_is_jojo());
+drop policy if exists jojo_recipes_jojo_delete on public.jojo_recipes;
+create policy jojo_recipes_jojo_delete on public.jojo_recipes for delete to authenticated
+  using (owner = auth.uid() and public.jojo_is_jojo());

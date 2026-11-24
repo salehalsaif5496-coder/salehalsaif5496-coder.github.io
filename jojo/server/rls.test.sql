@@ -139,6 +139,12 @@ begin;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 select jt.ok(public.jojo_is_saleh() = false, 'jojo: jojo_is_saleh() false');
+select jt.ok(jt.try($q$insert into public.jojo_recipes(id,name,style,dose,water,temp_c,target_sec,grind_encore,owner) values ('mine1','وصفتي','hot',15,250,92,180,15,'11111111-1111-1111-1111-111111111111')$q$) = 'ok:1', 'jojo: adds her own recipe');
+select jt.ok(jt.try($q$update public.jojo_recipes set name='x' where id='mine1'$q$) = 'ok:1', 'jojo: edits her own recipe');
+select jt.ok(jt.try($q$update public.jojo_recipes set name='x' where id='r1'$q$) in ('ok:0','denied'), 'jojo: cannot edit Saleh''s recipe');
+select jt.ok(jt.try($q$delete from public.jojo_recipes where id='r1'$q$) in ('ok:0','denied'), 'jojo: cannot delete Saleh''s recipe');
+select jt.ok(jt.try($q$insert into public.jojo_recipes(id,name,style,dose,water,temp_c,target_sec,grind_encore,owner) values ('fake','x','hot',1,1,1,1,1,null)$q$) = 'denied', 'jojo: cannot add an ownerless recipe');
+select jt.ok(jt.try($q$delete from public.jojo_recipes where id='mine1'$q$) = 'ok:1', 'jojo: deletes her own recipe');
 select jt.ok(jt.see($q$select * from public.jojo_messages where id='aaaaaaaa-0000-0000-0000-0000000000f9'$q$) = 0, 'jojo: cannot see tomorrow''s daily message');
 -- review fix: a letter inserted by Jojo can't carry a fake read receipt or backdate
 select jt.ok(jt.try($q$insert into public.jojo_letters(id, user_id, body, read_at, created_at) values ('aaaaaaaa-0000-0000-0000-0000000000f1','11111111-1111-1111-1111-111111111111','x', now(), '2020-01-01')$q$) = 'ok:1', 'jojo: inserts letter with forged fields');
