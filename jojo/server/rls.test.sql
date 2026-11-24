@@ -62,13 +62,12 @@ insert into public.jojo_daily(user_id, date, pct) values
   ('11111111-1111-1111-1111-111111111111', '2026-11-24', 80);
 insert into public.jojo_messages(id, kind, for_date, body) values
   ('aaaaaaaa-0000-0000-0000-000000000004', 'daily', '2026-11-24', 'صباح الخير');
-insert into public.jojo_beans(id, user_id, roaster, name, is_rays) values
-  ('aaaaaaaa-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Rays', 'Ethiopia', true);
+insert into public.jojo_beans(id, user_id, roaster, name) values
+  ('aaaaaaaa-0000-0000-0000-000000000005', '11111111-1111-1111-1111-111111111111', 'Some Roaster', 'Ethiopia');
 insert into public.jojo_ratings(id, user_id, bean_id, liked, notes) values
   ('aaaaaaaa-0000-0000-0000-000000000006', '11111111-1111-1111-1111-111111111111',
    'aaaaaaaa-0000-0000-0000-000000000005', true, '{berry}');
-insert into public.jojo_rays_products(notion_id, name) values ('np1', 'Ethiopia Guji');
-insert into public.jojo_rays_recipes(notion_id, product_notion_id, name) values ('nr1', 'np1', 'V60');
+insert into public.jojo_recipes(id, name, style, dose, water, temp_c, target_sec, grind_encore) values ('r1', 'V60 hot', 'hot', 15, 250, 93, 180, 16);
 insert into public.jojo_push(user_id, subscription, tz) values
   ('11111111-1111-1111-1111-111111111111', '{}', 'Asia/Riyadh');
 insert into public.jojo_config(key, value) values ('vapid_private', '"secret"');
@@ -176,10 +175,8 @@ select jt.ok(jt.try($q$delete from public.jojo_profiles$q$) = 'denied', 'jojo: c
 select jt.ok(jt.try($q$update public.jojo_ratings set liked=false$q$) = 'ok:1', 'jojo: updates own rating');
 select jt.ok(jt.try($q$insert into public.jojo_beans(user_id,name) values ('11111111-1111-1111-1111-111111111111','Kenya')$q$) = 'ok:1', 'jojo: inserts own bean');
 -- reference data read-only
-select jt.ok(jt.see('select * from public.jojo_rays_products') = 1, 'jojo: reads rays_products');
-select jt.ok(jt.see('select * from public.jojo_rays_recipes') = 1, 'jojo: reads rays_recipes');
-select jt.ok(jt.try($q$insert into public.jojo_rays_products(notion_id,name) values ('x','x')$q$) = 'denied', 'jojo: cannot write rays_products');
-select jt.ok(jt.try($q$update public.jojo_rays_recipes set name='x'$q$) = 'denied', 'jojo: cannot write rays_recipes');
+select jt.ok(jt.see('select * from public.jojo_recipes') = 1, 'jojo: reads recipes');
+select jt.ok(jt.try($q$insert into public.jojo_recipes(id,name,style,dose,water,temp_c,target_sec,grind_encore) values ('x','x','hot',1,1,1,1,1)$q$) = 'denied', 'jojo: cannot write recipes');
 -- server-only
 select jt.ok(jt.see('select * from public.jojo_config') = -1, 'jojo: jojo_config denied');
 select jt.ok(jt.see('select * from public.jojo_push') = -1, 'jojo: jojo_push denied');
@@ -215,7 +212,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['jojo_profiles','jojo_checks','jojo_tasks','jojo_notes','jojo_letters','jojo_daily',
-                           'jojo_messages','jojo_beans','jojo_ratings','jojo_rays_products','jojo_rays_recipes',
+                           'jojo_messages','jojo_beans','jojo_ratings','jojo_recipes',
                            'jojo_push','jojo_config'] loop
     perform jt.ok(jt.see('select * from public.' || t) <= 0, 'anon: reads nothing from ' || t);
   end loop;
@@ -228,7 +225,7 @@ begin;
 set local role service_role;
 select jt.ok(jt.see('select * from public.jojo_config') = 1, 'service_role: reads jojo_config');
 select jt.ok(jt.see('select * from public.jojo_notes') >= 1, 'service_role: bypasses RLS');
-select jt.ok(jt.try($q$insert into public.jojo_rays_products(notion_id,name) values ('np2','Colombia')$q$) = 'ok:1', 'service_role: writes rays_products');
+select jt.ok(jt.try($q$insert into public.jojo_recipes(id,name,style,dose,water,temp_c,target_sec,grind_encore) values ('r2','x','iced',1,1,1,1,1)$q$) = 'ok:1', 'service_role: writes recipes');
 commit;
 
 \o
