@@ -301,7 +301,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.3';
+var JOJO_VERSION = '2026-11-24.4';
 </script>
 <script>
 (function () {
@@ -460,6 +460,31 @@ var Auth = {
     this.sess = s; LS.set('session', s);
   },
   uid: function () { return this.sess && this.sess.user && this.sess.user.id; },
+  mustChange: function () { var u = this.sess && this.sess.user; return !!(u && u.user_metadata && u.user_metadata.must_change_password === true); },
+  /* تغيير كلمة المرور (أول دخول). كلمة المرور ما تنكتب بأي لوج ولا تنحفظ؛ نحدّث الجلسة بنسخة المستخدم الراجعة بس. */
+  setPassword: async function (password) {
+    var r;
+    try {
+      r = await fetch(SB_URL + '/auth/v1/user', {
+        method: 'PUT', headers: { apikey: SB_KEY, Authorization: 'Bearer ' + await this.token(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: password, data: { must_change_password: false } })
+      });
+    } catch (e) { if (e instanceof AuthError) throw e; throw new NetError(); }
+    if (!r.ok) {
+      var b = {}; try { b = await r.json(); } catch (e) { /* not json */ }
+      var code = b.error_code || b.code || '';
+      if (r.status === 401) throw new AuthError('expired');
+      if (code === 'same_password') throw new AuthError('same_password');
+      if (code === 'weak_password') throw new AuthError('weak_password');
+      if (r.status === 429) throw new AuthError('rate_limited');
+      if (r.status === 422) throw new AuthError('weak_password');
+      throw new AuthError('pw_' + r.status);
+    }
+    var u = null; try { u = await r.json(); } catch (e) { /* keep local copy */ }
+    var user = (u && u.id) ? u : Object.assign({}, this.sess.user, { user_metadata: Object.assign({}, this.sess.user.user_metadata, { must_change_password: false }) });
+    if (user.user_metadata) user.user_metadata.must_change_password = false;
+    this.save(Object.assign({}, this.sess, { user: user }));
+  },
   signIn: async function (email, password) {
     var r;
     try {
@@ -1071,11 +1096,23 @@ async function loadCoffee() {
 }
 function ratingsForCore() { return (C.ratings || []).map(function (r) { return { beanId: r.bean_id, liked: r.liked === true, notes: r.notes || [] }; }); }
 /* وصفة اليوم من Jojo.recipeOfDay (مرجّحة بذوقها). "وصفة ثانية" تمشي على المكتبة. وقت الصب تثبت الوصفة. */
+var rod = null;   // { key, id }: وصفة اليوم تنحسب مرة لكل تاريخ، وما تتغير بعد ما تحفظ تقييم
+function recipeOfDayOnce(list) {
+  var key = (Auth.uid() || '') + '|' + S.today, lsk = 'rod.' + key, id = null;
+  if (rod && rod.key === key) id = rod.id;
+  else { try { id = LS.get(lsk, null); } catch (e) { id = null; } }
+  var hit = id != null && list.filter(function (x) { return x.id === id; })[0];
+  if (hit) { rod = { key: key, id: id }; return hit; }
+  var base = Jojo.recipeOfDay(list, ratingsForCore(), S.today);
+  rod = { key: key, id: base.id };
+  try { LS.set(lsk, base.id); } catch (e) { /* optional */ }
+  return base;
+}
 function currentRecipe() {
   var list = C.recipes || [];
   if (!list.length) return null;
   if (B.recipeId) { var held = list.filter(function (x) { return x.id === B.recipeId; })[0]; if (held) return held; }
-  var base = Jojo.recipeOfDay(list, ratingsForCore(), S.today);
+  var base = recipeOfDayOnce(list);
   return C.pick ? list[(list.indexOf(base) + C.pick) % list.length] : base;
 }
 function savedGrind(r) { var g = LS.get('grind.' + r.id, null); return typeof g === 'number' ? g : null; }
@@ -1084,7 +1121,7 @@ function savedGrind(r) { var g = LS.get('grind.' + r.id, null); return typeof g 
 function brewElapsed() { return B.acc + (B.phase === 'run' ? (Date.now() - B.t0) / 1000 : 0); }
 function wakeLock(on) {
   try {
-    if (on && navigator.wakeLock && !B.lock) navigator.wakeLock.request('screen').then(function (l) { B.lock = l; }).catch(function () { /* optional */ });
+    if (on && navigator.wakeLock && !B.lock) navigator.wakeLock.request('screen').then(function (l) { B.lock = l; try { l.addEventListener('release', function () { if (B.lock === l) B.lock = null; }); } catch (e) { /* optional */ } }).catch(function () { /* optional */ });
     else if (!on && B.lock) { B.lock.release().catch(function () { /* ignore */ }); B.lock = null; }
   } catch (e) { /* optional */ }
 }
@@ -1645,11 +1682,11 @@ document.addEventListener('submit', async function (ev) {
       C.photo = null; coffeeCache(); renderCoffee(); toast('انحفظ برفك 🎀');
     } else if (kind === 'rate') {
       if (RD.liked === null) { toast('قولي لي: عجبتك ولا لا؟ 🤍'); throw 0; }
-      setCheck('coffee', true);                         // بونص: مو من بنود السوارة، النسبة ما تتغير (ويفتح «أول وصفة قهوة»)
-      S.wins = null;
       var row = { user_id: Auth.uid(), bean_id: RD.bean || null, date: S.today, liked: RD.liked, notes: RD.notes.slice(),
         brew_sec: B.sec != null ? B.sec : null, grind: B.grind != null ? String(B.grind) : null };
       var saved = await store.addRating(row);
+      setCheck('coffee', true);                         // بونص: مو من بنود السوارة، النسبة ما تتغير (ويفتح «أول وصفة قهوة»). بعد ما ينحفظ التقييم
+      S.wins = null;
       C.ratings.unshift(saved || row); coffeeCache();
       brewStop(); renderCoffee(); window.scrollTo(0, 0); toast(row.liked ? 'حفظته! وبتطلع لك أكثر وصفات تشبهها ☕' : 'حفظته، المرة الجاية نجرب شي ثاني ☕');
     }
@@ -1726,7 +1763,11 @@ async function refreshToday() {
   if (route === 'today' && !isEmptySettings(S.settings) && !$('.party')) renderToday();
   flush();
 }
-document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && S.role) refreshToday(); });
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState !== 'visible') return;
+  if (B.phase === 'run') { if (B.lock && B.lock.released) B.lock = null; wakeLock(true); }   // المتصفح يفك القفل لما تنخفي الصفحة
+  if (S.role) refreshToday();
+});
 setInterval(function () { if (S.role && computeToday() !== S.today) refreshToday(); }, 30000);
 window.addEventListener('online', function () {
   setOnline(true); backoff = 0;                     // رجع النت: نبدأ المحاولات من أول
@@ -1742,13 +1783,20 @@ window.addEventListener('resize', function () {   // الأكواب تتوزع �
 window.addEventListener('hashchange', function () { if (S.role) { if (location.hash !== '#settings') draft = null; go(); } });
 
 /* ============================================================ الدخول */
+/* اسم المستخدم → إيميل داخلي: trim + lowercase، وبدون @ نضيف @jojo.invalid */
+function usernameToEmail(u) {
+  u = String(u || '').trim().toLowerCase();
+  if (!u) return '';
+  return u.indexOf('@') === -1 ? u + '@jojo.invalid' : u;
+}
+var tempPw = null;   // كلمة المرور المؤقتة بالذاكرة بس (للمقارنة)، تنمسح بعد التغيير أو الخروج
 function showLogin(errMsg) {
-  S.role = null; S.synced = false; touchedAt = {}; S.notes = S.letters = S.wins = S.msg = null; S.tasks = []; S.checks = {}; S.settings = {};
+  tempPw = null; S.role = null; S.synced = false; touchedAt = {}; S.notes = S.letters = S.wins = S.msg = null; S.tasks = []; S.checks = {}; S.settings = {};
   resetCoffee();
   $('#tabs').hidden = true; document.body.classList.add('bare');
   $('#view').innerHTML =
     '<section class="login"><form data-login novalidate>' + catSVG() + '<h1>هلا جوجو 🎀</h1><p class="lead">سجّلي دخولك عشان نكمل يومك سوا</p>' +
-    '<label class="f" for="em">إيميلك</label><input id="em" class="in" type="email" name="email" autocomplete="username" inputmode="email" dir="ltr" required>' +
+    '<label class="f" for="em">اسم المستخدم</label><input id="em" class="in" type="text" name="username" autocomplete="username" autocapitalize="off" autocorrect="off" spellcheck="false" dir="ltr" required>' +
     '<label class="f" for="pw">كلمة المرور</label><input id="pw" class="in" type="password" name="password" autocomplete="current-password" dir="ltr" required>' +
     '<div class="actions"><button class="btn block" id="loginBtn">دخول</button></div>' +
     '<div id="loginErr" role="alert">' + (errMsg ? '<p class="alert">' + errMsg + '</p>' : '') + '</div></form></section>';
@@ -1756,13 +1804,47 @@ function showLogin(errMsg) {
 document.addEventListener('submit', async function (ev) {
   var f = ev.target; if (!f.hasAttribute('data-login')) return;
   ev.preventDefault();
-  var email = f.email.value.trim(), pw = f.password.value, err = $('#loginErr'), btn = $('#loginBtn');
-  if (!email || !pw) { err.innerHTML = '<p class="alert">اكتبي الإيميل وكلمة المرور 🤍</p>'; return; }
+  var email = usernameToEmail(f.username.value), pw = f.password.value, err = $('#loginErr'), btn = $('#loginBtn');
+  if (!email || !pw) { err.innerHTML = '<p class="alert">اكتبي اسم المستخدم وكلمة المرور 🤍</p>'; return; }
   btn.disabled = true; btn.textContent = 'لحظة…'; err.innerHTML = '';
-  try { await Auth.signIn(email, pw); await start(); }
+  try { await Auth.signIn(email, pw); tempPw = pw; await start(); }
   catch (e) {
     btn.disabled = false; btn.textContent = 'دخول';
-    err.innerHTML = '<p class="alert">' + (isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : e.message === 'email_not_confirmed' ? 'إيميلك لسه ما تأكد، افتحي رسالة التأكيد بإيميلك وبعدين ادخلي' : e.message === 'rate_limited' ? 'محاولات كثير ورا بعض، استني دقيقة وجربي' : e.message === 'bad_credentials' ? 'الإيميل أو كلمة المرور مو صحيحة، جربي مرة ثانية' : 'صار شي غلط، جربي بعد شوي') + '</p>';
+    err.innerHTML = '<p class="alert">' + (isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : e.message === 'email_not_confirmed' ? 'إيميلك لسه ما تأكد، افتحي رسالة التأكيد بإيميلك وبعدين ادخلي' : e.message === 'rate_limited' ? 'محاولات كثير ورا بعض، استني دقيقة وجربي' : e.message === 'bad_credentials' ? 'اسم المستخدم أو كلمة المرور غلط' : 'صار شي غلط، جربي بعد شوي') + '</p>';
+  }
+});
+/* خطوة إجبارية بأول دخول: كلمة مرور خاصة فيها. ما تتخطى (ما فيه رجوع ولا تنقل) */
+function showPwChange(errMsg) {
+  S.role = null; S.synced = false;
+  $('#tabs').hidden = true; document.body.classList.add('bare');
+  $('#view').innerHTML =
+    '<section class="login"><form data-pwchange novalidate>' + catSVG() + '<h1>اختاري كلمة مرور لك 🔒</h1><p class="lead">عشان نوتك الخاص يبقى لك بس — حتى صالح ما يعرفها.</p>' +
+    '<label class="f" for="pw1">كلمة المرور الجديدة</label><input id="pw1" class="in" type="password" name="pw1" autocomplete="new-password" dir="ltr" minlength="6" required>' +
+    '<label class="f" for="pw2">أكدي كلمة المرور</label><input id="pw2" class="in" type="password" name="pw2" autocomplete="new-password" dir="ltr" minlength="6" required>' +
+    '<div class="actions"><button type="button" class="btn ghost small" data-act="pw-toggle" aria-pressed="false">إظهار</button></div>' +
+    '<div class="actions"><button class="btn block" id="pwBtn">حفظ</button></div>' +
+    '<div id="pwErr" role="alert">' + (errMsg ? '<p class="alert">' + errMsg + '</p>' : '') + '</div></form></section>';
+}
+document.addEventListener('click', function (ev) {
+  var b = ev.target.closest && ev.target.closest('[data-act="pw-toggle"]'); if (!b) return;
+  var show = b.getAttribute('aria-pressed') !== 'true';
+  b.setAttribute('aria-pressed', show ? 'true' : 'false'); b.textContent = show ? 'إخفاء' : 'إظهار';
+  ['pw1', 'pw2'].forEach(function (id) { var i = document.getElementById(id); if (i) i.type = show ? 'text' : 'password'; });
+});
+document.addEventListener('submit', async function (ev) {
+  var f = ev.target; if (!f.hasAttribute('data-pwchange')) return;
+  ev.preventDefault();
+  var a = f.pw1.value, b = f.pw2.value, err = $('#pwErr'), btn = $('#pwBtn');
+  function bad(m) { err.innerHTML = '<p class="alert">' + m + '</p>'; }
+  if (a.length < 6) return bad('كلمة المرور لازم تكون ٦ خانات أو أكثر 🤍');
+  if (a !== b) return bad('الكلمتين مو متطابقتين، جربي مرة ثانية');
+  if (tempPw !== null && a === tempPw) return bad('اختاري كلمة غير المؤقتة 🤍');
+  btn.disabled = true; btn.textContent = 'لحظة…'; err.innerHTML = '';
+  try { await Auth.setPassword(a); tempPw = null; await start(); }
+  catch (e) {
+    btn.disabled = false; btn.textContent = 'حفظ';
+    if (e instanceof AuthError && e.message === 'expired') { await Auth.signOut(); return showLogin('انتهت الجلسة، سجّلي دخولك مرة ثانية 🤍'); }
+    bad(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : e.message === 'same_password' ? 'اختاري كلمة غير المؤقتة 🤍' : e.message === 'weak_password' ? 'كلمة المرور ضعيفة، اختاري وحدة أقوى (٦ خانات أو أكثر)' : e.message === 'rate_limited' ? 'محاولات كثير، استني دقيقة وجربي' : 'صار شي غلط، جربي بعد شوي');
   }
 });
 async function sessionExpired() {
@@ -1772,6 +1854,7 @@ async function sessionExpired() {
 
 /* ============================================================ التشغيل */
 async function start() {
+  if (!DEMO && Auth.mustChange()) return showPwChange();   // قبل أي شي: ما تتخطى
   $('#view').innerHTML = '<div class="loading" role="status">' + catSVG() + 'لحظة…</div>';
   var cached = !DEMO && loadCache();
   if (cached) { S.role = 'jojo'; go(); }

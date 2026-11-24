@@ -4,6 +4,7 @@
      (~15 s; headless puppeteer works too). Needs REAL time: --virtual-time-budget stalls the bean-photo decode (createImageBitmap). -->
 <script>
 var ROLE = new URLSearchParams(location.search).get('role') || 'jojo';
+var MUST = new URLSearchParams(location.search).get('must') === '1';   // ?must=1: first-login password change flow
 var MOCK = `<script>
 (function(){
   var db = {checks:{}, daily:{}, msgSeen:null}; window.__db = db; window.__log = []; window.__offline = false;
@@ -18,7 +19,12 @@ var MOCK = `<script>
     var body = opt.body && !raw ? JSON.parse(opt.body) : null, h = opt.headers||{};
     window.__log.push(m+' '+url.split('.co')[1]+(h.Prefer?' ['+h.Prefer+']':'')+(body?' '+JSON.stringify(body):'')+(raw?' <'+(raw.type||'blob')+' '+raw.size+'B>':''));
     if (!h.apikey) return new Response('no apikey',{status:401});
-    if (url.indexOf('/auth/v1/token?grant_type=password')!==-1) return J({access_token:'AT',refresh_token:'RT',expires_in:3600,user:{id:'U1'}});
+    if (url.indexOf('/auth/v1/token?grant_type=password')!==-1) return J({access_token:'AT',refresh_token:'RT',expires_in:3600,user:{id:'U1', user_metadata:${MUST?"{must_change_password:true}":"{}"}}});
+    if (url.indexOf('/auth/v1/user')!==-1 && m==='PUT') {
+      if (h.Authorization!=='Bearer AT') return new Response('bad token',{status:401});
+      if (body.password==='abcdef') return new Response(JSON.stringify({error_code:'weak_password'}),{status:422});
+      db.pwPut = body; return J({id:'U1', user_metadata:body.data});
+    }
     if (url.indexOf('/auth/v1/logout')!==-1) return J();
     if (h.Authorization!=='Bearer AT') return new Response('bad token',{status:401});
     var q = url.indexOf('?')!==-1 ? qs(url) : {};
@@ -75,9 +81,35 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
   if (!w.adhan) { /* CDN blocked in sandbox: load local copy for prayer times */ }
   await sleep(300);
   ok(!!d.querySelector('form[data-login]'), 'login screen shown with no session');
-  d.getElementById('em').value='jojo@example.com'; d.getElementById('pw').value='x';
+  d.getElementById('em').value='  JoJo '; d.getElementById('pw').value='x';
+  var uf = d.querySelector('form[data-login]');
+  ok(/اسم المستخدم/.test(uf.textContent) && !uf.querySelector('input[type=email]') && uf.username.getAttribute('autocapitalize')==='off' && uf.username.getAttribute('autocomplete')==='username' && uf.username.getAttribute('dir')==='ltr', 'login asks for username (autocapitalize off, autocomplete username, ltr)');
   d.querySelector('form[data-login]').requestSubmit();
   await sleep(800);
+  ok(w.__log.some(function(l){return /POST \/auth\/v1\/token\?grant_type=password/.test(l) && /"email":"jojo@jojo\.invalid"/.test(l)}), 'username "  JoJo " -> email jojo@jojo.invalid (trim, lowercase, @jojo.invalid)');
+  if (MUST) {
+    var pf = function(){ return d.querySelector('form[data-pwchange]'); };
+    var puts = function(){ return w.__log.filter(function(l){return /^PUT \/auth\/v1\/user/.test(l)}); };
+    ok(!!pf() && /اختاري كلمة مرور لك/.test(d.body.textContent) && /حتى صالح ما يعرفها/.test(d.body.textContent), 'must_change_password: full-screen password step shown first');
+    ok(!w.__log.some(function(l){return /jojo_profiles|jojo_checks|jojo_tasks/.test(l)}) && d.getElementById('tabs').hidden, 'nothing else loaded and no tabs before the change (cannot skip)');
+    w.location.hash = '#settings'; await sleep(200);
+    ok(!!pf() && !d.querySelector('form[data-form="settings"]'), 'navigating away does not skip the step');
+    function sub(a,b){ pf().pw1.value=a; pf().pw2.value=b; pf().requestSubmit(); return sleep(300); }
+    await sub('abc','abc'); ok(puts().length===0 && !!pf(), 'under 6 chars: no request');
+    await sub('abcdefg','abcdefh'); ok(puts().length===0 && !!pf(), 'mismatch: no request');
+    await sub('x','x'); ok(puts().length===0 && !!pf(), 'same as the temporary password: no request');
+    d.querySelector('[data-act="pw-toggle"]').click();
+    ok(pf().pw1.type==='text' && pf().pw2.type==='text', 'show/hide toggle works');
+    await sub('abcdef','abcdef');
+    ok(puts().length===1 && /كلمة المرور ضعيفة/.test(d.getElementById('pwErr').textContent) && !!pf(), '422 weak_password -> friendly Arabic error, still on the step');
+    await sub('Gooood1','Gooood1');
+    var pl = puts();
+    ok(pl.length===2 && pl[1]==='PUT /auth/v1/user {"password":"Gooood1","data":{"must_change_password":false}}', 'PUT /auth/v1/user body is exactly {password, data:{must_change_password:false}}');
+    await sleep(1000);
+    ok(!pf() && d.getElementById('tabs').hidden===false && w.__log.some(function(l){return /jojo_profiles/.test(l)}), 'after success: continues into the app (profile loaded, tabs shown)');
+    ok(!/Gooood1/.test(JSON.stringify(Object.assign({}, w.localStorage))), 'new password never stored');
+    out.push('--- requests ---'); out = out.concat(w.__log); document.getElementById('out').textContent = out.join('\n'); return;
+  }
   if (ROLE !== 'jojo') {
     ok(/هذا التطبيق لجوجو/.test(d.body.textContent), 'non-jojo role sees "هذا التطبيق لجوجو"');
     ok(!w.localStorage.getItem('jojo.session'), 'non-jojo session signed out (cleared)');
@@ -148,6 +180,9 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     d.querySelector('[data-act="rate-bean"]').click();
     d.querySelector('form[data-form="rate"]').requestSubmit(); await sleep(1200);
     var ri = w.__db.ratingInsert || {};
+    var iR = w.__log.findIndex(function(l){return /^POST \/rest\/v1\/jojo_ratings/.test(l)}), iC = w.__log.findIndex(function(l){return /^POST \/rest\/v1\/jojo_checks.*"key":"coffee"/.test(l)});
+    ok(iR!==-1 && iC!==-1 && iR<iC, '3a: jojo_ratings insert happens before the coffee check ('+iR+' < '+iC+')');
+    ok(!!d.querySelector('.brew h2') && d.querySelector('.brew h2').textContent===rcp, '3c: recipe of the day unchanged after saving a rating ('+rcp+')');
     ok(Object.keys(ri).sort().join(',')==='bean_id,brew_sec,date,grind,liked,notes,user_id', 'rating insert uses only granted columns ('+Object.keys(ri).join(',')+')');
     ok(ri.user_id==='U1' && ri.bean_id==='B1' && ri.date===S.today && ri.liked===true && ri.notes.join()==='حلو' && ri.brew_sec===70 && /^\d+$/.test(ri.grind), 'rating values: bean, date, liked, notes, brew_sec, grind');
     ok(w.__db.checks[S.today+'|coffee']===true, 'coffee check stored for today');
