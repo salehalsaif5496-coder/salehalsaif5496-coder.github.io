@@ -28,6 +28,7 @@
 :root{
   color-scheme:dark;
   --choc:#141012; --cream:#1F191C; --card-2:#2A2226;
+  --card-glass:rgba(31,25,28,.88); /* نفس تطبيق جوجو: بطاقات شفافة شوي يبين منها نقش البوسات */
   --pink:#F4A7C0; --pink-soft:#3A2630; --rose:#F4A7C0;
   --ink:#F6EEE3; --ink-2:#C7B4B9; --line:#33292D;
   --choc-deep:#C9AE8E; --on-pink:#1A1214;
@@ -37,6 +38,9 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--choc);color:var(--ink);font-family:"Plex",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+/* نقش البوسات — منسوخ حرفيًا من jojo/index.html عشان الصفحتين عيلة وحدة */
+html{overflow-x:clip;background-color:var(--choc);background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cg opacity=%22.32%22%3E%3Cg transform=%22translate(50 46) rotate(-18) scale(0.9) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.28%22%3E%3Cg transform=%22translate(160 72) rotate(24) scale(0.75) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.31%22%3E%3Cg transform=%22translate(98 152) rotate(9) scale(0.85) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.27%22%3E%3Cg transform=%22translate(188 188) rotate(-32) scale(0.7) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");background-size:220px 220px;background-attachment:fixed}
+@media (prefers-contrast:more),(prefers-reduced-transparency:reduce){html{background-image:none}}
 ::selection{background:var(--pink);color:var(--on-pink)}
 body{min-height:100dvh;padding:calc(env(safe-area-inset-top) + 18px) 18px 120px;max-width:440px;margin:0 auto}
 body.bare{padding-bottom:40px}
@@ -90,16 +94,16 @@ input,textarea,select{font:inherit;color:inherit}
 /* أقسام وبطاقات */
 h2.sec{font-size:19px;font-weight:700;margin:4px 4px 10px;display:flex;align-items:center;gap:8px}
 h2.sec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--choc-deep);flex:none}
-.card{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.card{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
 .card h3{font-size:18px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .card h3 .ic{width:22px;height:22px;flex:none;color:var(--choc-deep)}
 .muted{color:var(--ink-2);font-size:14px;line-height:1.7}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.stat{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px;display:block;text-decoration:none;color:inherit}
+.stat{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px;display:block;text-decoration:none;color:inherit}
 .stat .num{font-size:30px;font-weight:800;color:var(--rose);line-height:1.1}
 .stat .l{font-size:13px;color:var(--ink-2);margin-top:2px;line-height:1.6}
 a.stat:active{background:var(--card-2)}
-.group{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:16px;overflow:hidden}
+.group{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:16px;overflow:hidden}
 .row{display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:56px;width:100%;text-align:start}
 .row+.row,.sub+.row{border-top:1px solid var(--line)}
 .row .ic{width:26px;height:26px;flex:none;color:var(--choc-deep)}
@@ -150,11 +154,11 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 .status{font-size:13px;color:var(--ink-2);margin-top:8px;line-height:1.6}
 
 /* رسالة اليوم: ظرف */
-.letter{position:relative;background:var(--cream);border:1.5px solid #4A3D33;border-radius:var(--r-lg);padding:22px 18px 18px;box-shadow:var(--shadow);margin-bottom:22px}
+.letter{position:relative;background:var(--card-glass);border:1.5px solid #4A3D33;border-radius:var(--r-lg);padding:22px 18px 18px;box-shadow:var(--shadow);margin-bottom:22px}
 .letter .bow{position:absolute;top:-16px;inset-inline-start:22px;width:46px;height:30px}
 
 /* رسائل التشجيع */
-.win{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
+.win{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
 .win-head{display:flex;gap:12px;align-items:flex-start}
 .win .medal{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--choc-deep)}
 .win .medal .ic{width:24px;height:24px}
@@ -164,7 +168,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 .win textarea.in{min-height:90px;margin-top:12px}
 
 /* نوتها */
-.note{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
+.note{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:10px;overflow:hidden}
 .note.unread{border-color:#5A3B48;background:linear-gradient(180deg,#2A1C23,var(--cream))}
 .note>button{display:flex;align-items:center;gap:10px;width:100%;text-align:start;padding:14px 16px;min-height:56px}
 .note>button .ic{width:24px;height:24px;color:var(--choc-deep);flex:none}
@@ -176,7 +180,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 
 /* ذوقها */
 .shelf{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-.bean{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:8px;min-width:0}
+.bean{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:8px;min-width:0}
 .bean .ph{display:block;width:100%;aspect-ratio:3/4;border-radius:14px;background:var(--card-2);object-fit:cover}
 .bean .n{font-size:15px;font-weight:600;margin-top:8px;overflow-wrap:anywhere}
 .bean .rs{font-size:12px;color:var(--ink-2);overflow-wrap:anywhere}
@@ -194,6 +198,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 .login .lead{text-align:center;color:var(--ink-2);margin:6px 0 18px}
 .login .owner{align-self:center;margin-bottom:12px}
 .alert{border-radius:var(--r-sm);padding:12px 14px;font-size:14px;line-height:1.6;margin-top:12px;background:#3A1F28;border:1px solid #6B3446;color:#FFD9E5}
+.alert.soft{background:var(--card-2);border-color:#4A3D42;color:var(--ink);margin:0 0 16px}
 .empty{text-align:center;padding:26px 18px;border:1.5px dashed var(--line);border-radius:var(--r-md);color:var(--ink-2);font-size:15px;line-height:1.8;margin-bottom:16px}
 .loading{display:flex;flex-direction:column;align-items:center;gap:10px;padding:60px 0;color:var(--ink-2);text-align:center}
 .loading .cat{animation:breathe 1.6s ease-in-out infinite}
@@ -227,13 +232,9 @@ nav.tabs .dot{position:absolute;top:2px;inset-inline-end:14px;width:8px;height:8
 <div id="live" class="sr" aria-live="polite"></div>
 
 <script>
-/* رقم النسخة: غيّره مع كل نشر (يجدد ../core.js و ../vendor/) */
-var SALEH_VERSION = '2026-11-24.1';
-</script>
-<script>
 (function () {
 'use strict';
-var V = SALEH_VERSION;
+var V = '';          // = Jojo.CORE_VERSION بعد ما يتحمل core.js (ما فيه رقم نسخة يدوي يتأخر عنه)
 
 /* ============================================================ إعدادات ثابتة
    نفس مشروع جوجو. الحماية كلها من RLS (jojo/server/schema.sql): صالح يقرأ يومها وعاداتها ونسبتها وذوقها ونوتها له،
@@ -269,7 +270,24 @@ function ar(x) { return String(x).replace(/\d/g, function (d) { return '٠١٢٣
 function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
 function addDays(iso, n) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10); }
 function todayISO() { return Jojo.localDate(new Date(), TZ); }
-function herTz() { return (S.her && S.her.settings && S.her.settings.tz) || TZ; }
+function validTz(z) { try { new Intl.DateTimeFormat('en', { timeZone: z }); return true; } catch (e) { return false; } }
+function herTz() { var z = S.her && S.her.settings && S.her.settings.tz; return typeof z === 'string' && validTz(z) ? z : TZ; }
+/* إعداداتها تجي من حسابها: نثبّت الأنواع قبل أي رسم أو حساب (ما نثق بشكلها) */
+function normSettings(s) {
+  s = s && typeof s === 'object' ? s : {};
+  var hm = function (v) { return typeof v === 'string' && /^\d{2}:\d{2}$/.test(v) ? v : null; };
+  var out = {};
+  Object.keys(s).forEach(function (k) { out[k] = s[k]; });
+  out.sleepAt = hm(s.sleepAt); out.wakeAt = hm(s.wakeAt);
+  out.gymDays = Array.isArray(s.gymDays) ? s.gymDays.map(Number).filter(function (d) { return d >= 0 && d <= 6 && Math.floor(d) === d; }) : [];
+  out.vitamins = Array.isArray(s.vitamins) ? s.vitamins.filter(function (v) { return typeof v === 'string' && v; }) : [];
+  var wg = Math.floor(Number(s.waterGoal)); out.waterGoal = wg > 0 && wg <= 40 ? wg : 0;
+  var c = s.city;
+  out.city = c && typeof c === 'object' && isFinite(Number(c.lat)) && isFinite(Number(c.lng)) ? { name: String(c.name || ''), lat: Number(c.lat), lng: Number(c.lng) } : null;
+  out.wins = Array.isArray(s.wins) ? s.wins.filter(function (w) { return typeof w === 'string'; }) : [];
+  if (!(typeof s.tz === 'string' && validTz(s.tz))) delete out.tz;
+  return out;
+}
 function nowHM() {
   var o = {};
   new Intl.DateTimeFormat('en-GB', { timeZone: herTz(), hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date()).forEach(function (x) { o[x.type] = x.value; });
@@ -425,7 +443,10 @@ async function api(path, opt, retried) {
   try {
     r = await fetch(SB_URL + path, { method: opt.method || 'GET', headers: h, body: opt.body !== undefined ? JSON.stringify(opt.body) : undefined });
   } catch (e) { throw new NetError(); }
-  if (r.status === 401 && !retried) { await Auth.refresh(); return api(path, opt, true); }
+  if (r.status === 401) {
+    if (retried) throw new AuthError('expired');     // ٤٠١ حتى بعد تحديث ناجح = الجلسة منتهية → شاشة الدخول
+    await Auth.refresh(); return api(path, opt, true);
+  }
   if (r.status >= 500 || r.status === 429 || r.status === 408) throw new NetError('http_' + r.status);
   if (!r.ok) throw new HttpError(r.status, await r.text());
   var t = await r.text(); return t ? JSON.parse(t) : null;
@@ -565,7 +586,8 @@ var S = {
   msgs: null, msgsErr: false,                      // { daily: {date: msg}, wins: {id: msg} }
   wins: null, winsErr: false,                      // { unlocked: [] }
   letters: null, lettersErr: false, open: {},
-  beans: null, ratings: null, tasteErr: false, urls: {}, urlsExp: 0
+  beans: null, ratings: null, tasteErr: false, urls: {}, urlsExp: 0,
+  drafts: {}, rollNotice: false                    // مسودات الرسايل (ما تضيع مع إعادة الرسم) + تنبيه نص الليل
 };
 window.SalehApp = { state: S };
 var store = null, route = 'home', loadGen = 0;
@@ -610,19 +632,11 @@ function render(nav) {
 }
 function paint(html) {
   var a = document.activeElement, fid = a && a.getAttribute && a.getAttribute('data-fid');
-  var drafts = keepDrafts();
   $('#view').innerHTML = html;
-  restoreDrafts(drafts);
-  if (fid) { var b = $('[data-fid="' + CSS.escape(fid) + '"]'); if (b) b.focus({ preventScroll: true }); }
-}
-/* ما يضيع اللي يكتبه لو انرسمت الشاشة (تحديث بالخلفية) */
-function keepDrafts() {
-  var o = {};
-  document.querySelectorAll('textarea[data-draft]').forEach(function (t) { if (t.dataset.dirty === '1') o[t.dataset.draft] = t.value; });
-  return o;
-}
-function restoreDrafts(o) {
-  Object.keys(o).forEach(function (k) { var t = $('textarea[data-draft="' + CSS.escape(k) + '"]'); if (t) { t.value = o[k]; t.dataset.dirty = '1'; } });
+  if (fid) {
+    var b = $('[data-fid="' + CSS.escape(fid) + '"]');
+    if (b) { b.focus({ preventScroll: true }); if (b.tagName === 'TEXTAREA') b.setSelectionRange(b.value.length, b.value.length); }
+  }
 }
 function loadingBox(t) { return '<div class="loading" role="status">' + catSVG() + (t || 'لحظة…') + '</div>'; }
 function errBox(t) {
@@ -632,7 +646,7 @@ function errBox(t) {
 /* ============================================================ مشترك: ملفها ومهامها */
 async function loadHer() {
   var r = await Promise.all([store.her(), store.tasks()]);
-  S.her = r[0] || { settings: {} }; S.her.settings = S.her.settings || {};
+  S.her = r[0] || { settings: {} }; S.her.settings = normSettings(S.her.settings);
   S.tasks = r[1] || [];
 }
 function tasksOn(date) {
@@ -732,7 +746,7 @@ function renderDay() {
     care += roRow(ch.vitamins === true, IC.pill, 'الفيتامينات', ar(vOn) + ' من ' + ar(vits.length)) +
       '<div class="sub"><div class="chips">' + vits.map(function (v) { var on = ch['vit:' + v] === true; return '<span class="chip' + (on ? ' done' : '') + '">' + (on ? '✓ ' : '') + esc(v) + '</span>'; }).join('') + '</div></div>';
   }
-  var goal = s.waterGoal || 0;
+  var goal = Number(s.waterGoal) || 0;
   if (goal > 0) {
     var w = typeof ch.water === 'number' ? ch.water : 0, cups = '';
     for (var c = 1; c <= Math.max(goal, w); c++) cups += cupSVG(c <= w);
@@ -766,7 +780,7 @@ function settingsSummary() {
     '<dt>الصحيان</dt><dd>' + t12(s.wakeAt, true) + '</dd>' +
     '<dt>أيام النادي</dt><dd>' + (gd.length ? gd.map(function (d) { return DAYS[d]; }).join('، ') : 'بدون نادي') + '</dd>' +
     '<dt>الفيتامينات</dt><dd>' + ((s.vitamins || []).length ? s.vitamins.map(esc).join('، ') : 'ما فيه') + '</dd>' +
-    '<dt>هدف الماء</dt><dd>' + (s.waterGoal ? ar(s.waterGoal) + ' أكواب' : '—') + '</dd>' +
+    '<dt>هدف الماء</dt><dd>' + (s.waterGoal ? esc(ar(Number(s.waterGoal) || 0)) + ' أكواب' : '—') + '</dd>' +
     '<dt>المدينة</dt><dd>' + esc((s.city && s.city.name) || '—') + '</dd></dl></div>' +
     '<h2 class="sec">كل مهامها</h2>' + (all ? '<ul class="group" style="list-style:none">' + all + '</ul>' : '<p class="empty" style="padding:16px">ما أضافت مهام لسه.</p>');
 }
@@ -777,11 +791,14 @@ function seenBadge(m) {
   if (!m) return '<span class="badge">ما كتبتها لسه</span>';
   return m.seen_at ? '<span class="badge seen">✓✓ شافتها · ' + whenLabel(m.seen_at) + '</span>' : '<span class="badge">✓ وصلت، لسه ما شافتها</span>';
 }
-function msgForm(kind, key, m, label, placeholder, btn) {
-  return '<form data-form="msg" data-kind="' + kind + '" data-key="' + esc(key) + '">' +
-    '<label class="sr" for="t-' + esc(key) + '">' + label + '</label>' +
-    '<textarea id="t-' + esc(key) + '" class="in" name="body" maxlength="2000" data-draft="' + kind + ':' + esc(key) + '" placeholder="' + placeholder + '">' + esc(m ? m.body : '') + '</textarea>' +
-    '<div class="actions"><button class="btn small" data-fid="save-' + esc(key) + '">' + (m ? 'عدّلها' : btn) + '</button>' +
+/* المسودات بالحالة (S.drafts) مو بالشاشة: أي إعادة رسم — حتى تحديث نص الليل — ما تمسح اللي يكتبه.
+   المفتاح "خانة" (اليوم/بكرة/الإنجاز) مو تاريخ، عشان المسودة تنتقل مع الخانة لو عدّت الساعة ١٢. */
+function msgForm(kind, slot, key, m, label, placeholder, btn) {
+  var dk = kind + ':' + slot, val = Object.prototype.hasOwnProperty.call(S.drafts, dk) ? S.drafts[dk] : (m ? m.body : '');
+  return '<form data-form="msg" data-kind="' + kind + '" data-slot="' + esc(slot) + '" data-key="' + esc(key) + '">' +
+    '<label class="sr" for="t-' + esc(slot) + '">' + label + '</label>' +
+    '<textarea id="t-' + esc(slot) + '" class="in" name="body" maxlength="2000" data-draft="' + esc(dk) + '" data-fid="t-' + esc(slot) + '" placeholder="' + placeholder + '">' + esc(val) + '</textarea>' +
+    '<div class="actions"><button class="btn small" data-fid="save-' + esc(slot) + '">' + (m ? 'عدّلها' : btn) + '</button>' +
     (m ? '<span class="status">التعديل يرجّعها "لسه ما شافتها" لين تفتحها</span>' : '') + '</div></form>';
 }
 function renderMsg() {
@@ -790,12 +807,13 @@ function renderMsg() {
   if (!S.msgs) { loadMsgs(); return paint(top + loadingBox()); }
   var t = S.today, tm = addDays(t, 1), mt = S.msgs.daily[t], mm = S.msgs.daily[tm];
   paint(top +
+    (S.rollNotice ? '<p class="alert soft" role="status" id="rollNotice">الساعة عدّت ١٢ — بتنحفظ لليوم الجديد (' + dateLabel(t) + ')</p>' : '') +
     '<article class="letter" aria-labelledby="mt">' + BOW + '<h3 id="mt" style="font-size:18px;font-weight:700;display:flex;gap:8px;align-items:center;flex-wrap:wrap">💌 اليوم <span class="muted" style="font-family:Plex;font-weight:400">' + dateLabel(t) + '</span></h3>' +
     '<div style="margin-top:6px" id="todaySeen">' + seenBadge(mt) + '</div>' +
-    msgForm('daily', t, mt, 'رسالة اليوم', 'اكتب لها شي يفرّحها اليوم…', 'أرسلها') + '</article>' +
+    msgForm('daily', 'today', t, mt, 'رسالة اليوم', 'اكتب لها شي يفرّحها اليوم…', 'أرسلها') + '</article>' +
     '<h2 class="sec">جدولها لبكرة</h2><div class="card"><p class="muted">' + dateLabel(tm) + ' — ما تشوفها إلا بكرة.</p>' +
     (mm ? '<div style="margin-top:6px"><span class="badge seen">مجدولة ✓</span></div>' : '') +
-    msgForm('daily', tm, mm, 'رسالة بكرة', 'رسالة بكرة الصبح…', 'جدولها') + '</div>'
+    msgForm('daily', 'tomorrow', tm, mm, 'رسالة بكرة', 'رسالة بكرة الصبح…', 'جدولها') + '</div>'
   );
 }
 
@@ -830,21 +848,27 @@ function renderWins() {
       : (m ? '<span class="badge">مقفل — رسالتك تنتظرها</span>' : '<span class="badge">مقفل — ما كتبت رسالة لسه</span>');
     return '<article class="win' + (open ? ' open' : '') + '" data-win="' + esc(id) + '"><div class="win-head"><div class="medal" aria-hidden="true">' + (open ? IC[info.icon] : IC.lock) + '</div>' +
       '<div style="flex:1;min-width:0"><h3>' + esc(info.title) + '</h3><p class="muted">' + esc(info.how) + '</p><div style="margin-top:6px">' + state + '</div></div></div>' +
-      msgForm('achievement', id, m, 'رسالة ' + info.title, 'اكتب لها لما توصل…', 'احفظها') + '</article>';
+      msgForm('achievement', id, id, m, 'رسالة ' + info.title, 'اكتب لها لما توصل…', 'احفظها') + '</article>';
   }).join('');
   paint(top + list);
 }
 
 /* حفظ رسالة: موجودة ← PATCH للنص، مو موجودة ← POST. قبل الـ POST نتأكد من الخادم عشان ما تتكرر. */
 async function saveMsg(form) {
-  var kind = form.dataset.kind, key = form.dataset.key, body = form.body.value.trim(), btn = form.querySelector('button');
+  var kind = form.dataset.kind, slot = form.dataset.slot, dk = kind + ':' + slot, body = form.body.value.trim(), btn = form.querySelector('button');
   if (!body) { toast('اكتب شي أول ✍️'); form.body.focus(); return; }
-  if (kind === 'daily' && key !== S.today && key !== addDays(S.today, 1)) { toast('اليوم تغيّر، حدّث الصفحة'); return; }
-  if (kind === 'achievement' && Jojo.ACHIEVEMENTS.indexOf(key) === -1) return;
-  var bag = kind === 'daily' ? S.msgs.daily : S.msgs.wins, cur = bag[key];
-  if (cur && cur.body === body) { toast('ما تغيّر شي'); return; }
+  if (kind === 'achievement' && Jojo.ACHIEVEMENTS.indexOf(slot) === -1) return;
+  if (kind === 'daily' && slot !== 'today' && slot !== 'tomorrow') return;
+  S.drafts[dk] = form.body.value;
+  /* التاريخ ينحسب الحين (توقيت الرياض)، مو من "اليوم" المحفوظ — لو عدّت الساعة ١٢ وهو يكتب، تروح لليوم الجديد */
+  var now = todayISO(), rolled = false;
+  if (now !== S.today) { rolled = kind === 'daily'; rollDay(now); }
+  var key = kind === 'daily' ? (slot === 'today' ? now : addDays(now, 1)) : slot;
   btn.disabled = true;
   try {
+    if (!S.msgs) await loadMsgsRaw();
+    var bag = kind === 'daily' ? S.msgs.daily : S.msgs.wins, cur = bag[key];
+    if (cur && cur.body === body) { btn.disabled = false; delete S.drafts[dk]; toast('ما تغيّر شي'); return; }
     if (!cur) {
       var fresh = kind === 'daily' ? await store.dailyMsgs([key]) : (await store.winMsgs()).filter(function (m) { return m.achievement === key; });
       cur = (fresh || [])[0] || null;
@@ -852,9 +876,10 @@ async function saveMsg(form) {
     var saved = cur ? await store.editMsg(cur.id, body) : await store.addMsg(kind === 'daily' ? { kind: 'daily', for_date: key, body: body } : { kind: 'achievement', achievement: key, body: body });
     bag[key] = saved || Object.assign({}, cur, { body: body, seen_at: null });
     if (S.home && kind === 'daily' && key === S.today) S.home.msg = bag[key];
-    form.body.dataset.dirty = '';
+    delete S.drafts[dk];
+    if (kind === 'daily') S.rollNotice = false;
     render();
-    toast(kind === 'daily' ? (key === S.today ? 'وصلت لها 💌' : 'تجدولت لبكرة 💌') : 'انحفظت، تنفتح لها لما توصل 🎀');
+    toast(kind === 'daily' ? (rolled ? 'الساعة عدّت ١٢ — انحفظت لليوم الجديد 💌' : key === S.today ? 'وصلت لها 💌' : 'تجدولت لبكرة 💌') : 'انحفظت، تنفتح لها لما توصل 🎀');
   } catch (e) {
     btn.disabled = false;
     if (e instanceof AuthError) return sessionExpired();
@@ -958,22 +983,28 @@ document.addEventListener('click', function (ev) {
   }
   else if (act === 'signout') { Auth.signOut().then(function () { location.hash = ''; showLogin(); }); }
 });
-document.addEventListener('input', function (ev) { if (ev.target.matches && ev.target.matches('textarea[data-draft]')) ev.target.dataset.dirty = '1'; });
+document.addEventListener('input', function (ev) { var t = ev.target; if (t.matches && t.matches('textarea[data-draft]')) S.drafts[t.dataset.draft] = t.value; });
 document.addEventListener('submit', function (ev) {
   var f = ev.target;
   if (f.getAttribute('data-form') === 'msg') { ev.preventDefault(); if (S.role) saveMsg(f); }
 });
 window.addEventListener('hashchange', function () { if (S.role) go(); });
 /* رجع للصفحة أو تغيّر اليوم: نجيب الجديد */
+/* اليوم تغيّر (نص الليل): نحدّث التاريخ ونرمي اللي مرتبط باليوم القديم. المسودات تبقى. */
+function rollDay(t) {
+  S.today = t; S.msgs = null; S.home = null; S.wins = null; S.day = { date: null, checks: {}, err: false };
+  if (Object.keys(S.drafts).some(function (k) { return k.indexOf('daily:') === 0 && String(S.drafts[k]).trim(); })) S.rollNotice = true;
+}
 function refreshAll() {
   if (!S.role) return;
   var t = todayISO();
-  if (t !== S.today) { S.today = t; S.msgs = null; S.day = { date: null, checks: {}, err: false }; }
+  if (t !== S.today) rollDay(t);
   S.home = null; S.letters = null; S.wins = null; S.msgs = null; S.her = null; S.tasks = null; S.beans = null; S.ratings = null;
   if (S.day.date) S.day.loaded = false;
   clearErrors(); render();
 }
-document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible' && !document.querySelector('textarea[data-dirty="1"]')) refreshAll(); });
+document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'visible') refreshAll(); });
+window.addEventListener('focus', function () { if (S.role && todayISO() !== S.today) refreshAll(); });
 setInterval(function () { if (S.role && todayISO() !== S.today) refreshAll(); }, 60000);
 window.addEventListener('online', function () { if (S.role) { backoff = 0; clearErrors(); render(); } });
 
@@ -989,7 +1020,7 @@ function usernameToEmail(u) {
 }
 function resetState() {
   S.role = null; S.her = S.tasks = S.home = S.msgs = S.wins = S.letters = S.beans = S.ratings = null;
-  S.urls = {}; S.urlsExp = 0; S.open = {}; S.day = { date: null, checks: {}, err: false }; clearErrors();
+  S.urls = {}; S.urlsExp = 0; S.open = {}; S.drafts = {}; S.rollNotice = false; S.day = { date: null, checks: {}, err: false }; clearErrors();
 }
 function showLogin(errMsg) {
   resetState();
@@ -1059,7 +1090,25 @@ function boot() {
   store = Remote;
   if (Auth.load()) start(); else showLogin();
 }
-loadScript('../core.js?v=' + V).then(boot, function () {
+/* core.js يتحمل دايمًا طازج (Cache-Control: no-cache = يتأكد من الخادم كل مرة، ٣٠٤ لو ما تغيّر)،
+   ورقم النسخة ناخذه منه هو (Jojo.CORE_VERSION) لـ ../vendor/ — كذا ما يصير فيه رقم يدوي ينسى أحد يحدّثه. */
+function loadCore() {
+  return new Promise(function (res, rej) {
+    var x = new XMLHttpRequest();
+    x.open('GET', '../core.js');
+    x.setRequestHeader('Cache-Control', 'no-cache');
+    x.onload = function () { if (x.status >= 200 && x.status < 300) res(x.responseText); else rej(new Error('core ' + x.status)); };
+    x.onerror = function () { rej(new Error('core offline')); };
+    x.send();
+  }).then(function (code) {
+    var sc = document.createElement('script'); sc.textContent = code + '\n//# sourceURL=core.js';
+    document.head.appendChild(sc);
+    if (!window.Jojo) throw new Error('core');
+    V = String(Jojo.CORE_VERSION || '0');
+    window.SalehApp.version = V;
+  });
+}
+loadCore().then(boot, function () {
   $('#view').innerHTML = '<div class="loading" role="alert">' + catSVG() + '<p>ما قدرت أحمّل الصفحة، تأكد من النت وحدّثها.</p><button class="btn small" onclick="location.reload()">حدّث</button></div>';
 });
 })();

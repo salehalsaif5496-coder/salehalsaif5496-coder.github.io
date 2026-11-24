@@ -5,6 +5,10 @@
 })(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
+  /* نسخة المنطق: غيّرها مع أي تعديل هنا. صفحة صالح تاخذ رقم نسختها منها (Jojo.CORE_VERSION)،
+     وتطبيق جوجو يجدد core.js مع JOJO_VERSION. */
+  var CORE_VERSION = '2026-11-25.1';
+
   var PRAYERS = [
     ['fajr', 'الفجر'], ['dhuhr', 'الظهر'], ['asr', 'العصر'], ['maghrib', 'المغرب'], ['isha', 'العشاء']
   ];
@@ -205,6 +209,7 @@
   }
 
   return {
+    CORE_VERSION: CORE_VERSION,
     localDate: localDate,
     weekday: weekday,
     requiredItems: requiredItems,

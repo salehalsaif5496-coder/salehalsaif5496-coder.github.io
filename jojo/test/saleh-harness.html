@@ -6,7 +6,11 @@
 var ROLE = new URLSearchParams(location.search).get('role') || 'saleh';
 var MOCK = `<script>
 (function(){
-  var db = { patches: [], posts: [], refreshed: 0, first401: true }; window.__db = db; window.__log = [];
+  /* ساعة وهمية: __setOff(ms) يقدّم الوقت (لاختبار نص الليل) */
+  var OFF = 0, RD = Date; window.__setOff = function(o){ OFF = o; }; window.__RD = RD;
+  function D(){ if (!(this instanceof D)) return new RD(RD.now()+OFF).toString(); if (arguments.length===0) return new RD(RD.now()+OFF); return new (Function.prototype.bind.apply(RD,[null].concat([].slice.call(arguments))))(); }
+  D.now = function(){ return RD.now()+OFF; }; D.UTC = RD.UTC; D.parse = RD.parse; D.prototype = RD.prototype; window.Date = D;
+  var db = { patches: [], posts: [], refreshed: 0, first401: true, always401: false }; window.__db = db; window.__log = [];
   function J(x){ return new Response(x===undefined?'':JSON.stringify(x), {status:200, headers:{'Content-Type':'application/json'}}); }
   function qs(u){ var o={}; (u.split('?')[1]||'').split('&').forEach(function(p){ if(!p) return; var i=p.indexOf('='); o[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); return o; }
   function riyadh(off){ var p={}; new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Riyadh',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).forEach(function(x){p[x.type]=x.value;}); var d=new Date(Date.UTC(+p.year,+p.month-1,+p.day+(off||0))); return d.toISOString().slice(0,10); }
@@ -31,6 +35,7 @@ var MOCK = `<script>
     if (url.indexOf('/auth/v1/token?grant_type=refresh_token')!==-1) { db.refreshed++; return J({access_token:'AT2',refresh_token:'RT2',expires_in:3600,user:{id:'U1',user_metadata:{}}}); }
     if (url.indexOf('/auth/v1/logout')!==-1) return J();
     if (h.Authorization!=='Bearer AT' && h.Authorization!=='Bearer AT2') return new Response('bad token',{status:401});
+    if (db.always401) return new Response('user gone',{status:401});
     var q = qs(url);
     if (url.indexOf('/storage/v1/object/sign/jojo-beans')!==-1) { db.sign = (db.sign||[]).concat([body.paths]); return J(body.paths.map(function(p){ return {path:p, signedURL:'/object/sign/jojo-beans/'+p+'?token=T', error:null}; })); }
     if (url.indexOf('jojo_profiles')!==-1) {
@@ -184,6 +189,43 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(sh.textContent.indexOf('<img src=x onerror=') !== -1 && sh.textContent.indexOf('"><script>') !== -1 && !sh.querySelector('script,b'), 'taste: bean name/roaster/notes HTML rendered as text');
     ok(/عجبها ٢ من ٢/.test(sh.textContent) && /حلو ×٢/.test(sh.textContent) && /كيس بدون اسم/.test(sh.textContent), 'taste: per-bean liked count + note chips');
 
+    /* ---- النسخة تتبع core.js ---- */
+    ok(w.SalehApp.version && w.SalehApp.version === w.Jojo.CORE_VERSION && [].some.call(d.scripts, function(sc){ return sc.src.indexOf('adhan.umd.min.js?v=' + encodeURIComponent(w.Jojo.CORE_VERSION)) !== -1 || sc.src.indexOf('adhan.umd.min.js?v=' + w.Jojo.CORE_VERSION) !== -1; }), 'version follows Jojo.CORE_VERSION (' + w.SalehApp.version + ')');
+    ok(w.getComputedStyle(d.documentElement).backgroundImage.indexOf('svg') !== -1 && w.getComputedStyle(d.querySelector('.bean')).backgroundColor === 'rgba(31, 25, 28, 0.88)', 'kiss background + glass cards like her app');
+
+    /* ---- نص الليل ---- */
+    var T1 = (function(){ var p=db.today.split('-').map(Number); return new w.__RD(w.__RD.UTC(p[0],p[1]-1,p[2]+1)).toISOString().slice(0,10); })();
+    function plus(iso,n){ var p=iso.split('-').map(Number); return new w.__RD(w.__RD.UTC(p[0],p[1]-1,p[2]+n)).toISOString().slice(0,10); }
+    function setRiyadh(iso, hh, mm, ss){ var p=iso.split('-').map(Number); w.__setOff(w.__RD.UTC(p[0],p[1]-1,p[2],hh-3,mm,ss) - w.__RD.now()); }
+    function type(ta, v){ ta.value = v; ta.dispatchEvent(new w.Event('input', {bubbles:true})); }
+    // (أ) يكتب ٢٣:٥٩:٥٠ ويرسل بعد ١٢ بدون أي تحديث → تنحفظ لليوم الجديد (T+1 فيها رسالة n1 من فوق → PATCH لها)
+    setRiyadh(db.today, 23, 59, 50);
+    await nav('#msg'); await until(function(){ return d.querySelector('form[data-slot="today"]'); });
+    var np0 = db.patches.length, nP0 = db.posts.length;
+    type(d.querySelector('form[data-slot="today"] textarea'), 'نص الليل');
+    setRiyadh(db.today, 0 + 24, 0, 20);
+    d.querySelector('form[data-slot="today"]').requestSubmit();
+    await until(function(){ return db.patches.length > np0 || db.posts.length > nP0; });
+    var lastP = db.patches[db.patches.length-1];
+    ok(db.posts.length === nP0 && /id=eq\.n1&/.test(lastP.url) && lastP.body.body === 'نص الليل', 'midnight: submit after 00:00 saves to the NEW day (' + T1 + '), not the cached one');
+    await sleep(150);
+    ok(/الساعة عدّت ١٢/.test((d.querySelector('.toast')||{}).textContent||''), 'midnight: tells him it went to the new day');
+    // (ب) يكتب ببكرة الساعة ٢٣:٥٩:٥٠، يعدّي ١٢ ويرجع للصفحة (focus) → المسودة ما تضيع + تنبيه، والحفظ يروح لبكرة الجديد
+    setRiyadh(T1, 23, 59, 50); w.dispatchEvent(new w.Event('focus'));
+    await until(function(){ return d.querySelector('form[data-slot="tomorrow"]') && d.querySelector('form[data-slot="tomorrow"]').dataset.key === plus(T1,1); });
+    type(d.querySelector('form[data-slot="tomorrow"] textarea'), 'مسودة نص الليل');
+    setRiyadh(T1, 24, 0, 20); w.dispatchEvent(new w.Event('focus'));
+    await until(function(){ return d.getElementById('rollNotice') && d.querySelector('form[data-slot="tomorrow"]'); });
+    var ta2 = d.querySelector('form[data-slot="tomorrow"] textarea');
+    ok(!!d.getElementById('rollNotice') && /بتنحفظ لليوم الجديد/.test(d.getElementById('rollNotice').textContent), 'midnight refresh: shows "الساعة عدّت ١٢ — بتنحفظ لليوم الجديد"');
+    ok(ta2 && ta2.value === 'مسودة نص الليل' && ta2.form.dataset.key === plus(T1,2), 'midnight refresh: half-written message kept, now under the new tomorrow');
+    var nP1 = db.posts.length; ta2.form.requestSubmit();
+    await until(function(){ return db.posts.length > nP1; });
+    ok(JSON.stringify(db.posts[db.posts.length-1]) === JSON.stringify({kind:'daily', for_date: plus(T1,2), body:'مسودة نص الليل'}), 'midnight refresh: saved for the new tomorrow ' + plus(T1,2));
+    await sleep(150);
+    ok(!d.getElementById('rollNotice'), 'notice cleared after saving');
+    w.__setOff(0);
+
     await sleep(300);
     var L = w.__log;
     ok(!L.some(function(l){ return /jojo_notes/.test(l); }), 'privacy: jojo_notes never requested');
@@ -192,6 +234,12 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(L.filter(function(l){ return /^PATCH .*jojo_letters/.test(l); }).every(function(l){ return /\{"read_at":"[^"]+"\}$/.test(l); }), 'every jojo_letters PATCH body is only {read_at}');
     ok(!L.some(function(l){ return /^(POST|PATCH) .*storage\/v1\/object\/jojo-beans/.test(l); }), 'no storage uploads');
     ok(w.top.__xss === undefined, 'no injected script/handler ran');
+
+    /* ---- ٤٠١ حتى بعد تحديث ناجح → شاشة الدخول ---- */
+    var r0 = db.refreshed, l0 = w.__log.length; db.always401 = true;
+    d.dispatchEvent(new w.Event('visibilitychange'));
+    await until(function(){ return d.querySelector('form[data-login]') && /انتهت الجلسة/.test(d.body.textContent) && !w.localStorage.getItem('jojo-saleh.session'); }, 6000);
+    ok(/انتهت الجلسة/.test(d.body.textContent) && !!d.querySelector('form[data-login]') && db.refreshed === r0 + 1 && !w.localStorage.getItem('jojo-saleh.session'), '401 right after a successful refresh -> login "انتهت الجلسة" (not a stuck error)');
   }
   out.push('--- requests ---'); out = out.concat(w.__log); document.getElementById('out').textContent = out.join('\n');
   } catch (e) { out.push('ERROR ' + e.message + '\n' + e.stack); document.getElementById('out').textContent = out.join('\n'); }

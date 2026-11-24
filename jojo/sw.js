@@ -47,13 +47,17 @@ function networkFirst(req, cacheKey) {
   });
 }
 
+var SALEH_PATH = new URL('./saleh', self.location.href).pathname;      // /jojo/saleh
+function isSalehPath(p) { return p === SALEH_PATH || p.indexOf(SALEH_PATH + '/') === 0; }
+
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;
   var url = new URL(req.url);
   if (url.origin !== self.location.origin) return;                 // ولا شي من برّا (Supabase من الشبكة دايمًا)
-  // صفحة صالح (/jojo/saleh/) داخل نطاق هذا الـ SW: ما نلمسها، وإلا تنحفظ مكان index.html حق جوجو
-  if (url.pathname.indexOf(new URL('./saleh/', self.location.href).pathname) === 0) return;
+  // صفحة صالح (/jojo/saleh و /jojo/saleh/...) داخل نطاق هذا الـ SW: ما نلمسها أبد.
+  // بدون السلاش، GitHub Pages يرجع 301 والـ SW كان يرد بـ index.html حق جوجو بداله.
+  if (isSalehPath(url.pathname)) return;
 
   if (req.mode === 'navigate' || /\/index\.html$/.test(url.pathname)) {
     e.respondWith(networkFirst(req, './index.html'));
@@ -89,11 +93,10 @@ self.addEventListener('notificationclick', function (e) {
   var raw = (e.notification.data && e.notification.data.url) || './#today';
   var url = new URL(raw, self.registration.scope).href;
   var app = new URL('./', self.registration.scope).pathname;
-  var saleh = new URL('./saleh/', self.registration.scope).pathname;
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(function (ws) {
     for (var i = 0; i < ws.length; i++) {
       var p = new URL(ws[i].url).pathname;
-      if (p.indexOf(app) === 0 && p.indexOf(saleh) !== 0 && 'focus' in ws[i]) {
+      if (p.indexOf(app) === 0 && !isSalehPath(p) && 'focus' in ws[i]) {
         var w = ws[i];
         return w.focus().then(function (f) { return f && 'navigate' in f ? f.navigate(url) : f; }).catch(function () { return self.clients.openWindow(url); });
       }
