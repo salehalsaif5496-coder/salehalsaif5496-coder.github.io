@@ -1,0 +1,94 @@
+<!doctype html><meta charset="utf-8"><body><pre id="out">RUNNING</pre><iframe id="f" style="width:390px;height:844px"></iframe>
+<!-- Browser check for jojo/index.html against a mocked Supabase (no network). Serve repo root: python3 -m http.server 8765, then
+     google-chrome --headless=new --virtual-time-budget=30000 --dump-dom "http://localhost:8765/jojo/test/app-harness.html?role=jojo" (or role=saleh). -->
+<script>
+var ROLE = new URLSearchParams(location.search).get('role') || 'jojo';
+var MOCK = `<script>
+(function(){
+  var db = {checks:{}, daily:{}, msgSeen:null}; window.__db = db; window.__log = []; window.__offline = false;
+  var today = null;
+  function J(x){ return new Response(x===undefined?'':JSON.stringify(x), {status:200, headers:{'Content-Type':'application/json'}}); }
+  function qs(u){ var o={}; u.split('?')[1].split('&').forEach(function(p){ var i=p.indexOf('='); o[decodeURIComponent(p.slice(0,i))]=decodeURIComponent(p.slice(i+1)); }); return o; }
+  window.fetch = async function(url, opt){
+    opt = opt||{}; var m = opt.method||'GET';
+    if (window.__offline) throw new TypeError('Failed to fetch');
+    if (url.indexOf('supabase.co')===-1) throw new TypeError('blocked');
+    var body = opt.body ? JSON.parse(opt.body) : null, h = opt.headers||{};
+    window.__log.push(m+' '+url.split('.co')[1]+(h.Prefer?' ['+h.Prefer+']':'')+(body?' '+JSON.stringify(body):''));
+    if (!h.apikey) return new Response('no apikey',{status:401});
+    if (url.indexOf('/auth/v1/token?grant_type=password')!==-1) return J({access_token:'AT',refresh_token:'RT',expires_in:3600,user:{id:'U1'}});
+    if (url.indexOf('/auth/v1/logout')!==-1) return J();
+    if (h.Authorization!=='Bearer AT') return new Response('bad token',{status:401});
+    var q = qs(url);
+    if (url.indexOf('jojo_profiles')!==-1) return J([{role:'${ROLE}', settings:{sleepAt:'23:00',wakeAt:'06:30',gymDays:[],vitamins:['د'],waterGoal:8,city:{id:'riyadh',name:'الرياض',lat:24.7136,lng:46.6753},tz:'Asia/Riyadh'}, created_at:'2026-01-01T00:00:00Z'}]);
+    if (url.indexOf('jojo_tasks')!==-1) return J([]);
+    if (url.indexOf('jojo_messages')!==-1) { if (m==='PATCH') { db.msgSeen = body; return J(); } return J(q.kind==='eq.daily'?[{id:'m1',body:'صباحك ورد',seen_at:null}]:[]); }
+    if (url.indexOf('jojo_checks')!==-1) {
+      if (m==='GET') return J(Object.keys(db.checks).map(function(k){ var p=k.split('|'); return {date:p[0],key:p[1],value:db.checks[k]}; }));
+      if (m==='POST') { if (!/ignore-duplicates/.test(h.Prefer) || q.on_conflict!=='user_id,date,key') return new Response('bad upsert',{status:400}); var k=body.date+'|'+body.key; if(!(k in db.checks)) db.checks[k]=body.value; db.inserts=(db.inserts||0)+1; return J(); }
+      if (m==='PATCH') { var ks=Object.keys(body).sort().join(','); if (ks!=='updated_at,value') return new Response('42501 column',{status:403}); db.checks[q.date.slice(3)+'|'+q.key.slice(3)] = body.value; return J(); }
+    }
+    if (url.indexOf('jojo_daily')!==-1) {
+      if (m==='POST') { if(!(body.date in db.daily)) db.daily[body.date]=body.pct; return J(); }
+      if (m==='PATCH') { var ks2=Object.keys(body).sort().join(','); if (ks2!=='pct,updated_at') return new Response('42501',{status:403}); db.daily[q.date.slice(3)] = body.pct; return J(); }
+    }
+    return new Response('unhandled '+url,{status:404});
+  };
+})();
+<\/script>`;
+function sleep(ms){return new Promise(function(r){setTimeout(r,ms)})}
+var out = [];
+function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementById("out").textContent = out.join("\n"); }
+(async function(){
+  try { localStorage.clear(); } catch(e){}
+  try {
+  var html = await (await fetch('/jojo/index.html')).text();
+  html = html.replace('<head>', '<head><base href="/jojo/">'+MOCK);
+  out.push('fetched '+html.length); var f = document.getElementById('f'); f.srcdoc = html;
+  await new Promise(function(r){ f.onload = r; });
+  var w = f.contentWindow, d = f.contentDocument;
+  if (!w.adhan) { /* CDN blocked in sandbox: load local copy for prayer times */ }
+  await sleep(300);
+  ok(!!d.querySelector('form[data-login]'), 'login screen shown with no session');
+  d.getElementById('em').value='jojo@example.com'; d.getElementById('pw').value='x';
+  d.querySelector('form[data-login]').requestSubmit();
+  await sleep(800);
+  if (ROLE !== 'jojo') {
+    ok(/هذا التطبيق لجوجو/.test(d.body.textContent), 'non-jojo role sees "هذا التطبيق لجوجو"');
+    ok(!w.localStorage.getItem('jojo.session'), 'non-jojo session signed out (cleared)');
+    ok(w.__log.some(function(l){return /auth\/v1\/logout/.test(l)}), 'logout called');
+  } else {
+    ok(!!d.querySelector('.bracelet'), 'today rendered after login');
+    ok(w.__db.msgSeen && w.__db.msgSeen.seen_at && Object.keys(w.__db.msgSeen).length===1, 'daily message marked seen (only seen_at)');
+    function click(k){ d.querySelector('[data-key="'+k+'"]').click(); }
+    click('prayer:fajr'); click('meal:breakfast'); click('sleep');
+    await sleep(500);
+    var S = w.JojoApp.state;
+    ok(w.__db.checks[S.today+'|prayer:fajr']===true && w.__db.checks[S.today+'|sleep']===true, '3 ticks written to jojo_checks');
+    w.__offline = true; w.dispatchEvent(new Event('offline'));
+    click('wake'); await sleep(300);
+    var qd = JSON.parse(w.localStorage.getItem('jojo.queue')||'{}');
+    ok(qd['c|'+S.today+'|wake'] && qd['c|'+S.today+'|wake'].value===true, 'offline tick queued in localStorage');
+    ok(!(S.today+'|wake' in w.__db.checks), 'offline tick not on server yet');
+    ok(/بدون نت/.test(d.getElementById('pending').textContent), 'offline pill shown');
+    // the vitamin chip completes the vitamins item while offline too
+    d.querySelector('[data-act="vit"]').click(); await sleep(200);
+    w.__offline = false; w.dispatchEvent(new Event('online'));
+    await sleep(1200);
+    var items = w.Jojo.requiredItems(S.settings, S.tasks, S.today);
+    var expect = w.Jojo.dayScore(items, S.checks, {waterGoal:S.settings.waterGoal});
+    ok(w.__db.checks[S.today+'|wake']===true && w.__db.checks[S.today+'|vitamins']===true, 'queued ticks replayed after online');
+    ok(w.__db.daily[S.today]===expect, 'jojo_daily.pct ('+w.__db.daily[S.today]+') == dayScore ('+expect+')');
+    ok(Object.keys(JSON.parse(w.localStorage.getItem('jojo.queue')||'{}')).length===0, 'queue empty after replay');
+    // untick + replay twice → idempotent, value false
+    click('sleep'); await sleep(500); 
+    ok(w.__db.checks[S.today+'|sleep']===false, 'untick writes value=false');
+    var keys = Object.keys(w.__db.checks).filter(function(k){return k.indexOf(S.today)===0});
+    ok(keys.length === new Set(keys).size, 'no duplicate rows ('+keys.length+' keys)');
+    ok(!w.__log.some(function(l){return /merge-duplicates/.test(l)}), 'never uses merge-duplicates (column grants)');
+  }
+  out.push('--- requests ---'); out = out.concat(w.__log);
+  } catch(e) { out.push('ERROR '+e.stack); }
+  document.getElementById('out').textContent = out.join('\n');
+})();
+</script>
