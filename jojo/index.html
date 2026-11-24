@@ -301,7 +301,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.4';
+var JOJO_VERSION = '2026-11-24.5';
 </script>
 <script>
 (function () {
@@ -1783,9 +1783,14 @@ window.addEventListener('resize', function () {   // الأكواب تتوزع �
 window.addEventListener('hashchange', function () { if (S.role) { if (location.hash !== '#settings') draft = null; go(); } });
 
 /* ============================================================ الدخول */
+/* الأرقام العربية/الفارسية (٠-٩ ۰-۹) → إنجليزية، عشان كيبورد عربي ما يخرّب كلمة المرور */
+function latinDigits(v) {
+  return String(v == null ? '' : v).replace(/[\u0660-\u0669]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); })
+    .replace(/[\u06F0-\u06F9]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); });
+}
 /* اسم المستخدم → إيميل داخلي: trim + lowercase، وبدون @ نضيف @jojo.invalid */
 function usernameToEmail(u) {
-  u = String(u || '').trim().toLowerCase();
+  u = latinDigits(u).trim().toLowerCase();
   if (!u) return '';
   return u.indexOf('@') === -1 ? u + '@jojo.invalid' : u;
 }
@@ -1804,7 +1809,7 @@ function showLogin(errMsg) {
 document.addEventListener('submit', async function (ev) {
   var f = ev.target; if (!f.hasAttribute('data-login')) return;
   ev.preventDefault();
-  var email = usernameToEmail(f.username.value), pw = f.password.value, err = $('#loginErr'), btn = $('#loginBtn');
+  var email = usernameToEmail(f.username.value), pw = latinDigits(f.password.value), err = $('#loginErr'), btn = $('#loginBtn');
   if (!email || !pw) { err.innerHTML = '<p class="alert">اكتبي اسم المستخدم وكلمة المرور 🤍</p>'; return; }
   btn.disabled = true; btn.textContent = 'لحظة…'; err.innerHTML = '';
   try { await Auth.signIn(email, pw); tempPw = pw; await start(); }
@@ -1834,7 +1839,7 @@ document.addEventListener('click', function (ev) {
 document.addEventListener('submit', async function (ev) {
   var f = ev.target; if (!f.hasAttribute('data-pwchange')) return;
   ev.preventDefault();
-  var a = f.pw1.value, b = f.pw2.value, err = $('#pwErr'), btn = $('#pwBtn');
+  var a = latinDigits(f.pw1.value), b = latinDigits(f.pw2.value), err = $('#pwErr'), btn = $('#pwBtn');
   function bad(m) { err.innerHTML = '<p class="alert">' + m + '</p>'; }
   if (a.length < 6) return bad('كلمة المرور لازم تكون ٦ خانات أو أكثر 🤍');
   if (a !== b) return bad('الكلمتين مو متطابقتين، جربي مرة ثانية');
