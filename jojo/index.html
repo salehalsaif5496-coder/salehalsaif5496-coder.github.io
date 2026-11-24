@@ -41,6 +41,8 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--choc);color:var(--ink);font-family:"Plex",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+html{background-color:var(--choc);background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cg opacity=%22.085%22%3E%3Cg transform=%22translate(48 44) rotate(-18) scale(0.95) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(158 70) rotate(24) scale(0.7) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23F4A7C0%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(96 150) rotate(9) scale(0.8) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23F4A7C0%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(190 186) rotate(-32) scale(0.6) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");background-size:220px 220px;background-attachment:fixed}
+@media (prefers-contrast:more),(prefers-reduced-transparency:reduce){html{background-image:none}}
 ::selection{background:var(--pink);color:var(--on-pink)}
 body{min-height:100dvh;padding:calc(env(safe-area-inset-top) + 18px) 18px 120px;max-width:440px;margin:0 auto}
 body.bare{padding-bottom:40px}
@@ -272,6 +274,19 @@ button.bean[aria-pressed="true"] .ph{border-color:var(--pink);box-shadow:0 0 0 3
 .party .confetti{position:absolute;inset:0;overflow:hidden;pointer-events:none}
 .party .confetti svg{position:absolute;top:-30px;width:20px;height:20px;animation:fall 2.6s linear infinite}
 
+/* مباركة الملكة */
+.toast.queen{inset-inline:0;width:max-content;max-width:calc(100% - 36px);display:flex;align-items:center;gap:8px;background:var(--pink);color:var(--on-pink);border-radius:999px;padding:10px 18px;font-weight:600;animation:rise .3s var(--ease)}
+.toast.queen svg{width:20px;height:20px;flex:none}
+.party.queen h2{font-family:"Baloo","Plex",sans-serif;font-size:34px;line-height:1.3;color:var(--rose)}
+.party.queen .cat{position:relative}
+.party.queen .crowned{position:relative;width:150px;margin:0 auto 6px}
+.party.queen .crowned{animation:hop 1.2s var(--ease) 2}
+.party.queen .crowned .cat{width:150px;height:150px;margin:0;animation:none}
+.party.queen .crown{position:absolute;top:-14px;inset-inline-start:50%;width:56px;height:40px;margin-inline-start:-28px;z-index:1}
+.party.queen .burst{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.party.queen .burst svg{position:absolute;top:46%;inset-inline-start:50%;width:22px;height:22px;opacity:0;animation:kissburst 1.4s var(--ease) forwards;animation-delay:var(--d)}
+@keyframes kissburst{0%{opacity:0;transform:translate(0,0) scale(.4) rotate(0)}15%{opacity:1}100%{opacity:0;transform:translate(var(--x),var(--y)) scale(1.1) rotate(var(--r))}}
+
 @keyframes hop{0%,100%{transform:translateY(0) rotate(0)}30%{transform:translateY(-14px) rotate(-6deg)}60%{transform:translateY(0) rotate(4deg)}}
 @keyframes breathe{50%{transform:scale(1.06)}}
 @keyframes rise{from{opacity:0;transform:translateY(10px)}}
@@ -319,7 +334,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.7';
+var JOJO_VERSION = '2026-11-24.8';
 /* مفتاح VAPID العام للتنبيهات (مو سري) — يحطه الكنترولر نفس jojo_config 'vapid_public' */
 var JOJO_VAPID_PUBLIC = 'BCKOgH0ZISRSX4xbB7uPNBRV-kykIZanutg7t1rWSo9TwOKW-jgij0eaTICZAJLzljX40NgS7kEARJ6haWxV0EE';
 </script>
@@ -895,7 +910,7 @@ function updatePending() {
 /* تأشير بند: تحديث فوري + طابور + رفع */
 var touchGen = 0, touchedAt = {};   // متى آخر مرة تأشر كل بند (للدمج مع لقطة الخادم)
 function setCheck(key, value, extra) {
-  var before = score();
+  var before = score(), doneBefore = doneCount();
   S.checks[key] = value; touchedAt[key] = ++touchGen;
   (extra || []).forEach(function (x) { touchedAt[x[0]] = ++touchGen; });
   enqueue({ t: 'c', date: S.today, key: key, value: value });
@@ -904,7 +919,8 @@ function setCheck(key, value, extra) {
   saveCache();
   var after = score();
   if (route === 'today') renderToday();
-  if (after === 100 && before !== 100) celebrateDay();
+  var celebrating = after === 100 && before !== 100 && celebrateDay();
+  if (!celebrating && doneCount() > doneBefore) queenToast();
   flush();
 }
 /* حبة الفيتامينات = كل الفيتامينات الحالية متأشرة (تتعدل لو تغيرت القائمة) */
@@ -1588,10 +1604,50 @@ function party(title, text) {
   d.querySelector('button').focus();
   announce(title);
 }
+var CROWN = '<svg viewBox="0 0 28 20" aria-hidden="true"><path d="M3 16 L2 5 L9 10 L14 3 L19 10 L26 5 L25 16 Z" fill="#F4A7C0" stroke="#C2557A" stroke-width="1.6" stroke-linejoin="round"/><path d="M3 18.5 H25" stroke="#C2557A" stroke-width="2" stroke-linecap="round"/><circle cx="2" cy="4.5" r="1.6" fill="#C2557A"/><circle cx="14" cy="2.6" r="1.6" fill="#C2557A"/><circle cx="26" cy="4.5" r="1.6" fill="#C2557A"/></svg>';
+var QUEEN = 'شاطرة الملكة جوجو 👑';
+var KISS = '<svg viewBox="0 0 60 44" aria-hidden="true"><path d="M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z" fill="#F4A7C0"/><path d="M6 22Q30 25 54 22" fill="none" stroke="#C2557A" stroke-width="2" stroke-linecap="round"/></svg>';
+function doneCount() {
+  var g = { waterGoal: S.settings.waterGoal };
+  return items().filter(function (i) { return Jojo.isDone(i.key, S.checks[i.key], g); }).length;
+}
+var lastQueenToast = 0;
+function queenToast() {
+  var now = Date.now();
+  if (now - lastQueenToast < 3000) return;
+  lastQueenToast = now;
+  var old = $('.toast'); if (old) old.remove();
+  var d = document.createElement('div'); d.className = 'toast queen'; d.setAttribute('role', 'status');
+  d.innerHTML = CROWN + '<span>' + QUEEN + '</span>';
+  document.body.appendChild(d); setTimeout(function () { d.remove(); }, 2000);
+}
+function queenParty() {
+  var old = $('.party'); if (old) old.remove();
+  var d = document.createElement('div');
+  d.className = 'party queen'; d.setAttribute('role', 'dialog'); d.setAttribute('aria-modal', 'true'); d.setAttribute('aria-label', QUEEN);
+  d.innerHTML = '<div class="burst" aria-hidden="true"></div>';
+  var burst = d.querySelector('.burst');
+  for (var k = 0; k < 14; k++) {
+    var ang = (k / 14) * Math.PI * 2 + (k % 2) * 0.2, rad = 110 + (k % 3) * 45, w = document.createElement('div');
+    w.innerHTML = (k % 3 ? HEART : KISS);
+    var sv = w.firstChild;
+    sv.style.cssText = '--x:' + Math.round(Math.cos(ang) * rad) + 'px;--y:' + Math.round(Math.sin(ang) * rad * 1.3) + 'px;--r:' + ((k % 2 ? 1 : -1) * (20 + k * 9)) + 'deg;--d:' + (k % 4) * 0.08 + 's';
+    burst.appendChild(sv);
+  }
+  var box = document.createElement('div'); box.className = 'box';
+  box.innerHTML = '<div class="crowned">' + catSVG() + '<span class="crown">' + CROWN + '</span></div><h2>' + QUEEN + '</h2><p>خلصتي يومك كامل، فخورين فيك 🎀</p><button class="btn" data-act="close-party">تمام</button>';
+  d.appendChild(box);
+  document.body.appendChild(d);
+  d.querySelector('button').focus();
+  announce(QUEEN);
+}
+var queenSeen = {};
 function celebrateDay() {
-  if (LS.get('celebrated', '') === S.today) return;
-  LS.set('celebrated', S.today);
-  party('كملتِ سوارة اليوم!', 'كل الحبات بمكانها. القطوة ترقص لك وصالح بيعرف إنك قدها 🤍');
+  var k = 'queen.' + (Auth.uid() || 'anon') + '|' + S.today;
+  if (LS.get(k, false) || queenSeen[k]) return false;
+  queenSeen[k] = true; LS.set(k, true);
+  queenParty();
+  return true;
 }
 function heartAt(el) {
   if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
@@ -2122,6 +2178,9 @@ function boot() {
   if (DEMO) {
     store = makeDemo(DEMO === 'onboard');
     Auth.sess = { access_token: 'demo', user: { id: 'demo' } };
+    var hook = new URLSearchParams(location.search);
+    if (hook.get('celebrate')) setTimeout(queenParty, 600);
+    if (hook.get('toast')) setTimeout(function () { queenToast(); var t = $('.toast.queen'); if (t && hook.get('toast') === 'static') t.style.animation = 'none'; }, 600);
     return start();
   }
   store = Remote;
