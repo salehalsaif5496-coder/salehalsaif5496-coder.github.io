@@ -31,6 +31,8 @@ jobs:
           cp -r khazna site/khazna
           cp -r orb site/orb
           cp -r lab site/lab
+          cp -r jojo site/jojo
+          rm -rf site/jojo/test site/jojo/server site/jojo/proto site/jojo/.gitignore
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v4
         with:
