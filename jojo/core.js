@@ -7,7 +7,7 @@
 
   /* نسخة المنطق: غيّرها مع أي تعديل هنا. صفحة صالح تاخذ رقم نسختها منها (Jojo.CORE_VERSION)،
      وتطبيق جوجو يجدد core.js مع JOJO_VERSION. */
-  var CORE_VERSION = '2026-11-25.1';
+  var CORE_VERSION = '2026-11-25.2';
 
   var PRAYERS = [
     ['fajr', 'الفجر'], ['dhuhr', 'الظهر'], ['asr', 'العصر'], ['maghrib', 'المغرب'], ['isha', 'العشاء']
@@ -208,6 +208,74 @@
     return recipePick(rest, ratings, dateISO);
   }
 
+  /* ---- وصفات جوجو الخاصة (الفورم → صف jojo_recipes) ---- */
+  var RECIPE_TASTES = ['حلو', 'حامض', 'مر', 'خفيف', 'ثقيل'];
+  /* أرقام عربية/فارسية → لاتينية، وفاصلة عربية → نقطة */
+  function normDigits(s) {
+    return String(s == null ? '' : s).replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 1632); })
+      .replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 1776); })
+      .replace(/[٫,،]/g, '.').replace(/[：]/g, ':').trim();
+  }
+  /* 'm:ss' → ثواني (null لو مو صيغة صحيحة) */
+  function parseMMSS(str) {
+    var m = /^(\d{1,3}):([0-5]\d)$/.exec(normDigits(str).replace(/\./g, ':'));
+    return m ? (+m[1]) * 60 + (+m[2]) : null;
+  }
+  function fmtMMSS(sec) { sec = Math.max(0, Math.round(sec)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+  function num(v) {
+    var t = normDigits(v);
+    if (!/^\d+(\.\d+)?$/.test(t)) return null;
+    return +t;
+  }
+  function arD(x) { return String(x).replace(/\d/g, function (d) { return '٠١٢٣٤٥٦٧٨٩'[d]; }); }
+  /* form: { name, style, dose, water, iceCubes, temp, target, grind, pours:[{at,to,note}], tastes, note }
+     يرجع { ok, errors, row } — row = الأعمدة اللي تنكتب بـ jojo_recipes (بدون id و owner) */
+  function validateRecipe(f) {
+    var e = {}, row = null;
+    var name = String(f.name || '').trim();
+    if (!name) e.name = 'اكتبي اسم لوصفتك 🤍';
+    else if (name.length > 40) e.name = 'الاسم طويل شوي، اختصريه (٤٠ حرف)';
+    var style = f.style === 'iced' ? 'iced' : 'hot';
+    var dose = num(f.dose), water = num(f.water);
+    if (dose === null || dose < 5 || dose > 60) e.dose = 'اكتبي كمية القهوة بالجرام (من ٥ لين ٦٠)';
+    if (water === null || water < 50 || water > 1000) e.water = 'اكتبي كمية الموية (من ٥٠ لين ١٠٠٠)';
+    var cubes = style === 'iced' ? String(f.iceCubes || '').trim() : '';
+    if (cubes.length > 60) e.iceCubes = 'الثلج طويل شوي، اختصريه (٦٠ حرف)';
+    var temp = num(f.temp);
+    if (temp === null || temp < 60 || temp > 100) e.temp = 'الحرارة من ٦٠ لين ١٠٠ درجة';
+    var target = parseMMSS(f.target);
+    if (target === null) e.target = 'اكتبي الوقت مثل ٣:٠٠';
+    else if (target < 30 || target > 900) e.target = 'الوقت المستهدف من ٠:٣٠ لين ١٥:٠٠';
+    var grind = Math.round(num(f.grind) || 0);
+    if (!(grind >= 1 && grind <= 40)) e.grind = 'رقم الطحنة من ١ لين ٤٠';
+    var pours = f.pours || [], steps = [];
+    if (!pours.length) e.pours = 'أضيفي صبّة وحدة على الأقل';
+    var prevAt = -1, prevTo = 0;
+    pours.forEach(function (p, i) {
+      var at = parseMMSS(p.at), to = num(p.to), note = String(p.note || '').trim();
+      if (at === null) e['p' + i + '.at'] = 'اكتبي الوقت مثل ٠:٤٥';
+      else if (at <= prevAt) e['p' + i + '.at'] = 'وقت الصبّة لازم يكون بعد اللي قبلها';
+      else if (target !== null && at >= target) e['p' + i + '.at'] = 'الصبّة لازم تبدأ قبل الوقت المستهدف';
+      if (to === null || to <= 0) e['p' + i + '.to'] = 'اكتبي الكمية بالجرام';
+      else if (to <= prevTo) e['p' + i + '.to'] = 'الكمية لازم تزيد عن الصبّة اللي قبلها (' + arD(prevTo) + ' جم)';
+      else if (water !== null && to > water) e['p' + i + '.to'] = 'الكمية أكبر من كمية الموية (' + arD(water) + ' جم)';
+      else if (i === pours.length - 1 && water !== null && to !== water && water >= 50 && water <= 1000) e['p' + i + '.to'] = 'آخر صبّة لازم توصل لكمية الموية (' + arD(water) + ' جم)';
+      if (note.length > 80) e['p' + i + '.note'] = 'الملاحظة طويلة شوي (٨٠ حرف)';
+      if (at !== null) prevAt = at;
+      if (to !== null) prevTo = to;
+      steps.push({ at_sec: at, pour_to_g: to, note: note });
+    });
+    var note = String(f.note || '').trim();
+    if (note.length > 200) e.note = 'الملاحظة طويلة شوي (٢٠٠ حرف)';
+    var tastes = (f.tastes || []).filter(function (t, i, a) { return RECIPE_TASTES.indexOf(t) !== -1 && a.indexOf(t) === i; });
+    var ok = Object.keys(e).length === 0;
+    if (ok) {
+      row = { name: name, style: style, roast: [], dose: dose, water: water, ice: 0, ice_cubes: cubes || null, temp_c: temp,
+        target_sec: target, grind_encore: grind, steps: steps, tastes: tastes, note: note || null };
+    }
+    return { ok: ok, errors: e, row: row };
+  }
+
   return {
     CORE_VERSION: CORE_VERSION,
     localDate: localDate,
@@ -226,6 +294,10 @@
     grindAdvice: grindAdvice,
     tasteProfile: tasteProfile,
     recipeOfDay: recipeOfDay,
+    validateRecipe: validateRecipe,
+    parseMMSS: parseMMSS,
+    fmtMMSS: fmtMMSS,
+    RECIPE_TASTES: RECIPE_TASTES,
     _recipePick: recipePick
   };
 });

@@ -71,6 +71,12 @@ var MOCK = `<script>
       if (m==='GET') return J(letters);
       if (m==='PATCH') { db.patches.push({url:url, body:body}); var lid=q.id.slice(3); letters.forEach(function(x){ if(x.id===lid) x.read_at=body.read_at; }); return J(); }
     }
+    if (url.indexOf('jojo_recipes')!==-1) {
+      if (m!=='GET') return new Response('42501',{status:403});
+      return J([
+        {id:'my-1',name:XSS,style:'iced',dose:16,water:256,ice:0,ice_cubes:'٣ حبات بالسيرفر',temp_c:92,target_sec:190,grind_encore:16,steps:[{at_sec:0,pour_to_g:48,note:''},{at_sec:45,pour_to_g:150,note:''},{at_sec:90,pour_to_g:256,note:''}],tastes:['حلو'],note:'<b>x</b>'},
+        {id:'my-2',name:'قهوة الجمعة',style:'hot',dose:15,water:240,ice:0,ice_cubes:null,temp_c:93,target_sec:180,grind_encore:15,steps:[{at_sec:0,pour_to_g:45,note:''},{at_sec:45,pour_to_g:240,note:''}],tastes:[],note:null}]);
+    }
     if (url.indexOf('jojo_beans')!==-1) return J([
       {id:'B1',photo_path:'J1/1.jpg',name:XSS,roaster:'"><script>window.top.__xss=2<\\/script>',origin:null,process:null,roast:null,created_at:'2026-11-20T00:00:00Z'},
       {id:'B2',photo_path:'J1/2.jpg',name:null,roaster:null,created_at:'2026-11-19T00:00:00Z'}]);
@@ -188,6 +194,12 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(sh.querySelectorAll('img').length === 2 && [].every.call(sh.querySelectorAll('img'), function(i){ return /\/storage\/v1\/object\/sign\/jojo-beans\/J1\/\d\.jpg\?token=T$/.test(i.src) && !i.hasAttribute('onerror'); }), 'taste: photos use signed URLs; no injected attributes');
     ok(sh.textContent.indexOf('<img src=x onerror=') !== -1 && sh.textContent.indexOf('"><script>') !== -1 && !sh.querySelector('script,b'), 'taste: bean name/roaster/notes HTML rendered as text');
     ok(/عجبها ٢ من ٢/.test(sh.textContent) && /حلو ×٢/.test(sh.textContent) && /كيس بدون اسم/.test(sh.textContent), 'taste: per-bean liked count + note chips');
+
+    /* ---- وصفاتها (قراءة فقط) ---- */
+    var rsec = [].filter.call(d.querySelectorAll('.card'), function(c){ return c.querySelector('h3') && /حارة|باردة/.test(c.querySelector('h3').textContent); });
+    ok(w.__log.some(function(l){ return /^GET \/rest\/v1\/jojo_recipes\?.*owner=not\.is\.null/.test(l); }) && !w.__log.some(function(l){ return /jojo_recipes.*owner=is\.null|jojo_recipes\?select=[^&]*$/.test(l); }), 'recipes: only her own rows requested (owner=not.is.null)');
+    ok(rsec.length === 2 && /باردة/.test(rsec[0].textContent) && /الثلج: ٣ حبات بالسيرفر/.test(rsec[0].textContent) && /قهوة ١٦ جم/.test(rsec[0].textContent) && /موية ٢٥٦ جم/.test(rsec[0].textContent) && /حرارة ٩٢°/.test(rsec[0].textContent) && /طحنة Encore ١٦/.test(rsec[0].textContent) && /وقت ٣:١٠/.test(rsec[0].textContent) && /٠:٤٥ ← ١٥٠ جم/.test(rsec[0].textContent), 'recipes: her numbers shown (coffee, water, ice text, temp, grind, time, pours)');
+    ok(rsec[0].textContent.indexOf('<img src=x onerror=') !== -1 && !rsec[0].querySelector('img,b') && !rsec[0].querySelector('button,input,form,[data-act]'), 'recipes: HTML in name/note rendered as text; read-only (no buttons/inputs)');
 
     /* ---- النسخة تتبع core.js ---- */
     ok(w.SalehApp.version && w.SalehApp.version === w.Jojo.CORE_VERSION && [].some.call(d.scripts, function(sc){ return sc.src.indexOf('adhan.umd.min.js?v=' + encodeURIComponent(w.Jojo.CORE_VERSION)) !== -1 || sc.src.indexOf('adhan.umd.min.js?v=' + w.Jojo.CORE_VERSION) !== -1; }), 'version follows Jojo.CORE_VERSION (' + w.SalehApp.version + ')');

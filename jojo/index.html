@@ -250,6 +250,49 @@ button.bean[aria-pressed="true"] .ph{border-color:var(--pink);box-shadow:0 0 0 3
 .card h3{display:flex;align-items:center;gap:8px}
 .card h3 .ic{width:22px;height:22px;flex:none;color:var(--choc-deep)}
 
+/* وصفاتي: الفورم والمكتبة */
+.spec.wide{grid-column:1/-1;text-align:start;padding:10px 14px;font-size:14px;line-height:1.6;color:var(--ink)}
+.spec.wide b{display:inline;font-family:inherit;font-size:14px;font-weight:600;color:var(--rose)}
+.mk{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px}
+.mk .badge{font-size:12px}
+.badge.mine{background:var(--pink-soft);color:var(--rose);border:1px solid #5A3B48}
+.badge.his{background:var(--card-2);color:var(--choc-deep);border:1px solid #4A3D33}
+.badge.def{background:var(--pink);color:var(--on-pink);border:1px solid var(--pink)}
+.badge.today{background:transparent;color:var(--ink);border:1px solid #5C4A50}
+.mkbtn{margin-bottom:16px}
+.lib{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.lib-item{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);overflow:hidden}
+.lib-item.now{border-color:var(--pink)}
+.lib-main{display:block;width:100%;text-align:start;padding:14px 16px;min-height:64px}
+.lib-main b{display:block;font-family:"Baloo";font-size:18px;font-weight:700;line-height:1.3}
+.lib-main small{display:block;font-size:13px;color:var(--ink-2);margin-top:2px;line-height:1.6}
+.lib-tools{display:flex;gap:4px;flex-wrap:wrap;padding:0 10px 10px}
+.lib-tools button{min-height:44px;padding:0 12px;border-radius:12px;color:var(--ink-2);font-size:13px;display:inline-flex;align-items:center;gap:6px}
+.lib-tools button .ic{width:18px;height:18px}
+.lib-tools button:hover{background:var(--card-2)}
+.lib-tools button[aria-pressed="true"]{color:var(--rose);font-weight:600}
+.lib-tools .del{margin-inline-start:auto;color:#E8A0B4}
+.ferr{display:flex;gap:6px;align-items:flex-start;margin-top:6px;font-size:13px;line-height:1.6;color:#FFD9E5}
+.ferr::before{content:"";flex:none;width:6px;height:6px;border-radius:50%;background:var(--rose);margin-top:8px}
+.in[aria-invalid="true"]{border-color:#C2557A}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.seg button{min-height:52px;border-radius:var(--r-sm);background:var(--card-2);border:1.5px solid #4A3D42;display:flex;align-items:center;justify-content:center;gap:8px;font-weight:600;font-size:16px}
+.seg button .ic{width:20px;height:20px}
+.seg button[aria-pressed="true"]{background:var(--pink);border-color:var(--pink);color:var(--on-pink)}
+.pour-row{background:var(--card-2);border-radius:var(--r-sm);padding:12px;margin-bottom:10px}
+.pour-row .pr-top{display:flex;gap:8px;align-items:flex-end}
+.pour-row .pr-top>div{flex:1;min-width:0}
+.pour-row label.f{margin:0 2px 4px;font-size:12px}
+.pour-row .in{min-height:44px;padding:8px 10px;background:var(--choc);text-align:center;direction:ltr}
+.pour-row .nt{margin-top:8px}
+.pour-row .nt .in{text-align:start;direction:rtl}
+.pour-row .rm{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#E8A0B4}
+.pour-row .rm .ic{width:20px;height:20px}
+.pour-row .rm[disabled]{opacity:.35}
+.mkform .hint{font-size:13px;color:var(--ink-2);margin-top:6px;line-height:1.6}
+.mkform .two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mkform .two label.f{margin-top:14px}
+
 /* الدخول والإعداد */
 .login{min-height:calc(100dvh - 60px);display:flex;flex-direction:column;justify-content:center}
 .login .cat{width:96px;height:96px;margin:0 auto 10px;display:block}
@@ -335,7 +378,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-25.1';
+var JOJO_VERSION = '2026-11-25.2';
 /* مفتاح VAPID العام للتنبيهات (مو سري) — يحطه الكنترولر نفس jojo_config 'vapid_public' */
 var JOJO_VAPID_PUBLIC = 'BCKOgH0ZISRSX4xbB7uPNBRV-kykIZanutg7t1rWSo9TwOKW-jgij0eaTICZAJLzljX40NgS7kEARJ6haWxV0EE';
 </script>
@@ -474,7 +517,11 @@ var IC = {
   up: ic('<path d="M7 11v9H4v-9zM7 11l3.6-6.6a1.8 1.8 0 0 1 3.3 1.3L13 10h5.3a2 2 0 0 1 2 2.4l-1.3 5.9A2 2 0 0 1 17 20H7"/>'),
   down: ic('<path d="M7 13V4H4v9zM7 13l3.6 6.6a1.8 1.8 0 0 0 3.3-1.3L13 14h5.3a2 2 0 0 0 2-2.4L19 5.7A2 2 0 0 0 17 4H7"/>'),
   heart: ic('<path d="M12 20C4.5 14.5 3.5 9.5 6.2 7 8.4 5 10.8 6 12 8c1.2-2 3.6-3 5.8-1 2.7 2.5 1.7 7.5-5.8 13z"/>'),
-  grind: ic('<path d="M7 3h10l-1 5H8zM6 8h12v3H6zM8 11h8l-1 9H9z"/><path d="M17 5h3"/>')
+  grind: ic('<path d="M7 3h10l-1 5H8zM6 8h12v3H6zM8 11h8l-1 9H9z"/><path d="M17 5h3"/>'),
+  pen: ic('<path d="M4 20l1-4L16.5 4.5a2.1 2.1 0 0 1 3 3L8 19z"/><path d="M14.5 6.5l3 3"/>'),
+  plus: ic('<path d="M12 5v14M5 12h14"/>'),
+  trash: ic('<path d="M5 7h14M10 7V4.5h4V7M7 7l1 13h8l1-13M10.5 11v6M13.5 11v6"/>'),
+  check: ic('<path d="M5 12.5l4.5 4.5L19 7.5"/>')
 };
 var GEAR = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
 var BACK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>';
@@ -662,6 +709,14 @@ var Remote = {
 
   /* ---- قهوتي ---- */
   recipes: function () { return api('/rest/v1/jojo_recipes?select=' + RECIPE_COLS + '&order=id.asc'); },
+  /* وصفاتها هي بس: owner = uid (والـ RLS تحمي كذا من جهة الخادم). صالح وصفاته owner = null ما نلمسها أبد */
+  addRecipe: function (row) {
+    return api('/rest/v1/jojo_recipes?select=' + RECIPE_COLS, { method: 'POST', body: row, prefer: 'return=representation' }).then(function (r) { return r && r[0]; });
+  },
+  updateRecipe: function (id, patch) {
+    return api('/rest/v1/jojo_recipes?id=eq.' + q(id) + '&owner=eq.' + q(Auth.uid()) + '&select=' + RECIPE_COLS, { method: 'PATCH', body: patch, prefer: 'return=representation' }).then(function (r) { return r && r[0]; });
+  },
+  deleteRecipe: function (id) { return api('/rest/v1/jojo_recipes?id=eq.' + q(id) + '&owner=eq.' + q(Auth.uid()), { method: 'DELETE', prefer: 'return=minimal' }); },
   beans: function () { return api('/rest/v1/jojo_beans?select=' + BEAN_COLS + '&user_id=eq.' + Auth.uid() + '&order=created_at.desc'); },
   ratings: function () { return api('/rest/v1/jojo_ratings?select=' + RATING_COLS + '&user_id=eq.' + Auth.uid() + '&order=created_at.desc&limit=300'); },
   /* الصورة لمجلدها هي بس: jojo-beans/<uid>/<file> (سياسة storage.sql) */
@@ -683,7 +738,7 @@ var Remote = {
     });
   }
 };
-var RECIPE_COLS = 'id,name,style,roast,dose,water,ice,temp_c,target_sec,grind_encore,steps,tastes,note';
+var RECIPE_COLS = 'id,name,style,roast,dose,water,ice,ice_cubes,temp_c,target_sec,grind_encore,steps,tastes,note,owner';
 var BEAN_COLS = 'id,photo_path,name,roaster,created_at';
 var RATING_COLS = 'id,bean_id,date,liked,notes,brew_sec,grind,created_at';
 
@@ -755,6 +810,12 @@ function makeDemo(onboard) {
     ['b1', true, ['حلو', 'خفيف'], 1], ['b1', true, ['حلو', 'حامض'], 3], ['b2', true, ['حلو', 'ثقيل'], 5], ['b3', false, ['مر', 'ثقيل'], 7],
     ['b3', false, ['مر'], 8], ['b4', true, ['خفيف'], 11], ['b1', true, ['حلو', 'خفيف'], 13]
   ].map(function (x, i) { return { id: 'r' + i, bean_id: x[0], liked: x[1], notes: x[2], date: addDays(today, -x[3]), brew_sec: 175, grind: '15', created_at: ago(x[3]) }; });
+  /* وصفات صالح بالتجربة (الحقيقية عند الخادم) + وصفاتها اللي تسويها بالتجربة */
+  var demoHis = onboard ? [] : [
+    { id: 'iced-mine', owner: null, name: 'بارد صالح', style: 'iced', roast: ['medium'], dose: 20, water: 200, ice: 0, ice_cubes: '٤ حبات بالسيرفر + ٤ بالكوب', temp_c: 93, target_sec: 150, grind_encore: 14,
+      steps: [{ at_sec: 0, pour_to_g: 50, note: 'بلّلي القهوة كلها' }, { at_sec: 40, pour_to_g: 200, note: 'كملي بدواير هادية' }], tastes: ['حلو', 'خفيف'], note: 'وصفة صالح الباردة' }
+  ];
+  var myRecipes = [];
   var n = 100;
   function nid() { return 'd' + (n++); }
   function later(v) { return sleep(120).then(function () { return JSON.parse(JSON.stringify(v === undefined ? null : v)); }); }
@@ -783,8 +844,14 @@ function makeDemo(onboard) {
     markSeen: function (id) { msgs.forEach(function (m) { if (m.id === id) m.seen_at = new Date().toISOString(); }); return later(); },
     /* الوصفات نفسها اللي بـ server/recipes-seed.sql (نقرأ الـ JSON من الملف عشان ما تتكرر) */
     recipes: function () {
-      return fetch('server/recipes-seed.sql?v=' + V).then(function (r) { return r.text(); }).then(function (t) { return JSON.parse(t.split('$recipes$')[1]); });
+      return fetch('server/recipes-seed.sql?v=' + V).then(function (r) { return r.text(); }).then(function (t) {
+        var base = JSON.parse(t.split('$recipes$')[1]).map(function (x) { return Object.assign({ owner: null, ice_cubes: null }, x); });
+        return base.concat(demoHis, myRecipes.map(function (x) { return Object.assign({}, x); }));
+      });
     },
+    addRecipe: function (row) { var x = Object.assign({}, row); myRecipes.push(x); return later(x); },
+    updateRecipe: function (id, patch) { var x = null; myRecipes.forEach(function (r) { if (r.id === id) { Object.assign(r, patch); x = r; } }); return later(x); },
+    deleteRecipe: function (id) { myRecipes = myRecipes.filter(function (r) { return r.id !== id; }); return later(); },
     beans: function () { return later(beans); },
     ratings: function () { return later(ratings); },
     uploadPhoto: function (path, blob) { photos[path] = URL.createObjectURL(blob); return later(); },
@@ -1122,7 +1189,7 @@ function mmss(sec) { return ar(mmssL(sec)); }
 function mmssL(sec) { sec = Math.max(0, Math.round(sec)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
 function clampGrind(g) { return Math.max(1, Math.min(40, Math.round(g))); }
 function coffeeCache() { if (!DEMO) LS.set('coffee', { uid: Auth.uid(), recipes: C.recipes, beans: C.beans, ratings: C.ratings }); }
-function resetCoffee() { brewStop(); if (C.photo) URL.revokeObjectURL(C.photo.url); C = { recipes: null, beans: null, ratings: null, err: false, loading: false, urls: {}, urlsExp: 0, pick: 0, photo: null }; }
+function resetCoffee() { RF = null; brewStop(); if (C.photo) URL.revokeObjectURL(C.photo.url); C = { recipes: null, beans: null, ratings: null, err: false, loading: false, urls: {}, urlsExp: 0, pick: 0, photo: null }; }
 
 async function loadCoffee() {
   if (C.loading) return;
@@ -1144,11 +1211,17 @@ async function loadCoffee() {
 function ratingsForCore() { return (C.ratings || []).map(function (r) { return { beanId: r.bean_id, liked: r.liked === true, notes: r.notes || [] }; }); }
 /* وصفة اليوم من Jojo.recipeOfDay (مرجّحة بذوقها). "وصفة ثانية" تمشي على المكتبة. وقت الصب تثبت الوصفة. */
 var rod = null;   // { key, id }: وصفة اليوم تنحسب مرة لكل تاريخ، وما تتغير بعد ما تحفظ تقييم
+function findRecipe(list, id) { return id != null && list.filter(function (x) { return x.id === id; })[0] || null; }
+function mineRecipe(r) { return !!(r && r.owner && r.owner === Auth.uid()); }
+function todayKey() { return (Auth.uid() || '') + '|' + S.today; }
+/* الأولوية: اللي اختارتها لليوم ← اللي اعتمدتها (settings.coffeeDefault) ← اختيار اليوم المرجّح بذوقها */
 function recipeOfDayOnce(list) {
-  var key = (Auth.uid() || '') + '|' + S.today, lsk = 'rod.' + key, id = null;
+  var key = todayKey(), lsk = 'rod.' + key, id = null;
+  var chosen = findRecipe(list, LS.get('rodpick.' + key, null)); if (chosen) return chosen;
+  var dflt = findRecipe(list, S.settings && S.settings.coffeeDefault); if (dflt) return dflt;
   if (rod && rod.key === key) id = rod.id;
   else { try { id = LS.get(lsk, null); } catch (e) { id = null; } }
-  var hit = id != null && list.filter(function (x) { return x.id === id; })[0];
+  var hit = findRecipe(list, id);
   if (hit) { rod = { key: key, id: id }; return hit; }
   var base = Jojo.recipeOfDay(list, ratingsForCore(), S.today);
   rod = { key: key, id: base.id };
@@ -1231,6 +1304,160 @@ function brewTick() {
   }
 }
 
+/* ---- وصفاتي: المكتبة + صنع وصفتك ---- */
+var RF = null;     // مسودة فورم الوصفة (null = مقفول)
+function newRF() { return { id: null, name: '', style: 'hot', dose: '', water: '', iceCubes: '', temp: '93', target: '3:00', grind: 15, pours: [{ at: '0:00', to: '', note: '' }], tastes: [], note: '', errors: {} }; }
+function rfFrom(r) {
+  return { id: r.id, name: r.name || '', style: r.style === 'iced' ? 'iced' : 'hot', dose: String(r.dose), water: String(r.water), iceCubes: r.ice_cubes || '', temp: String(r.temp_c),
+    target: Jojo.fmtMMSS(r.target_sec), grind: r.grind_encore, tastes: (r.tastes || []).slice(), note: r.note || '', errors: {},
+    pours: (r.steps || []).map(function (x) { return { at: Jojo.fmtMMSS(x.at_sec), to: String(x.pour_to_g), note: x.note || '' }; }) };
+}
+function uuid() {
+  try { if (window.crypto && crypto.randomUUID) return crypto.randomUUID(); } catch (e) { /* fallback */ }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) { var r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+}
+function recipeSummary(r) {
+  var bits = [r.style === 'iced' ? 'باردة' : 'حارة', ar(r.dose) + ' جم قهوة', ar(r.water) + ' جم موية'];
+  if ((r.ice_cubes || '').trim()) bits.push('ثلج: ' + r.ice_cubes.trim()); else if (r.ice) bits.push(ar(r.ice) + ' جم ثلج');
+  bits.push('طحنة ' + ar(r.grind_encore));
+  return bits.join(' · ');
+}
+function libraryBlock(cur) {
+  var list = (C.recipes || []).slice().sort(function (a, b) { return (mineRecipe(b) ? 1 : 0) - (mineRecipe(a) ? 1 : 0); });
+  if (!list.length) return '';
+  var dflt = S.settings && S.settings.coffeeDefault;
+  return '<h2 class="sec">مكتبتي</h2><div class="lib" id="lib">' + list.map(function (r) {
+    var mine = mineRecipe(r), isNow = cur && cur.id === r.id, isDef = mine && dflt === r.id;
+    return '<div class="lib-item' + (isNow ? ' now' : '') + '" data-id="' + esc(r.id) + '"><button class="lib-main" data-act="lib-pick" data-id="' + esc(r.id) + '"' + (isNow ? ' aria-current="true"' : '') + '>' +
+      '<b>' + esc(r.name) + '</b><small>' + esc(recipeSummary(r)) + '</small><span class="mk">' + ownerBadge(r) +
+      (isDef ? '<span class="badge def">الافتراضية</span>' : '') + (isNow ? '<span class="badge today">وصفة اليوم</span>' : '') + '</span></button>' +
+      (mine ? '<div class="lib-tools"><button data-act="rf-default" data-id="' + esc(r.id) + '" aria-pressed="' + isDef + '">' + IC.heart + (isDef ? 'ألغي اعتمادها' : 'اعتمديها') + '</button>' +
+        '<button data-act="rf-edit" data-id="' + esc(r.id) + '">' + IC.pen + 'تعديل</button>' +
+        '<button class="del" data-act="rf-del" data-id="' + esc(r.id) + '">' + IC.trash + 'حذف</button></div>' : '') + '</div>';
+  }).join('') + '</div>';
+}
+function ferr(key) { return RF.errors[key] ? '<p class="ferr" id="e-' + key.replace('.', '-') + '" role="alert">' + esc(RF.errors[key]) + '</p>' : ''; }
+function finv(key) { return RF.errors[key] ? ' aria-invalid="true" aria-describedby="e-' + key.replace('.', '-') + '"' : ''; }
+function recipeForm() {
+  var e = RF.errors, iced = RF.style === 'iced';
+  var pours = RF.pours.map(function (p, i) {
+    return '<div class="pour-row" data-i="' + i + '"><div class="pr-top">' +
+      '<div><label class="f" for="pat' + i + '">الوقت</label><input id="pat' + i + '" class="in" data-p="at" inputmode="decimal" autocomplete="off" placeholder="0:45" value="' + esc(p.at) + '"' + finv('p' + i + '.at') + '></div>' +
+      '<div><label class="f" for="pto' + i + '">لين (جم)</label><input id="pto' + i + '" class="in" data-p="to" inputmode="decimal" autocomplete="off" placeholder="120" value="' + esc(p.to) + '"' + finv('p' + i + '.to') + '></div>' +
+      '<button type="button" class="rm" data-act="rf-pour-rm" data-i="' + i + '" aria-label="احذفي الصبّة ' + ar(i + 1) + '"' + (RF.pours.length < 2 ? ' disabled' : '') + '>' + IC.trash + '</button></div>' +
+      ferr('p' + i + '.at') + ferr('p' + i + '.to') +
+      '<div class="nt"><label class="f" for="pnt' + i + '">ملاحظة (اختياري)</label><input id="pnt' + i + '" class="in" data-p="note" maxlength="80" placeholder="مثلًا: بدواير صغيرة" value="' + esc(p.note) + '"' + finv('p' + i + '.note') + '></div>' + ferr('p' + i + '.note') + '</div>';
+  }).join('');
+  return '<header class="page-top"><h1>' + (RF.id ? 'عدّلي وصفتك' : 'وصفتك') + '</h1>' + catSVG() + '</header>' +
+    '<form class="card mkform" data-form="recipe" novalidate aria-label="' + (RF.id ? 'تعديل وصفتك' : 'وصفة جديدة') + '">' +
+    '<label class="f" for="rname" style="margin-top:0">اسم وصفتك</label><input id="rname" class="in" name="rname" maxlength="40" autocomplete="off" placeholder="مثلًا: قهوة الجمعة" value="' + esc(RF.name) + '"' + finv('name') + '>' + ferr('name') +
+    '<label class="f" id="rstyleL">نوعها</label><div class="seg" role="group" aria-labelledby="rstyleL">' +
+    '<button type="button" data-act="rf-style" data-v="hot" data-fid="rfhot" aria-pressed="' + !iced + '">' + IC.flame + 'حارة</button>' +
+    '<button type="button" data-act="rf-style" data-v="iced" data-fid="rficed" aria-pressed="' + iced + '">' + IC.snow + 'باردة</button></div>' +
+    '<div class="two"><div><label class="f" for="rdose">القهوة (جم)</label><input id="rdose" class="in" name="dose" inputmode="decimal" autocomplete="off" placeholder="15" value="' + esc(RF.dose) + '"' + finv('dose') + '>' + ferr('dose') + '</div>' +
+    '<div><label class="f" for="rwater">الموية (جم/مل)</label><input id="rwater" class="in" name="water" inputmode="decimal" autocomplete="off" placeholder="240" value="' + esc(RF.water) + '"' + finv('water') + '>' + ferr('water') + '</div></div>' +
+    (iced ? '<label class="f" for="rice">الثلج (اختياري)</label><input id="rice" class="in" name="iceCubes" maxlength="60" autocomplete="off" placeholder="مثلًا: ٤ حبات بالسيرفر + ٤ بالكوب" value="' + esc(RF.iceCubes) + '"' + finv('iceCubes') + '>' + ferr('iceCubes') : '') +
+    '<div class="two"><div><label class="f" for="rtemp">الحرارة (°)</label><input id="rtemp" class="in" name="temp" inputmode="decimal" autocomplete="off" placeholder="93" value="' + esc(RF.temp) + '"' + finv('temp') + '>' + ferr('temp') + '</div>' +
+    '<div><label class="f" for="rtarget">الوقت المستهدف</label><input id="rtarget" class="in" name="target" inputmode="decimal" autocomplete="off" dir="ltr" style="text-align:center" placeholder="3:00" value="' + esc(RF.target) + '"' + finv('target') + '>' + ferr('target') + '</div></div>' +
+    '<p class="hint">الوقت اكتبيه دقايق:ثواني مثل ٣:٠٠ (أو ٣.٠٠ لو الكيبورد ما فيه نقطتين).</p>' +
+    '<label class="f">الطحنة على Encore (١ لين ٤٠)</label><div class="stepper" role="group" aria-label="رقم الطحنة"><button type="button" data-act="rf-grind" data-d="-1" aria-label="أنعم">−</button>' +
+    '<span class="num" id="rfGrind" aria-live="polite">' + ar(RF.grind) + '</span><button type="button" data-act="rf-grind" data-d="1" aria-label="أخشن">+</button><span class="muted">أصغر = أنعم</span></div>' + ferr('grind') +
+    '<label class="f">الصبّات (الوقت اللي تبدين فيه، وكم يوصل الميزان)</label>' + pours + ferr('pours') +
+    '<button type="button" class="btn ghost small" data-act="rf-pour-add" data-fid="rfadd">' + IC.plus + 'أضيفي صبّة</button>' +
+    '<p class="hint">الأوقات والكميات لازم تزيد من صبّة للي بعدها، وآخر صبّة توصل لكمية الموية.</p>' +
+    '<label class="f">طعمها يكون… (اختياري)</label><div class="chips" role="group" aria-label="الطعم">' + TASTES.map(function (t) {
+      return '<button type="button" class="chip" data-act="rf-taste" data-v="' + t + '" aria-pressed="' + (RF.tastes.indexOf(t) !== -1) + '">' + t + '</button>';
+    }).join('') + '</div>' +
+    '<label class="f" for="rnote">ملاحظة (اختياري)</label><textarea id="rnote" class="in" name="rnote" maxlength="200" style="min-height:80px"' + finv('note') + '>' + esc(RF.note) + '</textarea>' + ferr('note') +
+    '<div class="actions"><button class="btn block" type="submit" id="rfSave">' + IC.check + (RF.id ? 'احفظي التعديل' : 'احفظي وصفتي') + '</button>' +
+    '<button type="button" class="btn ghost block" data-act="rf-cancel">إلغاء</button></div></form>';
+}
+/* يقرأ اللي مكتوب بالفورم للمسودة (قبل أي إعادة رسم) */
+function readRF() {
+  var f = $('form[data-form="recipe"]'); if (!f || !RF) return;
+  var g = function (n) { return f.elements[n] ? f.elements[n].value : ''; };
+  RF.name = g('rname'); RF.dose = g('dose'); RF.water = g('water'); RF.temp = g('temp'); RF.target = g('target'); RF.note = g('rnote');
+  if (f.elements.iceCubes) RF.iceCubes = f.elements.iceCubes.value;
+  RF.pours = [].map.call(f.querySelectorAll('.pour-row'), function (row) {
+    var v = function (k) { return row.querySelector('[data-p="' + k + '"]').value; };
+    return { at: v('at'), to: v('to'), note: v('note') };
+  });
+}
+function openRF(r) {
+  if (B.phase !== 'idle') { toast('خلصي الصب اللي بيدك أول 🤍'); return; }
+  RF = r ? rfFrom(r) : newRF(); renderCoffee(); window.scrollTo(0, 0);
+  var n = $('#rname'); if (n) n.focus({ preventScroll: true });
+}
+async function saveRecipeForm() {
+  readRF();
+  var v = Jojo.validateRecipe(RF);
+  if (!v.ok) {
+    RF.errors = v.errors; renderCoffee();
+    var bad = $('[aria-invalid="true"]') || $('.ferr'); if (bad) { bad.scrollIntoView({ block: 'center' }); if (bad.focus) bad.focus({ preventScroll: true }); }
+    toast('في خانات تحتاج تعديل 🤍'); return;
+  }
+  RF.errors = {};
+  if (!S.online || navigator.onLine === false) { toast('النت مقطوع، الوصفة تحتاج نت عشان تنحفظ. اللي كتبتيه باقي، جربي لما يرجع 🤍'); return; }
+  var btn = $('#rfSave'), label = btn.innerHTML; btn.disabled = true; btn.textContent = 'لحظة…';
+  var editing = RF.id;
+  try {
+    var saved;
+    if (editing) {
+      saved = await store.updateRecipe(editing, v.row);
+      C.recipes = C.recipes.map(function (x) { return x.id === editing ? (saved || Object.assign({}, x, v.row)) : x; });
+    } else {
+      var row = Object.assign({ id: 'my-' + uuid(), owner: Auth.uid() }, v.row);
+      saved = await store.addRecipe(row);
+      C.recipes.push(saved || row);
+    }
+    coffeeCache(); RF = null; renderCoffee(); window.scrollTo(0, 0);
+    toast(editing ? 'عدّلت وصفتك 🎀' : 'انحفظت وصفتك، تلقينها بمكتبتي 🎀');
+  } catch (e) {
+    if (e instanceof AuthError) return sessionExpired();
+    btn.disabled = false; btn.innerHTML = label;
+    toast(isOffline(e) ? 'النت مقطوع، الوصفة تحتاج نت عشان تنحفظ. اللي كتبتيه باقي، جربي لما يرجع 🤍' : 'ما قدرت أحفظ الوصفة، جربي مرة ثانية');
+  }
+}
+function pickForToday(id) {
+  if (B.phase !== 'idle') { toast('خلصي الصب اللي بيدك أول 🤍'); return; }
+  var r = findRecipe(C.recipes || [], id); if (!r) return;
+  LS.set('rodpick.' + todayKey(), id); C.pick = 0;
+  renderCoffee(); window.scrollTo(0, 0); toast('وصفة اليوم: ' + r.name + ' ☕');
+}
+async function setDefaultRecipe(id) {
+  var r = findRecipe(C.recipes || [], id); if (!mineRecipe(r)) return;
+  var was = S.settings.coffeeDefault === id, next = Object.assign({}, S.settings);
+  if (was) delete next.coffeeDefault; else next.coffeeDefault = id;
+  try {
+    await store.saveSettings(next);
+    S.settings = next; saveCache();
+    if (!was && B.phase === 'idle') { LS.del('rodpick.' + todayKey()); C.pick = 0; }     // المعتمدة تطلع الحين، مو بكرة بس
+    renderCoffee();
+    toast(was ? 'شلت الاعتماد، ترجع وصفة اليوم تتنوع 🤍' : 'اعتمدتها، بتطلع لك كل يوم (إلا لو اخترتي غيرها) 🎀');
+  } catch (e) {
+    if (e instanceof AuthError) return sessionExpired();
+    toast(isOffline(e) ? 'النت مقطوع، الاعتماد يحتاج نت. جربي لما يرجع' : 'ما قدرت أعتمدها، جربي مرة ثانية');
+  }
+}
+async function deleteRecipe(id) {
+  var r = findRecipe(C.recipes || [], id); if (!mineRecipe(r)) return;
+  if (!confirm('متأكدة تحذفينها؟')) return;
+  try {
+    await store.deleteRecipe(id);
+    C.recipes = C.recipes.filter(function (x) { return x.id !== id; }); C.pick = 0;
+    if (B.recipeId === id) brewStop();
+    coffeeCache();
+    if (S.settings.coffeeDefault === id) {                       // اعتمادها يروح معها
+      var next = Object.assign({}, S.settings); delete next.coffeeDefault;
+      try { await store.saveSettings(next); S.settings = next; saveCache(); } catch (e2) { /* لو فشل، المعتمدة ما لها وصفة فنتجاهلها */ }
+    }
+    renderCoffee(); toast('انحذفت');
+  } catch (e) {
+    if (e instanceof AuthError) return sessionExpired();
+    toast(isOffline(e) ? 'النت مقطوع، جربي لما يرجع' : 'ما قدرت أحذفها، جربي مرة ثانية');
+  }
+}
+
 /* ---- الصورة: أي صورة يقدر المتصفح يفتحها (فيها HEIC بالآيفون) → JPEG ≤ ١٢٨٠px جودة ٠٫٨ ---- */
 async function toJpeg(file) {
   var src = null, w, h;
@@ -1281,20 +1508,24 @@ function beanImg(b) {
 function recipeCard(r) {
   var sg = savedGrind(r), g = sg != null ? sg : r.grind_encore;
   var roast = (r.roast || []).map(function (x) { return ROAST_AR[x] || x; }).join(' أو ');
+  var cubes = (r.ice_cubes || '').trim(), iced = r.style === 'iced';
+  /* الباردة: الثلج يطلع نصه (ice_cubes) بدل جرامات، وما نعرض «النسبة» لأنها تضلل مع الثلج */
   var specs = [
     [ar(r.dose) + ' جم', 'قهوة'],
-    [ar(r.water) + ' جم', r.ice ? 'موية حارة' : 'موية'],
-    r.ice ? [ar(r.ice) + ' جم', 'ثلج'] : ['١:' + ar(Math.round(r.water / r.dose * 10) / 10), 'النسبة'],
+    [ar(r.water) + ' جم', r.ice || iced ? 'موية حارة' : 'موية'],
+    cubes ? null : r.ice ? [ar(r.ice) + ' جم', 'ثلج'] : iced ? null : ['١:' + ar(Math.round(r.water / r.dose * 10) / 10), 'النسبة'],
     [ar(r.temp_c) + '°', 'حرارة الموية'],
     [ar(g), sg != null && sg !== r.grind_encore ? 'طحنتك (الوصفة ' + ar(r.grind_encore) + ')' : 'طحنة Encore'],
     [mmss(r.target_sec), 'وقت الصب']
-  ];
+  ].filter(Boolean);
   return '<section class="brew" aria-labelledby="rn"><div class="brew-head"><div><div class="kind">' + (r.style === 'iced' ? IC.snow + 'باردة' : IC.flame + 'حارة') +
-    (roast ? ' · تحميص ' + roast : '') + '</div><h2 id="rn">' + esc(r.name) + '</h2></div>' +
+    (roast ? ' · تحميص ' + roast : '') + '</div><h2 id="rn">' + esc(r.name) + '</h2><div class="mk">' + ownerBadge(r) + '</div></div>' +
     (B.phase === 'idle' && (C.recipes || []).length > 1 ? '<button class="btn ghost small" data-act="next-recipe" style="flex:none">وصفة ثانية</button>' : '') + '</div>' +
     (r.note ? '<p class="note">' + esc(r.note) + '</p>' : '') +
-    '<div class="specs">' + specs.map(function (x) { return '<div class="spec"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('') + '</div></section>';
+    '<div class="specs">' + specs.map(function (x) { return '<div class="spec"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>'; }).join('') +
+    (cubes ? '<div class="spec wide">الثلج: <b>' + esc(cubes) + '</b></div>' : '') + '</div></section>';
 }
+function ownerBadge(r) { return mineRecipe(r) ? '<span class="badge mine">وصفتك 🎀</span>' : '<span class="badge his">من صالح 🤍</span>'; }
 function timerCard(r) {
   var el = brewElapsed(), p = pourText(r, el), i = B.phase === 'idle' ? -1 : stepIndex(r, el), ph = B.phase;
   var btns = ph === 'idle' ? '<button class="btn" data-act="brew-start" data-fid="bs">' + IC.timer + 'ابدئي الصب</button>'
@@ -1312,7 +1543,9 @@ function timerCard(r) {
       '<span class="num" id="grindNum" aria-live="polite">' + ar(B.grind) + '</span><button type="button" data-act="grind" data-d="1" aria-label="أخشن">+</button><span class="muted">أصغر = أنعم</span></div>' +
       '<div class="actions"><button class="btn block">شوفي النتيجة</button></div></form>';
   }
-  var iced = r.ice && ph === 'idle' ? '<p class="muted" style="margin-top:8px">حطي ' + ar(r.ice) + ' جم ثلج بالسيرفر، وصفّري الميزان مع الدريبر والقهوة قبل ما تبدين.</p>' : '';
+  var cubesT = (r.ice_cubes || '').trim();
+  var iced = ph !== 'idle' ? '' : cubesT ? '<p class="muted" style="margin-top:8px">الثلج: ' + esc(cubesT) + '. صفّري الميزان مع الدريبر والقهوة قبل ما تبدين.</p>'
+    : r.ice ? '<p class="muted" style="margin-top:8px">حطي ' + ar(r.ice) + ' جم ثلج بالسيرفر، وصفّري الميزان مع الدريبر والقهوة قبل ما تبدين.</p>' : '';
   return '<section class="card timer" aria-label="مؤقت الصب">' +
     '<div class="clock" id="clock" role="timer" aria-label="الوقت">' + mmssL(el) + '</div><div class="clock-sub">الهدف ' + mmss(r.target_sec) + '</div>' +
     (ph === 'ask' || ph === 'done' ? '' : '<div class="pour" id="pour" aria-live="polite"><b>' + esc(p.b) + '</b>' + (p.s ? '<span>' + esc(p.s) + '</span>' : '') + '</div><p class="clock-sub" id="pourNext">' + nextText(r, el) + '</p>') +
@@ -1381,12 +1614,14 @@ function renderCoffee() {
   var head = '<header class="page-top"><h1>قهوتي</h1>' + catSVG() + '</header>';
   if (C.err) return paint(head + '<div class="empty">ما قدرت أجيب وصفاتك، تأكدي من النت وجربي مرة ثانية.<div class="actions" style="justify-content:center"><button class="btn small" data-act="retry-coffee">جربي مرة ثانية</button></div></div>');
   if (!C.recipes) { loadCoffee(); return paint(head + '<div class="loading" role="status">' + catSVG() + 'لحظة أجهز قهوتك…</div>'); }
+  if (RF) return paint(recipeForm());
   var r = currentRecipe();
   paint(head +
+    '<button class="btn ghost block mkbtn" data-act="rf-new" data-fid="rfnew">' + IC.pen + 'اصنعي وصفتك</button>' +
     (r ? '<h2 class="sec">وصفة اليوم</h2>' + recipeCard(r) + timerCard(r) +
       (B.phase === 'done' ? adviceBlock(r) + rateCard() : '')
       : '<p class="empty">مكتبة الوصفات لسه فاضية، بتوصلك قريب ☕</p>') +
-    shelfBlock() + tasteCard()
+    libraryBlock(r) + shelfBlock() + tasteCard()
   );
   B.step = -2;                     // الرسم الجديد فيه حالة الخطوة؛ نخلي المؤقت يكمل منها
   if (r) brewTick();
@@ -1873,6 +2108,17 @@ document.addEventListener('click', function (ev) {
   } else if (act === 'pick-photo') { var fi = $('#beanPhoto'); if (fi) fi.click(); }
   else if (act === 'photo-cancel') { if (C.photo) URL.revokeObjectURL(C.photo.url); C.photo = null; renderCoffee(); }
   else if (act === 'retry-coffee') { C.err = false; C.recipes = null; renderCoffee(); }
+  else if (act === 'rf-new') { openRF(null); }
+  else if (act === 'rf-edit') { var er = findRecipe(C.recipes || [], b.dataset.id); if (mineRecipe(er)) openRF(er); }
+  else if (act === 'rf-del') { deleteRecipe(b.dataset.id); }
+  else if (act === 'rf-default') { setDefaultRecipe(b.dataset.id); }
+  else if (act === 'lib-pick') { pickForToday(b.dataset.id); }
+  else if (act === 'rf-cancel') { RF = null; renderCoffee(); window.scrollTo(0, 0); }
+  else if (act === 'rf-style') { readRF(); RF.style = b.dataset.v; renderCoffee(); }
+  else if (act === 'rf-grind') { RF.grind = clampGrind(RF.grind + +b.dataset.d); var rg = $('#rfGrind'); if (rg) rg.textContent = ar(RF.grind); }
+  else if (act === 'rf-taste') { var rt = b.dataset.v, ri2 = RF.tastes.indexOf(rt); if (ri2 === -1) RF.tastes.push(rt); else RF.tastes.splice(ri2, 1); b.setAttribute('aria-pressed', String(ri2 === -1)); }
+  else if (act === 'rf-pour-add') { readRF(); RF.pours.push({ at: '', to: '', note: '' }); RF.errors = {}; renderCoffee(); var na = $('#pat' + (RF.pours.length - 1)); if (na) na.focus(); }
+  else if (act === 'rf-pour-rm') { readRF(); if (RF.pours.length > 1) RF.pours.splice(+b.dataset.i, 1); RF.errors = {}; renderCoffee(); }
   else if (act === 'push-on') { enablePush(); }
   else if (act === 'push-off') { disablePush(); }
   else if (act === 'push-test') { testPush(); }
@@ -1903,6 +2149,7 @@ document.addEventListener('submit', async function (ev) {
   ev.preventDefault();
   if (kind === 'settings') return saveSettingsForm(f);
   if (kind === 'brew-time') return brewTime(f);
+  if (kind === 'recipe') return saveRecipeForm();
   var btn = f.querySelector('button:not([type="button"])'), label = btn.textContent;
   btn.disabled = true; btn.textContent = 'لحظة…';
   try {

@@ -36,9 +36,31 @@ var MOCK = `<script>
       db.upload = {path:url.split('/object/jojo-beans/')[1], ctype:h['Content-Type'], upsert:h['x-upsert'], blobType:raw.type, size:raw.size, soi:bytes[0]===0xFF&&bytes[1]===0xD8, w:bmp&&bmp.width, h:bmp&&bmp.height};
       return J({Key:'jojo-beans/'+db.upload.path});
     }
-    if (url.indexOf('jojo_recipes')!==-1) return J([
-      {id:'hot-a',name:'صباحي الهادئ',style:'hot',roast:['medium'],dose:15,water:240,ice:0,temp_c:93,target_sec:180,grind_encore:15,steps:[{at_sec:0,pour_to_g:45,note:'بلّلي'},{at_sec:45,pour_to_g:240,note:'كملي'}],tastes:['حلو'],note:'x'},
-      {id:'iced-b',name:'كراميل بارد',style:'iced',roast:['medium'],dose:20,water:180,ice:120,temp_c:92,target_sec:150,grind_encore:14,steps:[{at_sec:0,pour_to_g:45,note:'الثلج'},{at_sec:40,pour_to_g:180,note:'كملي'}],tastes:['حلو'],note:'y'}]);
+    if (url.indexOf('jojo_recipes')!==-1) {
+      var SALEH = [
+        {id:'hot-a',owner:null,ice_cubes:null,name:'صباحي الهادئ',style:'hot',roast:['medium'],dose:15,water:240,ice:0,temp_c:93,target_sec:180,grind_encore:15,steps:[{at_sec:0,pour_to_g:45,note:'بلّلي'},{at_sec:45,pour_to_g:240,note:'كملي'}],tastes:['حلو'],note:'x'},
+        {id:'iced-mine',owner:null,ice_cubes:'٤ حبات بالسيرفر + ٤ بالكوب',name:'بارد صالح',style:'iced',roast:['medium'],dose:20,water:180,ice:0,temp_c:92,target_sec:150,grind_encore:14,steps:[{at_sec:0,pour_to_g:45,note:'الثلج'},{at_sec:40,pour_to_g:180,note:'كملي'}],tastes:['حلو'],note:'y'}];
+      db.recipes = db.recipes || [];
+      var MY_OK = ['id','owner','name','style','roast','dose','water','ice','ice_cubes','temp_c','target_sec','grind_encore','steps','tastes','note'];
+      var onlyMy = function(b){ return Object.keys(b).every(function(k){ return MY_OK.indexOf(k)!==-1; }); };
+      var rid = (q.id||'').slice(3), rowMine = db.recipes.filter(function(x){ return x.id===rid; })[0];
+      if (m==='GET') return J(SALEH.concat(db.recipes));
+      if (m==='POST') {
+        if (!onlyMy(body) || body.owner!=='U1' || String(body.id).indexOf('my-')!==0) return new Response('42501 recipe insert',{status:403});
+        (db.recipePosts = db.recipePosts||[]).push(body); db.recipes.push(body); return J([body]);
+      }
+      /* RLS: PATCH/DELETE تمر فقط على صفوفها (owner = U1) */
+      if (m==='PATCH') {
+        (db.recipePatches = db.recipePatches||[]).push({url:url, body:body});
+        if (q.owner!=='eq.U1' || !rowMine || body.owner!==undefined || body.id!==undefined) return J([]);
+        Object.assign(rowMine, body); return J([rowMine]);
+      }
+      if (m==='DELETE') {
+        (db.recipeDeletes = db.recipeDeletes||[]).push(url);
+        if (q.owner!=='eq.U1' || !rowMine) return J();
+        db.recipes = db.recipes.filter(function(x){ return x.id!==rid; }); return J();
+      }
+    }
     var BEAN_OK = ['user_id','photo_path','name','roaster'], RATING_OK = ['user_id','bean_id','date','liked','notes','brew_sec','grind'];
     function only(b, ok){ return Object.keys(b).every(function(k){ return ok.indexOf(k)!==-1; }); }
     if (url.indexOf('jojo_beans')!==-1) {
@@ -51,6 +73,7 @@ var MOCK = `<script>
       if (!only(body, RATING_OK) || body.user_id!=='U1') return new Response('42501 rating cols',{status:403});
       db.ratingInsert = body; return J([Object.assign({id:'R1', created_at:new Date().toISOString()}, body)]);
     }
+    if (url.indexOf('jojo_profiles')!==-1 && m==='PATCH') { (db.profilePatches = db.profilePatches||[]).push({url:url, body:body}); return J(); }
     if (url.indexOf('jojo_profiles')!==-1) return J([{role:'${ROLE}', settings:{sleepAt:'23:00',wakeAt:'06:30',gymDays:[],vitamins:['د'],waterGoal:8,city:{id:'riyadh',name:'الرياض',lat:24.7136,lng:46.6753},tz:'Asia/Riyadh'}, created_at:'2026-01-01T00:00:00Z'}]);
     if (url.indexOf('jojo_tasks')!==-1) return J([]);
     if (url.indexOf('jojo_messages')!==-1) { if (m==='PATCH') { db.msgSeen = body; return J(); } return J(q.kind==='eq.daily'?[{id:'m1',body:'صباحك ورد',seen_at:null}]:[]); }
@@ -193,6 +216,87 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
     ok(w.Jojo.requiredItems(S.settings, S.tasks, S.today).length===itemsBefore && !w.Jojo.requiredItems(S.settings, S.tasks, S.today).some(function(i){return i.key==='coffee'}), 'coffee is not a required item');
     ok(w.__db.daily[S.today]===pctBefore, 'coffee is bonus: jojo_daily.pct unchanged ('+pctBefore+' → '+w.__db.daily[S.today]+')');
     ok(/جربتي|قيّمي/.test(d.querySelector('[aria-label="ذوقي"]').textContent), 'ذوقي card rendered');
+    // ---------------- اصنعي وصفتك ----------------
+    w.location.hash = '#coffee'; await sleep(400);
+    var rcpPosts = function(){ return w.__log.filter(function(l){ return /^POST \/rest\/v1\/jojo_recipes/.test(l); }); };
+    function setv(sel, v){ var el = d.querySelector(sel); el.value = v; el.dispatchEvent(new w.Event('input', {bubbles:true})); }
+    function rows(){ return d.querySelectorAll('.pour-row'); }
+    function pv(i, k, v){ var el = rows()[i].querySelector('[data-p="'+k+'"]'); el.value = v; }
+    ok(!!d.querySelector('[data-act="rf-new"]') && /اصنعي وصفتك/.test(d.querySelector('[data-act="rf-new"]').textContent), 'coffee: "اصنعي وصفتك" button');
+    ok(d.querySelectorAll('.lib-item').length===2 && d.querySelectorAll('.lib-item .badge.his').length===2 && !d.querySelector('[data-act="rf-edit"]') && !d.querySelector('[data-act="rf-del"]'), "library: Saleh's recipes marked من صالح 🤍, no edit/delete on them");
+    d.querySelector('[data-act="rf-new"]').click(); await sleep(150);
+    var rform = function(){ return d.querySelector('form[data-form="recipe"]'); };
+    ok(!!rform() && rform().querySelectorAll('.pour-row').length===1 && !d.querySelector('[name="iceCubes"]'), 'form opens: hot by default, ice field hidden, one pour row');
+    rform().requestSubmit(); await sleep(200);
+    ok(rcpPosts().length===0 && d.querySelectorAll('.ferr').length>=4 && /اكتبي اسم لوصفتك/.test(d.getElementById('e-name').textContent) && d.querySelector('#rname').getAttribute('aria-invalid')==='true', 'empty submit: friendly inline Arabic errors, nothing sent');
+    // fill: iced, Arabic digits, 3 pours
+    d.querySelector('[data-act="rf-style"][data-v="iced"]').click(); await sleep(100);
+    ok(!!d.querySelector('[name="iceCubes"]'), 'iced: free-text ice field shown');
+    setv('#rname', 'قهوة الجمعة'); setv('#rdose', '١٦'); setv('#rwater', '256'); setv('[name="iceCubes"]', '٣ حبات بالسيرفر'); setv('#rtemp', '92'); setv('#rtarget', '3:10');
+    d.querySelector('[data-act="rf-grind"][data-d="1"]').click();
+    ok(d.getElementById('rfGrind').textContent==='١٦', 'grind stepper 15 → 16');
+    pv(0,'at','0:00'); pv(0,'to','48'); pv(0,'note','بلّلي القهوة');
+    d.querySelector('[data-act="rf-pour-add"]').click(); await sleep(80);
+    pv(1,'at','0:45'); pv(1,'to','150');
+    d.querySelector('[data-act="rf-pour-add"]').click(); await sleep(80);
+    ok(rows().length===3 && rows()[0].querySelector('[data-p="at"]').value==='0:00' && rows()[0].querySelector('[data-p="note"]').value==='بلّلي القهوة', 'add pour keeps what was typed');
+    pv(2,'at','0:30'); pv(2,'to','250');
+    rform().requestSubmit(); await sleep(200);
+    ok(rcpPosts().length===0 && !!d.getElementById('e-p2-at') && !!d.getElementById('e-p2-to') && /بعد اللي قبلها/.test(d.getElementById('e-p2-at').textContent) && /آخر صبّة لازم توصل لكمية الموية/.test(d.getElementById('e-p2-to').textContent), 'validation: time not increasing + last pour ≠ water → inline errors on that row');
+    pv(2,'at','1:30'); pv(2,'to','256'); pv(1,'to','40');
+    rform().requestSubmit(); await sleep(200);
+    ok(rcpPosts().length===0 && /تزيد عن الصبّة اللي قبلها/.test(d.getElementById('e-p1-to').textContent), 'validation: amounts must increase');
+    pv(1,'to','150'); d.querySelector('[data-act="rf-taste"][data-v="حلو"]').click();
+    // offline: toast, form kept, nothing sent
+    w.__offline = true; var n0 = w.__log.length;
+    rform().requestSubmit(); await sleep(400);
+    ok(/النت مقطوع/.test((d.querySelector('.toast')||{}).textContent||'') && rcpPosts().length===0 && !!rform() && d.querySelector('#rname').value==='قهوة الجمعة' && rows().length===3, 'offline save: toast, nothing posted, form still filled');
+    w.__offline = false;
+    rform().requestSubmit(); await sleep(700);
+    var rp = rcpPosts();
+    var body = w.__db.recipePosts && w.__db.recipePosts[0] || {};
+    ok(rp.length===1 && !rform(), 'online save: one POST to jojo_recipes, form closed');
+    ok(body.owner==='U1' && /^my-[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(body.id||''), 'insert: owner = her uid, id = my-<uuid> ('+body.id+')');
+    ok(Object.keys(body).sort().join(',')==='dose,grind_encore,ice,ice_cubes,id,name,note,owner,roast,steps,style,target_sec,tastes,temp_c,water', 'insert body has exactly the table columns ('+Object.keys(body).sort().join(',')+')');
+    ok(body.name==='قهوة الجمعة' && body.style==='iced' && body.dose===16 && body.water===256 && body.ice===0 && body.ice_cubes==='٣ حبات بالسيرفر' && body.temp_c===92 && body.grind_encore===16 && body.target_sec===190 && body.tastes.join()==='حلو', 'insert values: numbers are numbers, target_sec = 190 seconds, ice_cubes text, ice 0');
+    ok(JSON.stringify(body.steps)==='[{"at_sec":0,"pour_to_g":48,"note":"بلّلي القهوة"},{"at_sec":45,"pour_to_g":150,"note":""},{"at_sec":90,"pour_to_g":256,"note":""}]', 'insert steps shape [{at_sec, pour_to_g, note}] in seconds');
+    var mineItem = d.querySelector('.lib-item[data-id="'+body.id+'"]');
+    ok(!!mineItem && /وصفتك 🎀/.test(mineItem.textContent) && !!mineItem.querySelector('[data-act="rf-edit"]') && !!mineItem.querySelector('[data-act="rf-del"]') && d.querySelectorAll('.lib-item .badge.his').length===2, 'library: her recipe has وصفتك 🎀 badge + edit/delete; Saleh\'s rows still read-only');
+    // edit: PATCH only her row, owner filter in URL, no id/owner in body
+    mineItem.querySelector('[data-act="rf-edit"]').click(); await sleep(150);
+    ok(d.querySelector('#rname').value==='قهوة الجمعة' && rows().length===3 && rows()[1].querySelector('[data-p="at"]').value==='0:45' && d.querySelector('[data-act="rf-style"][data-v="iced"]').getAttribute('aria-pressed')==='true' && d.getElementById('rfGrind').textContent==='١٦' && d.getElementById('rtarget').value==='3:10', 'edit form prefilled from the row (times back as m:ss)');
+    setv('#rname', 'قهوة الجمعة ٢'); setv('#rtarget', '3:20');
+    rform().requestSubmit(); await sleep(600);
+    var pp = w.__db.recipePatches || [];
+    ok(pp.length===1 && pp[0].url.split('.co')[1].indexOf('/rest/v1/jojo_recipes?id=eq.'+body.id+'&owner=eq.U1&')===0 && pp[0].body.name==='قهوة الجمعة ٢' && pp[0].body.target_sec===200 && pp[0].body.owner===undefined && pp[0].body.id===undefined, 'edit: PATCH ?id=eq.<hers>&owner=eq.U1, body without id/owner');
+    ok(!w.__log.some(function(l){ return /^(PATCH|DELETE) .*jojo_recipes.*id=eq\.(hot-a|iced-mine)/.test(l); }), 'never PATCH/DELETE Saleh\'s recipes');
+    // default: settings.coffeeDefault, merged with her other settings
+    d.querySelector('.lib-item[data-id="'+body.id+'"] [data-act="rf-default"]').click(); await sleep(600);
+    var prp = (w.__db.profilePatches||[]).slice(-1)[0] || {};
+    ok(prp.body && prp.body.settings && prp.body.settings.coffeeDefault===body.id && prp.body.settings.sleepAt==='23:00' && prp.body.settings.waterGoal===8, 'اعتمديها: PATCH jojo_profiles settings.coffeeDefault = her id (other settings kept)');
+    ok(d.querySelector('.brew h2').textContent==='قهوة الجمعة ٢' && /الافتراضية/.test(d.querySelector('.lib-item[data-id="'+body.id+'"]').textContent), 'recipe of the day = her default; marked الافتراضية');
+    // tapping Saleh's recipe overrides today only; the default stays
+    d.querySelector('.lib-item[data-id="hot-a"] [data-act="lib-pick"]').click(); await sleep(200);
+    ok(d.querySelector('.brew h2').textContent==='صباحي الهادئ' && /من صالح 🤍/.test(d.querySelector('.brew .mk').textContent) && w.JojoApp.state.settings.coffeeDefault===body.id, 'tap a library recipe → it is today\'s recipe; default unchanged');
+    w.location.hash = '#today'; await sleep(200); w.location.hash = '#coffee'; await sleep(300);
+    ok(d.querySelector('.brew h2').textContent==='صباحي الهادئ', 'today\'s pick survives navigation (overrides the default for today)');
+    // iced recipe from Saleh with ice_cubes: no النسبة, shows الثلج: text
+    d.querySelector('.lib-item[data-id="iced-mine"] [data-act="lib-pick"]').click(); await sleep(200);
+    var spx = d.querySelector('.specs').textContent;
+    ok(/الثلج: ٤ حبات بالسيرفر \+ ٤ بالكوب/.test(spx) && !/النسبة/.test(spx) && !/جم\s*ثلج/.test(spx), 'iced + ice_cubes: card shows "الثلج: <text>", no النسبة, no grams');
+    ok(/الثلج: ٤ حبات/.test(d.querySelector('.timer').textContent), 'iced timer hint shows ice_cubes');
+    // delete: confirm first
+    var asked = []; w.confirm = function(m){ asked.push(m); return false; };
+    d.querySelector('.lib-item[data-id="'+body.id+'"] [data-act="rf-del"]').click(); await sleep(300);
+    ok(asked.join()==='متأكدة تحذفينها؟' && !(w.__db.recipeDeletes||[]).length && !!d.querySelector('.lib-item[data-id="'+body.id+'"]'), 'delete: asks "متأكدة تحذفينها؟", cancel sends nothing');
+    w.confirm = function(m){ asked.push(m); return true; };
+    d.querySelector('.lib-item[data-id="'+body.id+'"] [data-act="rf-del"]').click(); await sleep(700);
+    var dl = w.__db.recipeDeletes || [];
+    ok(dl.length===1 && dl[0].split('.co')[1]==='/rest/v1/jojo_recipes?id=eq.'+body.id+'&owner=eq.U1' && !d.querySelector('.lib-item[data-id="'+body.id+'"]'), 'delete confirmed: DELETE ?id=eq.<hers>&owner=eq.U1, row gone from the library');
+    var prp2 = (w.__db.profilePatches||[]).slice(-1)[0] || {};
+    ok(prp2.body && prp2.body.settings && prp2.body.settings.coffeeDefault===undefined && prp2.body.settings.sleepAt==='23:00', 'deleting the default also clears settings.coffeeDefault');
+    ok(!/معتمد|ريز|Rays|Notion|المصدر/i.test(d.getElementById('view').textContent), 'coffee tab still never mentions approval/Rays/Notion/source');
+    w.location.hash = '#coffee'; await sleep(100);
     // sign-out clears timers / memory queue
     w.location.hash = '#settings'; await sleep(300);
     ok(d.querySelector('.see-line') && d.querySelector('.see-line').textContent === SEE, 'transparency line shown in settings');

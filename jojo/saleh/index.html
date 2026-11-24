@@ -481,6 +481,8 @@ var Remote = {
   markRead: function (id, at) { return api('/rest/v1/jojo_letters?id=eq.' + q(id), { method: 'PATCH', body: { read_at: at }, prefer: 'return=minimal' }); },
   beans: function () { return api('/rest/v1/jojo_beans?select=id,photo_path,name,roaster,origin,process,roast,created_at&order=created_at.desc'); },
   ratings: function () { return api('/rest/v1/jojo_ratings?select=bean_id,liked,notes,date,created_at&order=created_at.desc&limit=500'); },
+  /* وصفاتها هي بس (owner <> null)، قراءة فقط: صالح ما يكتب بجدول الوصفات من هالصفحة */
+  herRecipes: function () { return api('/rest/v1/jojo_recipes?select=id,name,style,dose,water,ice,ice_cubes,temp_c,target_sec,grind_encore,steps,tastes,note&owner=not.is.null&order=id.asc'); },
   signUrls: function (paths) {
     return api('/storage/v1/object/sign/jojo-beans', { method: 'POST', body: { expiresIn: 3600, paths: paths } }).then(function (r) {
       var out = {};
@@ -550,6 +552,12 @@ function makeDemo() {
     { id: 'b3', photo_path: H + '/3.jpg', name: 'برازيل غامق', roaster: null, created_at: ago(15) },
     { id: 'b4', photo_path: H + '/4.jpg', name: null, roaster: null, created_at: ago(20) }
   ];
+  var herRecipes = [
+    { id: 'my-demo-1', name: 'قهوة الجمعة', style: 'hot', dose: 16, water: 256, ice: 0, ice_cubes: null, temp_c: 92, target_sec: 190, grind_encore: 16,
+      steps: [{ at_sec: 0, pour_to_g: 48, note: 'بلّلي القهوة' }, { at_sec: 45, pour_to_g: 150, note: '' }, { at_sec: 90, pour_to_g: 256, note: 'آخر صبّة' }], tastes: ['حلو', 'خفيف'], note: 'أحبها بعد الصلاة' },
+    { id: 'my-demo-2', name: 'بارد العصرية', style: 'iced', dose: 20, water: 200, ice: 0, ice_cubes: '٤ حبات بالسيرفر + ٤ بالكوب', temp_c: 93, target_sec: 150, grind_encore: 14,
+      steps: [{ at_sec: 0, pour_to_g: 50, note: '' }, { at_sec: 40, pour_to_g: 200, note: '' }], tastes: ['حامض'], note: null }
+  ];
   var photos = {};
   photos[H + '/1.jpg'] = bag('#F4A7C0', '#C2557A', '#6B3A2A'); photos[H + '/2.jpg'] = bag('#C9AE8E', '#8C6A4A', '#4A2E20');
   photos[H + '/3.jpg'] = bag('#3A3034', '#F4A7C0', '#2A1A14'); photos[H + '/4.jpg'] = bag('#8FC6E3', '#3F7FA0', '#5A3A28');
@@ -573,6 +581,7 @@ function makeDemo() {
     markRead: function (id, at) { letters.forEach(function (l) { if (l.id === id) l.read_at = at; }); return later(); },
     beans: function () { return later(beans); },
     ratings: function () { return later(ratings); },
+    herRecipes: function () { return later(herRecipes); },
     signUrls: function (paths) { var o = {}; paths.forEach(function (p) { if (photos[p]) o[p] = photos[p]; }); return later(o); }
   };
 }
@@ -586,7 +595,7 @@ var S = {
   msgs: null, msgsErr: false,                      // { daily: {date: msg}, wins: {id: msg} }
   wins: null, winsErr: false,                      // { unlocked: [] }
   letters: null, lettersErr: false, open: {},
-  beans: null, ratings: null, tasteErr: false, urls: {}, urlsExp: 0,
+  beans: null, ratings: null, recipes: null, tasteErr: false, urls: {}, urlsExp: 0,
   drafts: {}, rollNotice: false                    // مسودات الرسايل (ما تضيع مع إعادة الرسم) + تنبيه نص الليل
 };
 window.SalehApp = { state: S };
@@ -925,8 +934,8 @@ async function openLetter(id) {
 /* ============================================================ ذوقها */
 function loadTaste() {
   return guard(async function () {
-    var r = await Promise.all([store.beans(), store.ratings()]);
-    S.beans = r[0] || []; S.ratings = r[1] || [];
+    var r = await Promise.all([store.beans(), store.ratings(), store.herRecipes()]);
+    S.beans = r[0] || []; S.ratings = r[1] || []; S.recipes = r[2] || [];
     await ensureUrls();
   }, 'tasteErr');
 }
@@ -942,8 +951,24 @@ async function ensureUrls() {
   } catch (e) { if (e instanceof AuthError) throw e; /* الصور تطلع فاضية، الباقي يشتغل */ }
 }
 function beanName(b) { return b.name || 'كيس بدون اسم'; }
+function mmss(sec) { sec = Math.max(0, Math.round(sec)); return ar(Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0')); }
+/* وصفاتها اللي صنعتها: أرقامها بس، بدون أي تعديل من صفحتك */
+function recipesBlock() {
+  var rs = S.recipes || [];
+  if (!rs.length) return '<h2 class="sec">وصفاتها</h2><p class="empty">ما صنعت وصفات لسه ☕</p>';
+  return '<h2 class="sec">وصفاتها</h2>' + rs.map(function (r) {
+    var cubes = (r.ice_cubes || '').trim();
+    var nums = ['قهوة ' + ar(r.dose) + ' جم', 'موية ' + ar(r.water) + ' جم', cubes ? 'الثلج: ' + cubes : r.ice ? 'ثلج ' + ar(r.ice) + ' جم' : '',
+      'حرارة ' + ar(r.temp_c) + '°', 'طحنة Encore ' + ar(r.grind_encore), 'وقت ' + mmss(r.target_sec)].filter(Boolean);
+    return '<section class="card" aria-label="' + esc(r.name) + '"><h3>' + esc(r.name) + ' <span class="badge seen">' + (r.style === 'iced' ? 'باردة' : 'حارة') + '</span></h3>' +
+      '<div class="taste"><div class="line">' + nums.map(function (x) { return '<span class="tag no">' + esc(x) + '</span>'; }).join('') + '</div>' +
+      '<div class="line">الصبّات: ' + (r.steps || []).map(function (st) { return esc(mmss(st.at_sec) + ' ← ' + ar(st.pour_to_g) + ' جم'); }).join(' · ') + '</div>' +
+      ((r.tastes || []).length ? '<div class="line">' + r.tastes.map(function (t) { return '<span class="tag">' + esc(t) + '</span>'; }).join('') + '</div>' : '') +
+      (r.note ? '<p class="muted">' + esc(r.note) + '</p>' : '') + '</div></section>';
+  }).join('');
+}
 function renderTaste() {
-  var top = head('ذوقها', 'أكياس القهوة اللي صوّرتها وتقييمها');
+  var top = head('ذوقها', 'أكياس القهوة اللي صوّرتها وتقييمها ووصفاتها');
   if (S.tasteErr) return paint(top + errBox('ما قدرت أجيب ذوقها.'));
   if (!S.beans) { loadTaste(); return paint(top + loadingBox()); }
   if (S.urlsExp && Date.now() > S.urlsExp) ensureUrls().then(function () { if (route === 'taste') render(); });
@@ -967,7 +992,7 @@ function renderTaste() {
       (order.length ? '<div class="chips">' + order.map(function (n) { return '<span class="tag">' + esc(n) + (counts[n] > 1 ? ' ×' + ar(counts[n]) : '') + '</span>'; }).join('') + '</div>' : '') +
       '</figcaption></figure>';
   }).join('') + '</div>' : '<p class="empty">ما صوّرت أكياس لسه ☕</p>';
-  paint(top + '<h2 class="sec">ملخص ذوقها</h2><section class="card" aria-label="ملخص ذوقها">' + sum + '</section><h2 class="sec">أكياسها</h2>' + grid);
+  paint(top + '<h2 class="sec">ملخص ذوقها</h2><section class="card" aria-label="ملخص ذوقها">' + sum + '</section>' + recipesBlock() + '<h2 class="sec">أكياسها</h2>' + grid);
 }
 
 /* ============================================================ الأحداث */
@@ -999,7 +1024,7 @@ function refreshAll() {
   if (!S.role) return;
   var t = todayISO();
   if (t !== S.today) rollDay(t);
-  S.home = null; S.letters = null; S.wins = null; S.msgs = null; S.her = null; S.tasks = null; S.beans = null; S.ratings = null;
+  S.home = null; S.letters = null; S.wins = null; S.msgs = null; S.her = null; S.tasks = null; S.beans = null; S.ratings = null; S.recipes = null;
   if (S.day.date) S.day.loaded = false;
   clearErrors(); render();
 }
