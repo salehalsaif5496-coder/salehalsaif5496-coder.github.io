@@ -38,6 +38,7 @@ create table if not exists public.jojo_tasks (
   user_id    uuid not null references auth.users(id) on delete cascade,
   title      text not null,
   days       smallint[],               -- null/empty = every day; 0=Sun..6=Sat
+  remind_at  text check (remind_at is null or remind_at ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$'), -- تنبيه بهالوقت بأيامها
   created_at timestamptz not null default now()
 );
 create index if not exists jojo_tasks_user on public.jojo_tasks(user_id);
@@ -353,3 +354,7 @@ create policy jojo_recipes_read on public.jojo_recipes for select to authenticat
   using (public.jojo_is_jojo() or public.jojo_is_saleh());
 
 -- jojo_push, jojo_config: RLS on, no policies, no grants => service role only.
+
+-- added later on khazna (migration jojo_task_reminder_time):
+alter table public.jojo_tasks add column if not exists remind_at text
+  check (remind_at is null or remind_at ~ '^([01][0-9]|2[0-3]):[0-5][0-9]$');
