@@ -328,10 +328,13 @@ create policy jojo_messages_saleh on public.jojo_messages for all to authenticat
   using (public.jojo_is_saleh()) with check (public.jojo_is_saleh());
 drop policy if exists jojo_messages_jojo_select on public.jojo_messages;
 create policy jojo_messages_jojo_select on public.jojo_messages for select to authenticated
-  using (public.jojo_is_jojo());
+  using (public.jojo_is_jojo()
+         and (kind <> 'daily' or for_date is null or for_date <= (now() at time zone 'Asia/Riyadh')::date));
 drop policy if exists jojo_messages_jojo_seen on public.jojo_messages;
 create policy jojo_messages_jojo_seen on public.jojo_messages for update to authenticated
-  using (public.jojo_is_jojo()) with check (public.jojo_is_jojo());
+  using (public.jojo_is_jojo()
+         and (kind <> 'daily' or for_date is null or for_date <= (now() at time zone 'Asia/Riyadh')::date))
+  with check (public.jojo_is_jojo());
 
 -- Jojo's recipe library: Jojo and Saleh read; writes via service role
 drop policy if exists jojo_recipes_read on public.jojo_recipes;
