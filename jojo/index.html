@@ -26,6 +26,7 @@
   color-scheme:dark;
   --choc:#141012;      /* أسود دافي — الأرضية */
   --cream:#1F191C;     /* البطاقات */
+  --card-glass:rgba(31,25,28,.88); /* بطاقات شفافة شوي يبين منها نقش البوسات */
   --card-2:#2A2226;    /* عناصر داخل البطاقات */
   --pink:#F4A7C0;      /* الوردي الأساسي */
   --pink-soft:#3A2630; /* أرضية وردية داكنة للسوارة */
@@ -41,7 +42,7 @@
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html{background:var(--choc);color:var(--ink);font-family:"Plex",system-ui,sans-serif;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
-html{background-color:var(--choc);background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cg opacity=%22.085%22%3E%3Cg transform=%22translate(48 44) rotate(-18) scale(0.95) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(158 70) rotate(24) scale(0.7) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23F4A7C0%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(96 150) rotate(9) scale(0.8) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23C2557A%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23F4A7C0%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3Cg transform=%22translate(190 186) rotate(-32) scale(0.6) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22Q30 25 54 22%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");background-size:220px 220px;background-attachment:fixed}
+html{overflow-x:clip;background-color:var(--choc);background-image:url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22220%22 height=%22220%22 viewBox=%220 0 220 220%22%3E%3Cg opacity=%22.32%22%3E%3Cg transform=%22translate(50 46) rotate(-18) scale(0.9) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.28%22%3E%3Cg transform=%22translate(160 72) rotate(24) scale(0.75) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.31%22%3E%3Cg transform=%22translate(98 152) rotate(9) scale(0.85) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3Cg opacity=%22.27%22%3E%3Cg transform=%22translate(188 188) rotate(-32) scale(0.7) translate(-30 -22)%22%3E%3Cpath d=%22M4 22C10 12 20 8 30 14C40 8 50 12 56 22C46 20 38 21 30 21C22 21 14 20 4 22Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M4 23C14 23 22 23 30 23C38 23 46 23 56 23C50 36 38 40 30 40C22 40 10 36 4 23Z%22 fill=%22%23F4A7C0%22/%3E%3Cpath d=%22M6 22.2Q30 25.5 54 22.2%22 fill=%22none%22 stroke=%22%23C2557A%22 stroke-width=%222.2%22 stroke-linecap=%22round%22/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");background-size:220px 220px;background-attachment:fixed}
 @media (prefers-contrast:more),(prefers-reduced-transparency:reduce){html{background-image:none}}
 ::selection{background:var(--pink);color:var(--on-pink)}
 body{min-height:100dvh;padding:calc(env(safe-area-inset-top) + 18px) 18px 120px;max-width:440px;margin:0 auto}
@@ -66,7 +67,7 @@ input,textarea,select{font:inherit;color:inherit}
 .page-top h1{font-size:28px;font-weight:800;flex:1}
 
 /* رسالة صالح — ظرف بفيونكة */
-.letter{position:relative;background:var(--cream);border:1.5px solid #4A3D33;border-radius:var(--r-lg);padding:22px 20px 18px;box-shadow:var(--shadow);margin-bottom:22px}
+.letter{position:relative;background:var(--card-glass);border:1.5px solid #4A3D33;border-radius:var(--r-lg);padding:22px 20px 18px;box-shadow:var(--shadow);margin-bottom:22px}
 .letter .bow{position:absolute;top:-16px;inset-inline-start:22px;width:46px;height:30px}
 .letter .from{font-size:13px;color:var(--rose);font-weight:600;margin-bottom:6px}
 .letter p{font-size:17px;line-height:1.7;color:var(--ink);white-space:pre-line}
@@ -93,7 +94,7 @@ input,textarea,select{font:inherit;color:inherit}
 h2.sec{font-size:19px;font-weight:700;margin:4px 4px 10px;display:flex;align-items:center;gap:8px}
 h2.sec::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--choc-deep);flex:none}
 h2.sec .badge{margin-inline-start:auto}
-.group{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:16px;overflow:hidden}
+.group{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);margin-bottom:16px;overflow:hidden}
 .row{display:flex;align-items:center;gap:12px;padding:14px 16px;min-height:56px;width:100%;text-align:start}
 .row+.row,.sub+.row{border-top:1px solid var(--line)}
 .row .ic{width:26px;height:26px;flex:none;color:var(--choc-deep)}
@@ -134,7 +135,7 @@ button.row:active{background:var(--card-2)}
 .chip .x{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(0,0,0,.25)}
 
 /* بطاقات وأزرار عامة */
-.card{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
+.card{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:18px;margin-bottom:16px}
 .card h3{font-size:18px;font-weight:700;margin-bottom:6px}
 .muted{color:var(--ink-2);font-size:14px;line-height:1.7}
 .btn{min-height:48px;padding:12px 22px;border-radius:999px;background:var(--pink);color:var(--on-pink);font-weight:600;font-size:16px;display:inline-flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s var(--ease),opacity .2s}
@@ -161,7 +162,7 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 .stepper .num{font-size:30px;font-weight:800;min-width:2ch;text-align:center;color:var(--rose)}
 
 /* القوائم: مهام ونوت ورسائل */
-.item{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px}
+.item{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px 16px;margin-bottom:10px}
 .item .body{font-size:16px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
 .item .meta{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px;font-size:12px;color:var(--ink-2);flex-wrap:wrap}
 .item .tools{display:flex;gap:4px}
@@ -181,10 +182,10 @@ textarea.in{min-height:110px;resize:vertical;line-height:1.7}
 
 /* إنجازاتي */
 .streaks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:22px}
-.streak{background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px}
+.streak{background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:14px}
 .streak .num{font-size:30px;font-weight:800;color:var(--rose);line-height:1.1}
 .streak .l{font-size:13px;color:var(--ink-2);margin-top:2px}
-.win{display:flex;gap:12px;align-items:flex-start;background:var(--cream);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
+.win{display:flex;gap:12px;align-items:flex-start;background:var(--card-glass);border:1.5px solid var(--line);border-radius:var(--r-md);padding:16px;margin-bottom:12px}
 .win .medal{width:46px;height:46px;flex:none;border-radius:50%;display:grid;place-items:center;background:var(--card-2);color:var(--choc-deep)}
 .win .medal .ic{width:24px;height:24px}
 .win.open{border-color:#5A3B48;background:linear-gradient(180deg,#2A1C23,var(--cream))}
@@ -334,7 +335,7 @@ nav.tabs a[aria-current]{color:var(--rose);background:var(--pink-soft);font-weig
 <script>
 /* ============================================================ رقم النسخة
    غيّريه مع كل نشر: يجدد core.js و vendor/ ويخلي الـ Service Worker يمسح الكاش القديم (sw.js?v=...). */
-var JOJO_VERSION = '2026-11-24.8';
+var JOJO_VERSION = '2026-11-24.9';
 /* مفتاح VAPID العام للتنبيهات (مو سري) — يحطه الكنترولر نفس jojo_config 'vapid_public' */
 var JOJO_VAPID_PUBLIC = 'BCKOgH0ZISRSX4xbB7uPNBRV-kykIZanutg7t1rWSo9TwOKW-jgij0eaTICZAJLzljX40NgS7kEARJ6haWxV0EE';
 </script>
