@@ -69,7 +69,7 @@ function ok(c, label){ out.push((c?"PASS ":"FAIL ")+label); document.getElementB
   try { localStorage.clear(); } catch(e){}
   try {
   var html = await (await fetch('/jojo/index.html')).text();
-  ok(/var JOJO_VAPID_PUBLIC = '__SET_BY_CONTROLLER__';/.test(html), 'index.html ships the VAPID placeholder (controller fills it)');
+  ok(/var JOJO_VAPID_PUBLIC = 'B[A-Za-z0-9_-]{80,}';/.test(html), 'index.html ships a real VAPID public key (no placeholder)');
   html = html.replace("'__SET_BY_CONTROLLER__'", "'" + TEST_VAPID + "'").replace('<head>', '<head><base href="/jojo/">'+MOCK);
   var f = document.getElementById('f'); f.srcdoc = html;
   await new Promise(function(r){ f.onload = r; });
