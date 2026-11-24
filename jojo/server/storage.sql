@@ -15,7 +15,7 @@ begin
 
   execute 'drop policy if exists jojo_beans_obj_insert_own on storage.objects';
   execute $p$create policy jojo_beans_obj_insert_own on storage.objects for insert to authenticated
-    with check (bucket_id = 'jojo-beans' and (storage.foldername(name))[1] = auth.uid()::text)$p$;
+    with check (bucket_id = 'jojo-beans' and public.jojo_is_jojo() and (storage.foldername(name))[1] = auth.uid()::text)$p$;
 
   execute 'drop policy if exists jojo_beans_obj_select_own on storage.objects';
   execute $p$create policy jojo_beans_obj_select_own on storage.objects for select to authenticated

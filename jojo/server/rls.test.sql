@@ -135,6 +135,10 @@ begin;
 set local role authenticated;
 set local request.jwt.claims = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
 select jt.ok(public.jojo_is_saleh() = false, 'jojo: jojo_is_saleh() false');
+-- review fix: a letter inserted by Jojo can't carry a fake read receipt or backdate
+select jt.ok(jt.try($q$insert into public.jojo_letters(id, user_id, body, read_at, created_at) values ('aaaaaaaa-0000-0000-0000-0000000000f1','11111111-1111-1111-1111-111111111111','x', now(), '2020-01-01')$q$) = 'ok:1', 'jojo: inserts letter with forged fields');
+select jt.ok((select read_at is null and created_at > '2026-01-01' from public.jojo_letters where id='aaaaaaaa-0000-0000-0000-0000000000f1'), 'jojo: forged read_at/created_at are reset on insert');
+delete from public.jojo_letters where id='aaaaaaaa-0000-0000-0000-0000000000f1';
 -- own private data
 select jt.ok(jt.see('select * from public.jojo_notes') = 1, 'jojo: reads own notes');
 select jt.ok(jt.see('select * from public.jojo_checks') = 1, 'jojo: reads own checks');

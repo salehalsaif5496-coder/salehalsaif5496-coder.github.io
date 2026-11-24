@@ -170,6 +170,13 @@ create or replace function public.jojo_letters_guard() returns trigger
 language plpgsql set search_path = ''
 as $$
 begin
+  if tg_op = 'INSERT' then
+    if current_user in ('authenticated', 'anon') then
+      new.read_at := null;          -- only Saleh marks a letter as read, never at insert
+      new.created_at := now();
+    end if;
+    return new;
+  end if;
   if current_user in ('authenticated', 'anon') then
     if new.id is distinct from old.id or new.user_id is distinct from old.user_id
        or new.created_at is distinct from old.created_at then
@@ -190,7 +197,7 @@ begin
   return new;
 end $$;
 drop trigger if exists jojo_letters_guard on public.jojo_letters;
-create trigger jojo_letters_guard before update on public.jojo_letters
+create trigger jojo_letters_guard before insert or update on public.jojo_letters
   for each row execute function public.jojo_letters_guard();
 
 create or replace function public.jojo_messages_guard() returns trigger
