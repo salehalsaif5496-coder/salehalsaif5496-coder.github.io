@@ -134,7 +134,16 @@
   function recipePick(recipes, ratings, dateISO) {
     if (!recipes || !recipes.length) return null;
     var rs = ratings || [];
+    var prof = null;
     var weights = recipes.map(function (rc) {
+      /* وصفات المكتبة (لها tastes وما لها beanId): ضعف الفرصة لو طعمها من اللي تحبه وما فيها شي ما تحبه */
+      if (rc.tastes && rc.beanId === undefined) {
+        prof = prof || tasteProfile(rs);
+        var t = rc.tastes || [];
+        var hit = t.some(function (x) { return prof.likes.indexOf(x) !== -1; });
+        var bad = t.some(function (x) { return prof.dislikes.indexOf(x) !== -1; });
+        return hit && !bad ? 2 : 1;
+      }
       var of = rs.filter(function (x) { return x.beanId === rc.beanId; });
       if (!of.length) return 1;
       var likes = of.filter(function (x) { return x.liked; }).length;

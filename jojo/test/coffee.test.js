@@ -53,3 +53,19 @@ test('recipeOfDay avoids yesterday', () => {
     assert.notStrictEqual(J.recipeOfDay(recipes, ratings, dd).id, J._recipePick(recipes, ratings, prev).id, 'day ' + dd);
   }
 });
+
+test('recipeOfDay weighs library recipes by her taste (tastes, no beanId)', () => {
+  const lib = [{ id: 'sweet', tastes: ['حلو'] }, { id: 'bitter', tastes: ['مر'] }, { id: 'sour', tastes: ['حامض'] }];
+  const likesSweet = [
+    { liked: true, notes: ['حلو'] }, { liked: true, notes: ['حلو'] },
+    { liked: false, notes: ['مر'] }, { liked: false, notes: ['مر'] }
+  ];
+  const count = { sweet: 0, bitter: 0, sour: 0 }, base = { sweet: 0, bitter: 0, sour: 0 };
+  for (let i = 0; i < 400; i++) {
+    const d = new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10);
+    count[J._recipePick(lib, likesSweet, d).id]++;
+    base[J._recipePick(lib, [], d).id]++;
+  }
+  assert.ok(count.sweet > base.sweet, 'sweet picked more once she likes sweet (' + count.sweet + ' vs ' + base.sweet + ')');
+  assert.ok(count.sweet > count.bitter);
+});
