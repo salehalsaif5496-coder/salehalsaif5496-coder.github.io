@@ -14,7 +14,7 @@ async function queryAll(dbId: string, token: string, filter?: unknown): Promise<
       headers: { Authorization: `Bearer ${token}`, "Notion-Version": "2022-06-28", "Content-Type": "application/json" },
       body: JSON.stringify({ page_size: 100, ...(cursor ? { start_cursor: cursor } : {}), ...(filter ? { filter } : {}) }),
     });
-    if (!res.ok) throw new Error(`notion ${res.status}: ${(await res.text()).slice(0, 200)}`);
+    if (!res.ok) { console.error("notion", res.status, (await res.text()).slice(0, 200)); throw new SyncError("notion_failed"); }
     const j = await res.json();
     out.push(...(j.results || []));
     cursor = j.has_more ? j.next_cursor : undefined;
@@ -22,6 +22,7 @@ async function queryAll(dbId: string, token: string, filter?: unknown): Promise<
   return out;
 }
 
+class SyncError extends Error {}
 const json = (b: unknown, status = 200) => new Response(JSON.stringify(b), { status, headers: { "Content-Type": "application/json" } });
 
 Deno.serve(async (req) => {
@@ -39,11 +40,11 @@ Deno.serve(async (req) => {
     const products = productPages.map((p) => {
       const titleProp: any = Object.values(p.properties || {}).find((x: any) => x?.type === "title");
       const name = ((titleProp?.title || []) as any[]).map((t) => t.plain_text ?? "").join("").trim();
-      return { notion_id: p.id as string, name, aliases: [] as string[], updated_at: now };
+      return { notion_id: p.id as string, name, updated_at: now }; // aliases left untouched on conflict
     }).filter((p) => p.name);
     if (products.length) {
       const { error } = await db.from("jojo_rays_products").upsert(products, { onConflict: "notion_id" });
-      if (error) throw new Error("products: " + error.message);
+      if (error) { console.error("products", error.message); throw new SyncError("db_failed"); }
     }
     const known = new Set(products.map((p) => p.notion_id));
 
@@ -60,11 +61,20 @@ Deno.serve(async (req) => {
     }));
     if (recipes.length) {
       const { error } = await db.from("jojo_rays_recipes").upsert(recipes, { onConflict: "notion_id" });
-      if (error) throw new Error("recipes: " + error.message);
+      if (error) { console.error("recipes", error.message); throw new SyncError("db_failed"); }
     }
-    return json({ ok: true, products: products.length, recipes: recipes.length });
+    // prune: only reached when every Notion fetch and upsert succeeded
+    const keep = new Set(recipes.map((r) => r.notion_id));
+    const { data: existing, error: lerr } = await db.from("jojo_rays_recipes").select("notion_id");
+    if (lerr) { console.error("list recipes", lerr.message); throw new SyncError("db_failed"); }
+    const stale = (existing || []).map((x: any) => x.notion_id as string).filter((id) => !keep.has(id));
+    if (stale.length) {
+      const { error } = await db.from("jojo_rays_recipes").delete().in("notion_id", stale);
+      if (error) { console.error("prune", error.message); throw new SyncError("db_failed"); }
+    }
+    return json({ ok: true, products: products.length, recipes: recipes.length, pruned: stale.length });
   } catch (e) {
-    console.log("sync error", String(e));
-    return json({ ok: false, error: String((e as Error).message || e) }, 500);
+    console.error("sync error", String(e));
+    return json({ ok: false, error: e instanceof SyncError ? e.message : "db_failed" }, 500);
   }
 });

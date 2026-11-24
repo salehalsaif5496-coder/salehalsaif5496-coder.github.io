@@ -1,5 +1,5 @@
 import { deepStrictEqual as assertEquals } from "node:assert";
-import { matchRaysProduct, mapNotionRecipe, normalize, notionTimeToSec, parseClaudeJson } from "./match.ts";
+import { matchRaysProduct, mapNotionRecipe, normalize, notionTimeToSec, parseClaudeJson, sniffMediaType } from "./match.ts";
 
 const products = [
   { notion_id: "p1", name: "إثيوبيا قوجي", aliases: ["Guji"] },
@@ -68,4 +68,15 @@ Deno.test("mapNotionRecipe", () => {
   const other = structuredClone(page);
   other.properties["طريقة التحضير"].select!.name = "Espresso";
   assertEquals(mapNotionRecipe(other), null);
+});
+
+Deno.test("sniffMediaType: magic bytes", () => {
+  const b = (...a: number[]) => new Uint8Array([...a, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+  assertEquals(sniffMediaType(b(0xff, 0xd8, 0xff, 0xe0)), "image/jpeg");
+  assertEquals(sniffMediaType(b(0x89, 0x50, 0x4e, 0x47)), "image/png");
+  assertEquals(sniffMediaType(new Uint8Array([0x52, 0x49, 0x46, 0x46, 1, 2, 3, 4, 0x57, 0x45, 0x42, 0x50])), "image/webp");
+  assertEquals(sniffMediaType(b(0x47, 0x49, 0x46, 0x38)), "image/gif");
+  // HEIC: ....ftypheic
+  assertEquals(sniffMediaType(new Uint8Array([0, 0, 0, 0x18, 0x66, 0x74, 0x79, 0x70, 0x68, 0x65, 0x69, 0x63])), null);
+  assertEquals(sniffMediaType(new Uint8Array([])), null);
 });

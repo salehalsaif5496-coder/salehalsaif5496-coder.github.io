@@ -1,6 +1,6 @@
 // جوجو — قراءة صورة كيس قهوة (Claude Haiku) وحفظها في jojo_beans
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { matchRaysProduct, parseClaudeJson } from "./match.ts";
+import { matchRaysProduct, parseClaudeJson, sniffMediaType } from "./match.ts";
 
 const ORIGIN = "https://salehalsaif5496-coder.github.io";
 const CORS = {
@@ -41,8 +41,12 @@ Deno.serve(async (req) => {
 
   const { data: blob, error: derr } = await db.storage.from("jojo-beans").download(photo_path);
   if (derr || !blob) return json({ ok: false, reason: "no_photo" }, 404);
-  const mediaType = ["image/jpeg", "image/png", "image/webp", "image/gif"].includes(blob.type) ? blob.type : "image/jpeg";
-  const data = b64(new Uint8Array(await blob.arrayBuffer()));
+  if (blob.size > 5 * 1024 * 1024) return json({ ok: false, reason: "too_large" });
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  if (bytes.length > 5 * 1024 * 1024) return json({ ok: false, reason: "too_large" });
+  const mediaType = sniffMediaType(bytes);
+  if (!mediaType) return json({ ok: false, reason: "unsupported_format" });
+  const data = b64(bytes);
 
   let text = "";
   try {
@@ -58,10 +62,10 @@ Deno.serve(async (req) => {
         ] }],
       }),
     });
-    if (!r.ok) { console.log("anthropic", r.status, (await r.text()).slice(0, 200)); return json({ ok: false, reason: "unreadable" }); }
+    if (!r.ok) { console.error("anthropic", r.status, (await r.text()).slice(0, 200)); return json({ ok: false, error: "scan_failed" }, 502); }
     const j = await r.json();
     text = (j.content || []).map((c: any) => c.text || "").join("");
-  } catch (e) { console.log("anthropic fetch", String(e)); return json({ ok: false, reason: "unreadable" }); }
+  } catch (e) { console.error("anthropic fetch", String(e)); return json({ ok: false, error: "scan_failed" }, 502); }
 
   const p = parseClaudeJson(text);
   if (!p) return json({ ok: false, reason: "unreadable" });
@@ -74,6 +78,6 @@ Deno.serve(async (req) => {
   const { data: bean, error: ierr } = await db.from("jojo_beans")
     .insert({ user_id: uid, photo_path, ...f, is_rays: matched != null, product_id: matched })
     .select().single();
-  if (ierr) { console.log("insert", ierr.message); return json({ ok: false, reason: "unreadable" }, 500); }
+  if (ierr) { console.error("insert", ierr.message); return json({ ok: false, error: "db_failed" }, 500); }
   return json({ ok: true, bean });
 });
