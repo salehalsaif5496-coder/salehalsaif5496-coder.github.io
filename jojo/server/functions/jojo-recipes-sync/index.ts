@@ -59,7 +59,13 @@ Deno.serve(async (req) => {
       product_notion_id: r!.product_notion_id && known.has(r!.product_notion_id) ? r!.product_notion_id : null,
       updated_at: now,
     }));
-    if (recipes.length) {
+    // Zero approved V60 recipes almost certainly means a mapping/permission problem, not
+    // that Saleh revoked them all — never prune the whole table on that.
+    if (!recipes.length) {
+      console.error("sync: 0 approved V60 recipes mapped from", recipePages.length, "pages — skipping prune");
+      return json({ ok: false, error: "no_recipes" }, 500);
+    }
+    {
       const { error } = await db.from("jojo_rays_recipes").upsert(recipes, { onConflict: "notion_id" });
       if (error) { console.error("recipes", error.message); throw new SyncError("db_failed"); }
     }
