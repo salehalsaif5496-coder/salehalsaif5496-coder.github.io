@@ -87,5 +87,84 @@ Deno.serve(async (req) => {
     return error ? json({ error: error.message }, 500) : json({ ok: true });
   }
 
+  // ---------------- الاجتماعات ----------------
+  const uuid = (v: unknown) => (typeof v === "string" && /^[0-9a-f-]{36}$/i.test(v) ? v : "");
+  const loadMeeting = async (id: string) => {
+    const { data } = await db.from("team_meetings").select("*").eq("id", id).maybeSingle();
+    return data;
+  };
+
+  if (body.action === "meetings") {
+    const since = new Date(Date.now() - 90 * 864e5).toISOString();
+    const { data: meetings, error } = await db.from("team_meetings").select("*").gte("created_at", since).order("created_at", { ascending: false }).limit(60);
+    if (error) return json({ error: error.message }, 500);
+    const ids = (meetings || []).map((m: any) => m.id);
+    const { data: tasks } = ids.length ? await db.from("team_meeting_tasks").select("*").in("meeting_id", ids).order("created_at") : { data: [] };
+    return json({ meetings, tasks: tasks || [] });
+  }
+
+  if (body.action === "meeting_get") {
+    const id = uuid(body.id);
+    const meeting = id && await loadMeeting(id);
+    if (!meeting) return json({ error: "الاجتماع مو موجود" }, 404);
+    const [msgs, tasks] = await Promise.all([
+      db.from("team_meeting_msgs").select("*").eq("meeting_id", id).order("created_at").limit(500),
+      db.from("team_meeting_tasks").select("*").eq("meeting_id", id).order("created_at"),
+    ]);
+    return json({ meeting, msgs: msgs.data || [], tasks: tasks.data || [] });
+  }
+
+  if (body.action === "meeting_create") {
+    const topic = str(body.topic, 160), details = str(body.details, 1500) || null;
+    const want = Array.isArray(body.attendees) ? body.attendees.map((x: unknown) => str(x, 40)).filter(Boolean).slice(0, 12) : [];
+    if (!topic) return json({ error: "اكتب موضوع الاجتماع" }, 400);
+    const { data: mem } = await db.from("team_members").select("id").in("id", want.length ? want : ["-"]);
+    const attendees = want.filter((id: string) => (mem || []).some((m: any) => m.id === id));
+    if (!attendees.length) return json({ error: "اختر موظف واحد على الأقل" }, 400);
+    const { data, error } = await db.from("team_meetings").insert({ topic, details, attendees }).select().single();
+    return error ? json({ error: error.message }, 500) : json({ ok: true, meeting: data });
+  }
+
+  if (body.action === "meeting_post") {
+    const meeting = await loadMeeting(uuid(body.id));
+    if (!meeting) return json({ error: "الاجتماع مو موجود" }, 404);
+    if (meeting.status !== "open") return json({ error: "الاجتماع مقفول" }, 400);
+    const { data: mem } = await db.from("team_members").select("id,n").in("id", meeting.attendees);
+    const rows = (Array.isArray(body.msgs) ? body.msgs : []).slice(0, 15).map((x: any) => {
+      const text = str(x?.body, 4000);
+      if (!text) return null;
+      if (!x.member_id) return { meeting_id: meeting.id, member_id: null, from_name: "صالح", body: text };
+      const m = (mem || []).find((y: any) => y.id === x.member_id);
+      return m ? { meeting_id: meeting.id, member_id: m.id, from_name: m.n, body: text } : null;
+    }).filter(Boolean);
+    if (!rows.length) return json({ error: "ما فيه رسالة" }, 400);
+    const { data, error } = await db.from("team_meeting_msgs").insert(rows).select();
+    return error ? json({ error: error.message }, 500) : json({ ok: true, msgs: data });
+  }
+
+  if (body.action === "meeting_close") {
+    const meeting = await loadMeeting(uuid(body.id));
+    if (!meeting) return json({ error: "الاجتماع مو موجود" }, 404);
+    if (meeting.status !== "open") return json({ error: "الاجتماع مقفول من قبل" }, 400);
+    const summary = str(body.summary, 3000);
+    if (!summary) return json({ error: "المحضر فاضي" }, 400);
+    const tasks = (Array.isArray(body.tasks) ? body.tasks : []).slice(0, 20).map((t: any) => ({
+      meeting_id: meeting.id, member_id: meeting.attendees.includes(t?.member_id) ? t.member_id : null,
+      task: str(t?.task, 400), due: str(t?.due, 60) || null,
+    })).filter((t: any) => t.member_id && t.task);
+    const { error } = await db.from("team_meetings").update({ status: "closed", minutes: summary, closed_at: new Date().toISOString() }).eq("id", meeting.id).eq("status", "open");
+    if (error) return json({ error: error.message }, 500);
+    if (tasks.length) { const r = await db.from("team_meeting_tasks").insert(tasks); if (r.error) return json({ error: r.error.message }, 500); }
+    const { data: mem } = await db.from("team_members").select("id,n,lead").in("id", [...meeting.attendees, ...tasks.map((t: any) => t.member_id)]);
+    const { data: lead } = await db.from("team_members").select("id,n").eq("lead", true).maybeSingle();
+    const nm = (id: string) => (mem || []).find((m: any) => m.id === id)?.n || id;
+    const lines = tasks.map((t: any) => `• ${nm(t.member_id)}: ${t.task}${t.due ? " (" + t.due + ")" : ""}`).join("\n");
+    await db.from("team_mail").insert({
+      member_id: lead?.id || null, from_name: lead?.n || "الفا", subject: "محضر اجتماع: " + meeting.topic,
+      body: `${lead?.n || "الفا"} — المنسّق العام\n\n${summary}${lines ? "\n\nالمهام:\n" + lines : ""}`,
+    });
+    return json({ ok: true, tasks: tasks.length });
+  }
+
   return json({ error: "unknown action" }, 400);
 });

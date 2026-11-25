@@ -263,6 +263,36 @@ h2.sec{font-size:13px;color:var(--mute);font-weight:500;margin:26px 2px 10px;dis
 .kv{font-size:13px;line-height:1.7;margin-top:12px}
 .kv .k{font-size:11.5px;color:var(--mute);display:block}
 .kv ul{margin:4px 18px 0 0;padding:0}
+/* ---------- MEETINGS (اجتماع) ---------- */
+.mt-new{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin:8px 0 4px;padding:14px;border:1px dashed #333;border-radius:14px;background:none;font-size:14px}
+.mt-card{display:block;width:100%;text-align:start;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 14px;margin-top:10px;color:inherit}
+.mt-card .tp{font-size:14.5px;font-weight:500}
+.mt-card .mm{font-size:11.5px;color:var(--mute);margin-top:5px;display:flex;justify-content:space-between;gap:8px}
+.mt-badge{font-size:10.5px;border:1px solid #333;border-radius:20px;padding:1px 8px;color:#aaa;flex:none}
+.mt-badge.on{border-color:#ddd;color:#fff}
+.room-hd{display:flex;align-items:center;gap:10px;margin:6px 0 4px}
+.room-hd b{flex:1;font-size:16px;font-weight:500}
+.room-hd button{background:none;border:1px solid var(--line);border-radius:10px;width:36px;height:34px;font-size:16px}
+.att{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 10px}
+.att span{font-size:11.5px;border:1px solid #2a2a2a;border-radius:20px;padding:3px 10px;color:#bbb}
+.bub{max-width:88%;margin:10px 0;padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.75;white-space:pre-wrap;border:1px solid var(--line);background:rgba(255,255,255,.03)}
+.bub .who{display:block;font-size:11.5px;color:var(--mute);margin-bottom:3px}
+.bub.me{margin-inline-start:auto;background:#efefef;color:#000;border-color:#efefef}
+.bub.me .who{color:#555}
+.bub.typing{color:var(--mute);font-size:13px}
+@media (prefers-reduced-motion:no-preference){.bub.typing{animation:flick 1.6s ease-in-out infinite}}
+.composer{position:sticky;bottom:0;display:flex;gap:8px;align-items:flex-end;padding:10px 0 4px;background:linear-gradient(0deg,var(--bg) 75%,transparent)}
+.composer textarea{flex:1;min-height:46px;max-height:140px;resize:none;font-size:15px}
+.composer button{flex:none;height:46px;padding:0 16px;border-radius:12px;border:none;background:#efefef;color:#000;font-weight:700}
+.composer button:disabled{opacity:.4}
+.minutes{margin-top:14px;padding:14px;border:1px solid #333;border-radius:14px;background:#0a0a0a;font-size:13.5px;line-height:1.8;white-space:pre-wrap}
+.mtask{display:flex;gap:10px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.6}
+.mtask i{font-style:normal;flex:none}
+.mtask small{display:block;color:var(--mute);font-size:11.5px}
+.pick{display:flex;align-items:center;gap:12px;width:100%;padding:11px 4px;border:none;border-bottom:1px solid var(--line);background:none;text-align:start;color:inherit;font-size:14px}
+.pick .box{width:20px;height:20px;border:1px solid #444;border-radius:6px;flex:none;display:grid;place-items:center;font-size:12px}
+.pick.on .box{background:#efefef;color:#000;border-color:#efefef}
+.pick small{color:var(--mute);font-size:11.5px;margin-inline-start:6px}
 
 /* ---------- SHEETS / OVERLAYS ---------- */
 .veil{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30;opacity:0;pointer-events:none;transition:.3s}
@@ -452,10 +482,10 @@ function avgNet(n=3){const ks=[];for(let i=0;i<12&&ks.length<n;i++){const k=shif
 
 /* ================= ROUTER ================= */
 let tab='home',viewMonth=curMonth(),openDrawer=null;
-function go(t){if(t==='team-mail'){teamView='mail';t='team'}if(!['home','expenses','income','tasks','plan','team','orb'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+(t==='team'&&teamView==='mail'?'team-mail':t))}catch(e){}
+function go(t){if(t==='team-mail'){teamView='mail';t='team'}if(t==='team-meet'){teamView='meet';t='team'}if(!['home','expenses','income','tasks','plan','team','orb'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+(t==='team'&&teamView!=='board'?'team-'+teamView:t))}catch(e){}
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));render();$('#main').scrollTop=0}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
-window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&(h!==tab||h==='team-mail')&&!$('#app').classList.contains('hidden'))go(h)});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&(h!==tab||h.startsWith('team-'))&&!$('#app').classList.contains('hidden'))go(h)});
 function render(){const isOrb=tab==='orb';$('#orbStage').classList.toggle('on',isOrb);if(window.Orb){isOrb?Orb.show():Orb.hide()}if(isOrb){$('#fab').classList.add('hidden');return}
   const subs={home:'لوحة القيادة',expenses:'الأرشيف',income:'الإيرادات',tasks:'مهام اليوم',plan:'الخطة',team:'الفريق'};$('#hdrSub').textContent=subs[tab];
   const fab=$('#fab');fab.classList.toggle('hidden',!['expenses','income','tasks','plan'].includes(tab)&&!(tab==='team'&&teamView==='board'&&TEAM.data));
@@ -753,7 +783,7 @@ async function teamCall(action,extra){const r=await fetch(PUSH.url+'/functions/v
   const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||('HTTP '+r.status));e.code=j.error;throw e}return j}
 async function loadTeam(quiet){if(TEAM.loading)return;TEAM.loading=true;if(!quiet&&!TEAM.data)renderTeam();
   try{TEAM.data=await teamCall('list');TEAM.err=null}catch(e){TEAM.err=e.code==='not_registered'?'reg':'net'}
-  TEAM.loading=false;if(tab==='team')render()}
+  TEAM.loading=false;if(tab==='team'&&!(teamView==='meet'&&MEET.cur))render()}
 function stopTeamPoll(){clearInterval(TEAM.t);TEAM.t=null}
 function teamStatus(id){return (TEAM.data.status||[]).find(x=>x.member_id===id)}
 function plateHTML(m,head){const st=teamStatus(m.id),now=new Date(TEAM.data.now),on=Team.isWorking(st,now)&&!Team.isPaused(m,today());
@@ -762,10 +792,11 @@ function plateHTML(m,head){const st=teamStatus(m.id),now=new Date(TEAM.data.now)
   <div class="info"><div>${esc(m.n)}<small>${esc(m.t)}</small></div>${line}</div><span class="cad">${CAD[m.cadence]||''}</span></button>`}
 function renderTeam(){
   if(!TEAM.t){TEAM.t=setInterval(()=>{if(tab==='team'&&!document.hidden)loadTeam(true)},60000);loadTeam(true)}
-  const segHTML=()=>{const n=TEAM.data?Team.unread(TEAM.data.mail):0;return `<div class="seg"><button class="${teamView==='board'?'on':''}" onclick="setTeamView('board')">اللوحة</button><button class="${teamView==='mail'?'on':''}" onclick="setTeamView('mail')">البريد${n?`<span class="cnt">${n}</span>`:''}</button></div>`};
+  const segHTML=()=>{const n=TEAM.data?Team.unread(TEAM.data.mail):0;return `<div class="seg"><button class="${teamView==='board'?'on':''}" onclick="setTeamView('board')">اللوحة</button><button class="${teamView==='mail'?'on':''}" onclick="setTeamView('mail')">البريد${n?`<span class="cnt">${n}</span>`:''}</button><button class="${teamView==='meet'?'on':''}" onclick="setTeamView('meet')">اجتماع</button></div>`};
   if(!TEAM.data){$('#main').innerHTML=TEAM.err==='reg'?`<div class="card" style="margin-top:14px"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>فعّل الإشعارات أول</b><span class="mute">الفريق يفتح على جوالك المسجّل بس. فعّلها وترجع هنا على طول.</span></div></div><button class="btn primary" style="margin-top:14px" onclick="enablePush().then(()=>loadTeam())">تفعيل الإشعارات</button></div>`
     :TEAM.err?`<div class="empty">ما قدرت أوصل للفريق — تأكد من النت<br><button class="btn" style="margin-top:14px;width:auto;padding:10px 22px" onclick="loadTeam()">حاول مرة ثانية</button></div>`:`<div class="empty">لحظة…</div>`;return}
   if(teamView==='mail')return renderMail(segHTML());
+  if(teamView==='meet')return renderMeet(segHTML());
   const T=Team.tree(TEAM.data.members),now=new Date(TEAM.data.now),all=TEAM.data.members;
   const working=all.filter(m=>Team.isWorking(teamStatus(m.id),now)&&!Team.isPaused(m,today())).length,unread=Team.unread(TEAM.data.mail);
   const L=T.lead,lst=L&&teamStatus(L.id),lon=L&&Team.isWorking(lst,now);
@@ -774,7 +805,7 @@ function renderTeam(){
     +T.depts.map(d=>{const p=Team.isPaused(d.head,today());return `<section class="dept${p?' paused':''}"><div class="dept-hd"><span>${esc(d.head.dept||('قسم '+d.head.n))}</span><span>${p?'موقوف لين '+esc(prettyDate(d.head.paused_until)):d.kids.length+' موظف'}</span></div>
     ${plateHTML(d.head,true)}${d.kids.map(k=>plateHTML(k)).join('')}</section>`}).join('')
     +(T.orphans.length?`<section class="dept"><div class="dept-hd"><span>بدون قسم</span></div>${T.orphans.map(k=>plateHTML(k)).join('')}</section>`:'')}
-function setTeamView(v){teamView=v;try{history.replaceState(null,'','#'+(v==='mail'?'team-mail':'team'))}catch(e){}render();$('#main').scrollTop=0}
+function setTeamView(v){teamView=v;if(v!=='meet')MEET.cur=null;try{history.replaceState(null,'','#'+(v==='mail'?'team-mail':v==='meet'?'team-meet':'team'))}catch(e){}render();$('#main').scrollTop=0}
 function renderMail(seg){const mail=Team.sortMail(TEAM.data.mail),now=new Date(TEAM.data.now),n=Team.unread(mail);
   $('#main').innerHTML=seg+(n?`<div style="display:flex;justify-content:flex-end;margin:4px 0"><button class="chip" onclick="readMail('all')">قراءة الكل</button></div>`:'')
   +(mail.map(m=>`<div class="letter${m.read_at?'':' unread'}"><button class="hd" onclick="openLetter('${esc(m.id)}')"><i class="seal"></i><div class="info">
@@ -809,6 +840,85 @@ function editMember(id){const m=id?TEAM.data.members.find(x=>x.id===id):{cadence
     const body={...m,id:id||'',n,t,boss:$('#mB').value,dept:$('#mDp').value.trim(),tasks:$('#mK').value.split('\n').map(x=>x.trim()).filter(Boolean),cadence:$('#mC').value,ref:$('#mR').value.trim(),rule:$('#mL').value.trim(),
       ord:m.ord??Math.max(0,...TEAM.data.members.map(x=>x.ord||0))+1};
     $('#mSave').disabled=true;try{await teamCall('upsert_member',{member:body});closeSheet();toast('انحفظ');loadTeam(true)}catch(e){$('#mSave').disabled=false;toast(e.message)}}})}
+
+/* ================= MEETINGS (اجتماع) ================= */
+const MEET={list:null,tasks:[],err:null,cur:null,busy:false,typing:null,draft:''};
+const AI_MODEL={staff:'claude-haiku-5-5',lead:'claude-sonnet-5-5'};
+function aiKey(){try{return localStorage.getItem('orb_key')||''}catch(e){return ''}}
+function needKey(){if(aiKey())return false;sheet(`<h3>محتاج مفتاح الكرة</h3><div class="kv">الاجتماع يستخدم نفس مفتاح Claude حق الكرة. افتح الكرة وحط المفتاح مرة وحدة، وبعدها ارجع هنا.</div>
+  <div style="margin-top:18px"><button class="btn primary" onclick="closeSheet();go('orb')">افتح الكرة</button></div>`);return true}
+async function aiAsk(system,user,model,max){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
+  headers:{'content-type':'application/json','x-api-key':aiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+  body:JSON.stringify({model,max_tokens:max,system,messages:[{role:'user',content:user}]})});
+  if(r.status===401){try{localStorage.removeItem('orb_key')}catch(e){}throw new Error('المفتاح ما اشتغل — حطه من جديد في الكرة')}
+  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
+  return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').trim()}
+const mMember=id=>(TEAM.data&&TEAM.data.members||[]).find(x=>x.id===id);
+const mAtt=mt=>(mt.attendees||[]).map(mMember).filter(Boolean);
+async function loadMeetings(){try{const r=await teamCall('meetings');MEET.list=r.meetings||[];MEET.tasks=r.tasks||[];MEET.err=null}catch(e){MEET.err=e.message}if(tab==='team'&&teamView==='meet')render()}
+function renderMeet(seg){
+  if(MEET.cur)return renderRoom(seg);
+  if(!MEET.list&&!MEET.err)loadMeetings();
+  const list=MEET.list||[];
+  $('#main').innerHTML=seg+`<button class="mt-new" onclick="newMeeting()">＋ اجتماع جديد</button>`
+  +(MEET.err&&!MEET.list?`<div class="empty">ما قدرت أجيب الاجتماعات<br><button class="btn" style="margin-top:14px;width:auto;padding:10px 22px" onclick="MEET.err=null;loadMeetings()">حاول مرة ثانية</button></div>`
+   :!MEET.list?'<div class="empty">لحظة…</div>'
+   :list.map(mt=>{const p=Team.taskProgress(MEET.tasks.filter(t=>t.meeting_id===mt.id)),open=mt.status==='open';
+    return `<button class="mt-card" onclick="openMeeting('${esc(mt.id)}')"><div class="tp">${esc(mt.topic)}</div>
+    <div class="mm"><span>${esc(mAtt(mt).map(a=>a.n).join('، '))}</span><span class="mt-badge${open?' on':''}">${open?'مفتوح':p.total?(p.done===p.total?'✅ ':'')+p.done+'/'+p.total+' مهام':'مقفول'}</span></div></button>`}).join('')
+   ||'<div class="empty">ما فيه اجتماعات للحين — افتح أول اجتماع وادعي اللي تحتاجهم</div>')}
+function newMeeting(){if(needKey())return;const ms=(TEAM.data.members||[]).filter(m=>!Team.isPaused(m,today())),sel=new Set();
+  sheet(`<h3>اجتماع جديد</h3><label class="f" for="mtT">الموضوع</label><input class="inp" id="mtT" maxlength="160" placeholder="مثال: كيف نقلل شكاوى الفروع؟">
+  <label class="f" for="mtD">تفاصيل (اختياري)</label><textarea class="inp" id="mtD" style="min-height:80px" maxlength="1500"></textarea>
+  <label class="f">الحضور</label><div id="mtP">${ms.map(m=>`<button class="pick" data-id="${esc(m.id)}"><span class="box"></span><span>${esc(m.n)}<small>${esc(m.t)}</small></span></button>`).join('')}</div>
+  <div style="margin-top:18px"><button class="btn primary" id="mtGo">ابدأ الاجتماع</button></div>`,()=>{
+  document.querySelectorAll('#mtP .pick').forEach(b=>b.onclick=()=>{const id=b.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);b.classList.toggle('on',sel.has(id));b.querySelector('.box').textContent=sel.has(id)?'✓':''});
+  $('#mtGo').onclick=async()=>{const topic=$('#mtT').value.trim();if(!topic)return toast('اكتب الموضوع');if(!sel.size)return toast('اختر موظف واحد على الأقل');
+    $('#mtGo').disabled=true;try{const r=await teamCall('meeting_create',{topic,details:$('#mtD').value.trim(),attendees:[...sel]});closeSheet();
+      MEET.list=null;MEET.cur={meeting:r.meeting,msgs:[],tasks:[]};render();
+      runRound(mAtt(r.meeting),'الاجتماع بدأ. عرّف بنفسك واعط رأيك المبدئي في الموضوع من زاوية تخصصك.')}
+    catch(e){$('#mtGo').disabled=false;toast(e.message)}}})}
+async function openMeeting(id){try{MEET.cur=await teamCall('meeting_get',{id});MEET.draft='';render();scrollRoom()}catch(e){toast(e.message)}}
+function closeRoom(){MEET.cur=null;MEET.list=null;render();$('#main').scrollTop=0}
+function scrollRoom(){const m=$('#main');m.scrollTop=m.scrollHeight}
+function renderRoom(seg){const c=MEET.cur,mt=c.meeting,open=mt.status==='open',att=mAtt(mt);
+  const prev=$('#mtIn');if(prev)MEET.draft=prev.value;
+  const tk=c.tasks||[];
+  $('#main').innerHTML=seg+`<div class="room-hd"><button onclick="closeRoom()" aria-label="رجوع">›</button><b>${esc(mt.topic)}</b><span class="mt-badge${open?' on':''}">${open?'مفتوح':'مقفول'}</span></div>
+  <div class="att">${att.map(a=>`<span>${esc(a.n)}</span>`).join('')}</div>${mt.details?`<div class="kv" style="margin:0 0 6px">${esc(mt.details)}</div>`:''}
+  ${(c.msgs||[]).map(x=>`<div class="bub${x.member_id?'':' me'}"><span class="who">${x.member_id?esc(x.from_name):'أنت'}</span>${esc(x.body)}</div>`).join('')}
+  ${MEET.typing?`<div class="bub typing">${esc(MEET.typing)} يكتب…</div>`:''}
+  ${open?`<div class="composer"><textarea class="inp" id="mtIn" placeholder="اكتب… (اذكر اسم موظف عشان يرد هو بس)">${esc(MEET.draft)}</textarea><button id="mtSend" ${MEET.busy?'disabled':''}>إرسال</button></div>
+    <button class="btn" style="margin-top:8px" onclick="closeMeeting()" ${MEET.busy?'disabled':''}>قفل الاجتماع وكتابة المحضر</button>`
+   :`${mt.minutes?`<h2 class="sec"><span>المحضر</span></h2><div class="minutes">${esc(mt.minutes)}</div>`:''}
+    ${tk.length?`<h2 class="sec"><span>المهام</span><span>${Team.taskProgress(tk).done}/${tk.length}</span></h2>`+tk.map(t=>`<div class="mtask"><i>${t.status==='done'?'✅':'⏳'}</i><div>${esc((mMember(t.member_id)||{}).n||'')}: ${esc(t.task)}${t.due?`<small>الموعد: ${esc(t.due)}</small>`:''}${t.result?`<small>${esc(t.result)}</small>`:''}</div></div>`).join('')
+    +`<div class="kv mute">كل موظف ينفّذ مهمته في الجولة (كل ساعة) ويرسل لك في البريد إذا خلص.</div>`:''}`}`;
+  const btn=$('#mtSend');if(btn)btn.onclick=sendMeeting}
+async function postMsgs(msgs){const r=await teamCall('meeting_post',{id:MEET.cur.meeting.id,msgs});MEET.cur.msgs.push(...(r.msgs||[]))}
+async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;
+  try{for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
+      const sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting));
+      const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح.');
+      const txt=await aiAsk(sys,user,Team.isHead(m,TEAM.data.members)?AI_MODEL.lead:AI_MODEL.staff,Team.isHead(m,TEAM.data.members)?700:300);
+      if(txt)await postMsgs([{member_id:m.id,body:txt}])}}
+  catch(e){toast(e.message)}MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}}
+async function sendMeeting(){const t=($('#mtIn').value||'').trim();if(!t||MEET.busy)return;if(needKey())return;
+  MEET.busy=true;try{await postMsgs([{member_id:null,body:t}]);MEET.draft='';const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}
+  MEET.busy=false;runRound(Team.pickResponders(t,mAtt(MEET.cur.meeting)))}
+async function closeMeeting(){if(MEET.busy||needKey())return;const c=MEET.cur,att=mAtt(c.meeting),lead=(TEAM.data.members||[]).find(m=>m.lead);
+  MEET.busy=true;MEET.typing=(lead&&lead.n||'الفا')+' يكتب المحضر —';render();scrollRoom();let mins=null;
+  try{const sys=`أنت «${lead?lead.n:'الفا'}» المنسّق العام لفريق صالح. اكتب محضر الاجتماع.
+ارجع JSON فقط بدون أي كلام قبله أو بعده، بهالشكل:
+{"summary":"خلاصة القرارات بلهجة سعودية بسيطة في 3-6 أسطر","tasks":[{"who":"اسم الموظف كما هو","task":"مهمة واضحة قابلة للتنفيذ","due":"موعد إذا انذكر أو فاضي"}]}
+المهام فقط للحضور: ${att.map(a=>a.n).join('، ')}. لا تخترع مهام ما انتفق عليها، وكل مهمة لموظف واحد.`;
+    const raw=await aiAsk(sys,'الموضوع: '+c.meeting.topic+'\n\nالنقاش:\n'+Team.transcript(c.msgs),AI_MODEL.lead,1200);
+    mins=Team.parseMinutes(raw,att);if(!mins)throw new Error('المحضر طلع ناقص — جرّب مرة ثانية')}
+  catch(e){toast(e.message)}MEET.typing=null;MEET.busy=false;render();if(!mins)return;
+  sheet(`<h3>محضر الاجتماع</h3><div class="minutes" style="margin-top:0">${esc(mins.summary)}</div>
+  <h2 class="sec"><span>المهام</span><span>${mins.tasks.length}</span></h2>${mins.tasks.map(t=>`<div class="mtask"><i>•</i><div>${esc(mMember(t.member_id).n)}: ${esc(t.task)}${t.due?`<small>الموعد: ${esc(t.due)}</small>`:''}</div></div>`).join('')||'<div class="empty">ما فيه مهام</div>'}
+  <div style="margin-top:18px"><button class="btn primary" id="mnOk">اعتماد وإرسال المهام</button></div><div style="margin-top:8px"><button class="btn" onclick="closeSheet()">رجوع للنقاش</button></div>`,()=>{
+  $('#mnOk').onclick=async()=>{$('#mnOk').disabled=true;try{await teamCall('meeting_close',{id:c.meeting.id,summary:mins.summary,tasks:mins.tasks});closeSheet();toast('انقفل — المحضر في البريد');
+    MEET.cur=await teamCall('meeting_get',{id:c.meeting.id});loadTeam(true);render()}catch(e){$('#mnOk').disabled=false;toast(e.message)}}})}
 
 /* ================= STAGES ================= */
 function stage(html){const s=$('#stage');s.innerHTML=`<button class="icon-btn close" onclick="closeStage()">✕</button>`+html;s.classList.add('on')}
