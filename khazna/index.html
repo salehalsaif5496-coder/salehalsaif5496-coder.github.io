@@ -285,6 +285,18 @@ h2.sec{font-size:13px;color:var(--mute);font-weight:500;margin:26px 2px 10px;dis
 .composer textarea{flex:1;min-height:46px;max-height:140px;resize:none;font-size:15px}
 .composer button{flex:none;height:46px;padding:0 16px;border-radius:12px;border:none;background:#efefef;color:#000;font-weight:700}
 .composer button:disabled{opacity:.4}
+.composer .attach{background:none;border:1px solid var(--line);color:inherit;font-weight:400;padding:0;width:46px;font-size:19px}
+.mt-pend{display:flex;gap:8px;overflow-x:auto;padding:8px 0 0}
+.mt-pend div{position:relative;flex:none;width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line);background:#111}
+.mt-pend img{width:100%;height:100%;object-fit:cover;display:block}
+.mt-pend button{position:absolute;top:2px;left:2px;width:22px;height:22px;border-radius:11px;border:0;background:rgba(0,0,0,.7);color:#fff;font-size:12px;padding:0;line-height:22px}
+.mt-pend .up{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.55);font-size:11px;color:#fff}
+.bub .imgs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px;margin:4px 0 2px}
+.bub .imgs.one{grid-template-columns:minmax(0,1fr)}
+.bub .imgs button{padding:0;border:0;background:#111;border-radius:10px;overflow:hidden;aspect-ratio:1}
+.bub .imgs.one button{aspect-ratio:auto;max-height:280px}
+.bub .imgs img{width:100%;height:100%;object-fit:cover;display:block}
+.stage img.full{max-width:100%;max-height:100%;margin:auto;object-fit:contain}
 .minutes{margin-top:14px;padding:14px;border:1px solid #333;border-radius:14px;background:#0a0a0a;font-size:13.5px;line-height:1.8;white-space:pre-wrap}
 .mtask{display:flex;gap:10px;align-items:flex-start;padding:11px 2px;border-bottom:1px solid var(--line);font-size:13.5px;line-height:1.6}
 .mtask i{font-style:normal;flex:none}
@@ -842,18 +854,25 @@ function editMember(id){const m=id?TEAM.data.members.find(x=>x.id===id):{cadence
     $('#mSave').disabled=true;try{await teamCall('upsert_member',{member:body});closeSheet();toast('انحفظ');loadTeam(true)}catch(e){$('#mSave').disabled=false;toast(e.message)}}})}
 
 /* ================= MEETINGS (اجتماع) ================= */
-const MEET={list:null,tasks:[],err:null,cur:null,busy:false,typing:null,draft:''};
+const MEET={list:null,tasks:[],err:null,cur:null,busy:false,typing:null,draft:'',pend:[],at:0};
+const MT_MAX_IMG=4;
 const AI_MODEL={staff:'claude-haiku-5-5',lead:'claude-sonnet-5-5'};
 function aiKey(){try{return localStorage.getItem('orb_key')||''}catch(e){return ''}}
 function needKey(){if(aiKey())return false;sheet(`<h3>محتاج مفتاح الكرة</h3><div class="kv">الاجتماع يستخدم نفس مفتاح Claude حق الكرة. افتح الكرة وحط المفتاح مرة وحدة، وبعدها ارجع هنا.</div>
   <div style="margin-top:18px"><button class="btn primary" onclick="closeSheet();go('orb')">افتح الكرة</button></div>`);return true}
 async function aiAsk(system,user,model,max){const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',
   headers:{'content-type':'application/json','x-api-key':aiKey(),'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
-  body:JSON.stringify({model,max_tokens:max,system,messages:[{role:'user',content:user}]})});
+  body:JSON.stringify({model,max_tokens:max,system,messages:[{role:'user',content:withImages(user)}]})});
   if(r.status===401){try{localStorage.removeItem('orb_key')}catch(e){}throw new Error('المفتاح ما اشتغل — حطه من جديد في الكرة')}
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
   const txt=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').trim();
   if(!txt)throw new Error(j.stop_reason==='max_tokens'?'الرد انقطع قبل يكمل':'الرد طلع فاضي');return txt}
+/* الصور تروح للموظف مع النص: آخر ٤ صور في النقاش، بروابطها الموقّعة */
+function withImages(text){const c=MEET.cur,urls=c?Team.recentImages(c.msgs,MT_MAX_IMG):[];if(!urls.length)return text;
+  return [...urls.map(url=>({type:'image',source:{type:'url',url}})),{type:'text',text:'(فوق: آخر الصور اللي أرفقها صالح في الاجتماع)\n\n'+text}]}
+/* روابط الصور تنتهي بعد ساعة: قبل أي رد نجدد الاجتماع إذا مرّ عليه ٤٥ دقيقة */
+async function freshMeeting(){const c=MEET.cur;if(!c||Date.now()-MEET.at<45*60e3)return;
+  try{const r=await teamCall('meeting_get',{id:c.meeting.id});if(MEET.cur===c){c.msgs=r.msgs;c.tasks=r.tasks;MEET.at=Date.now()}}catch(e){}}
 const mMember=id=>(TEAM.data&&TEAM.data.members||[]).find(x=>x.id===id);
 const mAtt=mt=>(mt.attendees||[]).map(mMember).filter(Boolean);
 async function loadMeetings(){try{const r=await teamCall('meetings');MEET.list=r.meetings||[];MEET.tasks=r.tasks||[];MEET.err=null}catch(e){MEET.err=e.message}if(tab==='team'&&teamView==='meet')render()}
@@ -876,27 +895,45 @@ function newMeeting(){if(needKey())return;const ms=(TEAM.data.members||[]).filte
   document.querySelectorAll('#mtP .pick').forEach(b=>b.onclick=()=>{const id=b.dataset.id;sel.has(id)?sel.delete(id):sel.add(id);b.classList.toggle('on',sel.has(id));b.querySelector('.box').textContent=sel.has(id)?'✓':''});
   $('#mtGo').onclick=async()=>{const topic=$('#mtT').value.trim();if(!topic)return toast('اكتب الموضوع');if(!sel.size)return toast('اختر موظف واحد على الأقل');
     $('#mtGo').disabled=true;try{const r=await teamCall('meeting_create',{topic,details:$('#mtD').value.trim(),attendees:[...sel]});closeSheet();
-      MEET.list=null;MEET.cur={meeting:r.meeting,msgs:[],tasks:[]};render();
+      MEET.list=null;MEET.cur={meeting:r.meeting,msgs:[],tasks:[]};MEET.at=Date.now();MEET.pend=[];render();
       runRound(mAtt(r.meeting),'الاجتماع بدأ. عرّف بنفسك واعط رأيك المبدئي في الموضوع من زاوية تخصصك.')}
     catch(e){$('#mtGo').disabled=false;toast(e.message)}}})}
-async function openMeeting(id){try{MEET.cur=await teamCall('meeting_get',{id});MEET.draft='';render();scrollRoom()}catch(e){toast(e.message)}}
-function closeRoom(){MEET.cur=null;MEET.list=null;render();$('#main').scrollTop=0}
+async function openMeeting(id){try{MEET.cur=await teamCall('meeting_get',{id});MEET.at=Date.now();MEET.draft='';MEET.pend=[];render();scrollRoom()}catch(e){toast(e.message)}}
+function closeRoom(){MEET.cur=null;MEET.pend=[];MEET.list=null;render();$('#main').scrollTop=0}
 function scrollRoom(){const m=$('#main');m.scrollTop=m.scrollHeight}
 function renderRoom(seg){const c=MEET.cur,mt=c.meeting,open=mt.status==='open',att=mAtt(mt);
   const prev=$('#mtIn');if(prev)MEET.draft=prev.value;
   const tk=c.tasks||[];
   $('#main').innerHTML=seg+`<div class="room-hd"><button onclick="closeRoom()" aria-label="رجوع">›</button><b>${esc(mt.topic)}</b><span class="mt-badge${open?' on':''}">${open?'مفتوح':'مقفول'}</span></div>
   <div class="att">${att.map(a=>`<span>${esc(a.n)}</span>`).join('')}</div>${mt.details?`<div class="kv" style="margin:0 0 6px">${esc(mt.details)}</div>`:''}
-  ${(c.msgs||[]).map(x=>`<div class="bub${x.member_id?'':' me'}"><span class="who">${x.member_id?esc(x.from_name):'أنت'}</span>${esc(x.body)}</div>`).join('')}
+  ${(c.msgs||[]).map(x=>{const u=x.urls||[];return `<div class="bub${x.member_id?'':' me'}"><span class="who">${x.member_id?esc(x.from_name):'أنت'}</span>${u.length?`<div class="imgs${u.length===1?' one':''}">${u.map(v=>`<button data-full="${esc(v)}" aria-label="افتح الصورة"><img src="${esc(v)}" alt="صورة مرفقة" loading="lazy"></button>`).join('')}</div>`:''}${esc(x.body)}</div>`}).join('')}
   ${MEET.typing?`<div class="bub typing">${esc(MEET.typing)} يكتب…</div>`:''}
-  ${open?`<div class="composer"><textarea class="inp" id="mtIn" placeholder="اكتب… (اذكر اسم موظف عشان يرد هو بس)">${esc(MEET.draft)}</textarea><button id="mtSend" ${MEET.busy?'disabled':''}>إرسال</button></div>
+  ${open?`<div class="composer"><div style="flex:1">${MEET.pend.length?`<div class="mt-pend">${MEET.pend.map((p,i)=>`<div><img src="${esc(p.preview)}" alt="">${p.path?'':'<span class="up">يرفع…</span>'}<button data-rm="${i}" aria-label="شيل الصورة">✕</button></div>`).join('')}</div>`:''}
+    <div style="display:flex;gap:8px;align-items:flex-end;margin-top:${MEET.pend.length?8:0}px"><button class="attach" id="mtAtt" aria-label="أرفق صورة" ${MEET.busy||MEET.pend.length>=MT_MAX_IMG?'disabled':''}>📷</button><input type="file" id="mtFile" accept="image/*" multiple hidden>
+    <textarea class="inp" id="mtIn" placeholder="اكتب… (اذكر اسم موظف عشان يرد هو بس)">${esc(MEET.draft)}</textarea><button id="mtSend" ${MEET.busy||MEET.pend.some(p=>!p.path)?'disabled':''}>إرسال</button></div></div></div>
     <div class="btn-row" style="margin-top:8px"><button class="btn" onclick="continueTalk()" ${MEET.busy?'disabled':''}>خلّهم يتناقشون 💬</button><button class="btn" onclick="closeMeeting()" ${MEET.busy?'disabled':''}>قفل وكتابة المحضر</button></div>`
    :`${mt.minutes?`<h2 class="sec"><span>المحضر</span></h2><div class="minutes">${esc(mt.minutes)}</div>`:''}
     ${tk.length?`<h2 class="sec"><span>المهام</span><span>${Team.taskProgress(tk).done}/${tk.length}</span></h2>`+tk.map(t=>`<div class="mtask"><i>${t.status==='done'?'✅':'⏳'}</i><div>${esc((mMember(t.member_id)||{}).n||'')}: ${esc(t.task)}${t.due?`<small>الموعد: ${esc(t.due)}</small>`:''}${t.result?`<small>${esc(t.result)}</small>`:''}</div></div>`).join('')
     +`<div class="kv mute">كل موظف ينفّذ مهمته في الجولة (كل ساعة) ويرسل لك في البريد إذا خلص.</div>`:''}`}`;
-  const btn=$('#mtSend');if(btn)btn.onclick=sendMeeting}
+  const btn=$('#mtSend');if(btn)btn.onclick=sendMeeting;
+  const at=$('#mtAtt'),fi=$('#mtFile');if(at&&fi){at.onclick=()=>fi.click();fi.onchange=()=>{addMeetingImages([...fi.files]);fi.value=''}}
+  document.querySelectorAll('.mt-pend [data-rm]').forEach(b=>b.onclick=()=>{MEET.pend.splice(+b.dataset.rm,1);render()});
+  document.querySelectorAll('.bub .imgs [data-full]').forEach(b=>b.onclick=()=>stage(`<img class="full" src="${esc(b.dataset.full)}" alt="صورة مرفقة">`))}
+/* تصغير الصورة على الجوال (أطول ضلع ١٥٦٨) ثم رفعها لمخزن الاجتماع الخاص */
+function shrinkImage(file){return new Promise((ok,no)=>{const url=URL.createObjectURL(file),im=new Image();
+  im.onload=()=>{const k=Math.min(1,1568/Math.max(im.naturalWidth,im.naturalHeight)),w=Math.round(im.naturalWidth*k),h=Math.round(im.naturalHeight*k);
+    const cv=document.createElement('canvas');cv.width=w;cv.height=h;cv.getContext('2d').drawImage(im,0,0,w,h);URL.revokeObjectURL(url);ok(cv.toDataURL('image/jpeg',.85))};
+  im.onerror=()=>{URL.revokeObjectURL(url);no(new Error('ما قدرت أقرا الصورة'))};im.src=url})}
+async function addMeetingImages(files){const c=MEET.cur;if(!c)return;
+  const room=MT_MAX_IMG-MEET.pend.length;if(files.length>room)toast('أقصى شي '+MT_MAX_IMG+' صور بالرسالة');
+  for(const f of files.slice(0,Math.max(0,room))){if(!/^image\//.test(f.type))continue;
+    let p;try{p={preview:await shrinkImage(f),path:null}}catch(e){toast(e.message);continue}
+    MEET.pend.push(p);render();scrollRoom();
+    try{const r=await teamCall('meeting_upload',{id:c.meeting.id,type:'image/jpeg',data:p.preview});p.path=r.path;p.url=r.url}
+    catch(e){MEET.pend=MEET.pend.filter(x=>x!==p);toast('ما انرفعت الصورة — '+e.message)}
+    if(MEET.cur===c)render()}}
 async function postMsgs(msgs){const r=await teamCall('meeting_post',{id:MEET.cur.meeting.id,msgs});MEET.cur.msgs.push(...(r.msgs||[]))}
-async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;
+async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;await freshMeeting();
   const failed=[];let lastErr='';
   for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
     try{const head=Team.isHead(m,TEAM.data.members),sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting));
@@ -907,11 +944,12 @@ async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(
   MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}
   if(failed.length)toast('ما ردّ: '+failed.join('، ')+' — '+lastErr)}
 function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش مع زملائك: رد على آخر الآراء، وافق أو اعترض بسبب، أو أضف فكرة جديدة. لا تكرر كلامك.')}
-async function sendMeeting(){const t=($('#mtIn').value||'').trim();if(!t||MEET.busy)return;if(needKey())return;
-  MEET.busy=true;try{await postMsgs([{member_id:null,body:t}]);MEET.draft='';const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}
+async function sendMeeting(){const t=($('#mtIn').value||'').trim(),imgs=MEET.pend.filter(p=>p.path);
+  if((!t&&!imgs.length)||MEET.busy||MEET.pend.some(p=>!p.path))return;if(needKey())return;
+  MEET.busy=true;try{await postMsgs([{member_id:null,body:t,images:imgs.map(p=>p.path)}]);MEET.draft='';MEET.pend=[];const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}
   MEET.busy=false;runRound(Team.pickResponders(t,mAtt(MEET.cur.meeting)))}
 async function closeMeeting(){if(MEET.busy||needKey())return;const c=MEET.cur,att=mAtt(c.meeting),lead=(TEAM.data.members||[]).find(m=>m.lead);
-  MEET.busy=true;MEET.typing=(lead&&lead.n||'الفا')+' يكتب المحضر —';render();scrollRoom();let mins=null;
+  MEET.busy=true;MEET.typing=(lead&&lead.n||'الفا')+' يكتب المحضر —';render();scrollRoom();let mins=null;await freshMeeting();
   try{const sys=`أنت «${lead?lead.n:'الفا'}» المنسّق العام لفريق صالح. اكتب محضر الاجتماع.
 ارجع JSON فقط بدون أي كلام قبله أو بعده، بهالشكل:
 {"summary":"خلاصة القرارات بلهجة سعودية بسيطة في 3-6 أسطر","tasks":[{"who":"اسم الموظف كما هو","task":"مهمة واضحة قابلة للتنفيذ","due":"موعد إذا انذكر أو فاضي"}]}

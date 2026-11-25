@@ -111,12 +111,25 @@
       ? 'أنت من الإدارة: تقدر تفصّل إذا احتاج، بس خلك مركّز وعملي.'
       : 'أنت موظف: عرّف بنفسك بسطر واحد أول مرة تتكلم، وبعدها أعط الزبدة فقط بسطرين أو ثلاثة. بدون كلام طويل.');
     L.push('تكلم بلهجة سعودية بسيطة ومن زاوية تخصصك بس. لا تكرر كلام غيرك، ولا تخترع أرقام أو معايير ما عندك مرجعها — إذا ما تعرف قل.');
+    L.push('صالح ممكن يرفق صور (مثل لقطة شاشة أو صورة منتج). إذا وصلتك صور، شوفها وتكلم عن اللي فيها فعلًا، ولا تتخيل شي مو موجود فيها.');
     L.push('لا تكتب اسمك قبل الرد. لا تستخدم عناوين أو جداول.');
     return L.join('\n\n');
   }
 
+  function imgNote(x) {
+    var n = (x.images || []).length;
+    return n ? ' [أرفق ' + (n === 1 ? 'صورة' : n === 2 ? 'صورتين' : n + ' صور') + ']' : '';
+  }
+
   function transcript(msgs) {
-    return (msgs || []).map(function (x) { return (x.member_id ? x.from_name : 'صالح') + ': ' + x.body; }).join('\n');
+    return (msgs || []).map(function (x) { return (x.member_id ? x.from_name : 'صالح') + ': ' + (x.body || '') + imgNote(x); }).join('\n');
+  }
+
+  /* روابط آخر الصور اللي ينرسلون للموظف (الأحدث، بحد أقصى max)، بترتيبها في النقاش */
+  function recentImages(msgs, max) {
+    var out = [];
+    (msgs || []).forEach(function (x) { (x.urls || []).forEach(function (u) { if (u) out.push(u); }); });
+    return out.slice(-(max || 4));
   }
 
   /* محضر الفا: JSON فيه summary و tasks[{who, task, due}] — يتحول لـ member_id ويحذف اللي مو من الحضور */
@@ -139,6 +152,6 @@
     return { done: list.filter(function (t) { return t.status === 'done'; }).length, total: list.length };
   }
 
-  return { isHead: isHead, pickResponders: pickResponders, memberPrompt: memberPrompt, transcript: transcript, parseMinutes: parseMinutes, taskProgress: taskProgress,
+  return { isHead: isHead, pickResponders: pickResponders, memberPrompt: memberPrompt, transcript: transcript, recentImages: recentImages, parseMinutes: parseMinutes, taskProgress: taskProgress,
     STALE_MIN: STALE_MIN, tree: tree, isPaused: isPaused, isWorking: isWorking, sortMail: sortMail, unread: unread, esc: esc, ago: ago };
 });

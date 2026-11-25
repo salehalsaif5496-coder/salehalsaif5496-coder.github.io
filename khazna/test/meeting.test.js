@@ -63,3 +63,16 @@ test('taskProgress', () => {
   assert.deepStrictEqual(Team.taskProgress([{ status: 'done' }, { status: 'open' }, { status: 'done' }]), { done: 2, total: 3 });
   assert.deepStrictEqual(Team.taskProgress([]), { done: 0, total: 0 });
 });
+
+test('transcript: marks attached images', () => {
+  const t = Team.transcript([{ member_id: null, body: 'شوفوا هذي', images: ['a', 'b'] }, { member_id: null, body: '', images: ['c'] }, { member_id: 'saad', from_name: 'سعد', body: 'تمام' }]);
+  assert.strictEqual(t, 'صالح: شوفوا هذي [أرفق صورتين]\nصالح:  [أرفق صورة]\nسعد: تمام');
+});
+test('recentImages: newest first-capped, kept in order', () => {
+  const msgs = [{ urls: ['u1', 'u2'] }, { body: 'x' }, { urls: ['u3', 'u4', 'u5'] }];
+  assert.deepStrictEqual(Team.recentImages(msgs, 4), ['u2', 'u3', 'u4', 'u5']);
+  assert.deepStrictEqual(Team.recentImages([], 4), []);
+});
+test('memberPrompt: tells the member to look at attached images', () => {
+  assert.match(Team.memberPrompt(M[2], M, { topic: 'x' }, att), /صور/);
+});

@@ -93,6 +93,16 @@ Deno.serve(async (req) => {
     const { data } = await db.from("team_meetings").select("*").eq("id", id).maybeSingle();
     return data;
   };
+  // صور الاجتماع: مخزن خاص، والجوال ياخذ روابط موقّعة لمدة ساعة
+  const BUCKET = "team-meet", MAX_IMG = 4;
+  const withUrls = async (msgs: any[]) => {
+    const paths = msgs.flatMap((m) => m.images || []);
+    if (!paths.length) return msgs;
+    const { data } = await db.storage.from(BUCKET).createSignedUrls(paths, 3600);
+    const url: Record<string, string> = {};
+    (data || []).forEach((x: any) => { if (x.signedUrl && x.path) url[x.path] = x.signedUrl; });
+    return msgs.map((m) => (m.images && m.images.length ? { ...m, urls: m.images.map((p: string) => url[p]).filter(Boolean) } : m));
+  };
 
   if (body.action === "meetings") {
     const since = new Date(Date.now() - 90 * 864e5).toISOString();
@@ -111,7 +121,25 @@ Deno.serve(async (req) => {
       db.from("team_meeting_msgs").select("*").eq("meeting_id", id).order("created_at").limit(500),
       db.from("team_meeting_tasks").select("*").eq("meeting_id", id).order("created_at"),
     ]);
-    return json({ meeting, msgs: msgs.data || [], tasks: tasks.data || [] });
+    return json({ meeting, msgs: await withUrls(msgs.data || []), tasks: tasks.data || [] });
+  }
+
+  if (body.action === "meeting_upload") {
+    const meeting = await loadMeeting(uuid(body.id));
+    if (!meeting) return json({ error: "الاجتماع مو موجود" }, 404);
+    if (meeting.status !== "open") return json({ error: "الاجتماع مقفول" }, 400);
+    const types: Record<string, string> = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" };
+    const ext = types[String(body.type || "")];
+    if (!ext) return json({ error: "نوع الصورة مو مدعوم" }, 400);
+    const b64 = String(body.data || "").replace(/^data:[^,]*,/, "");
+    if (!b64 || b64.length > 4_300_000) return json({ error: "الصورة كبيرة" }, 400);
+    let bytes: Uint8Array;
+    try { bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)); } catch { return json({ error: "الصورة خربانة" }, 400); }
+    const path = `${meeting.id}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await db.storage.from(BUCKET).upload(path, bytes, { contentType: body.type, upsert: false });
+    if (error) return json({ error: error.message }, 500);
+    const { data: s } = await db.storage.from(BUCKET).createSignedUrl(path, 3600);
+    return json({ ok: true, path, url: s?.signedUrl || null });
   }
 
   if (body.action === "meeting_create") {
@@ -130,16 +158,22 @@ Deno.serve(async (req) => {
     if (!meeting) return json({ error: "الاجتماع مو موجود" }, 404);
     if (meeting.status !== "open") return json({ error: "الاجتماع مقفول" }, 400);
     const { data: mem } = await db.from("team_members").select("id,n").in("id", meeting.attendees);
+    const own = new RegExp(`^${meeting.id}/[0-9a-f-]{36}\\.(jpg|png|webp)$`, "i");
     const rows = (Array.isArray(body.msgs) ? body.msgs : []).slice(0, 15).map((x: any) => {
       const text = str(x?.body, 4000);
+      if (!x?.member_id) {
+        // صور صالح بس، ولازم تكون مرفوعة لنفس الاجتماع
+        const images = (Array.isArray(x?.images) ? x.images : []).filter((p: unknown) => typeof p === "string" && own.test(p)).slice(0, MAX_IMG);
+        if (!text && !images.length) return null;
+        return { meeting_id: meeting.id, member_id: null, from_name: "صالح", body: text, images };
+      }
       if (!text) return null;
-      if (!x.member_id) return { meeting_id: meeting.id, member_id: null, from_name: "صالح", body: text };
       const m = (mem || []).find((y: any) => y.id === x.member_id);
       return m ? { meeting_id: meeting.id, member_id: m.id, from_name: m.n, body: text } : null;
     }).filter(Boolean);
     if (!rows.length) return json({ error: "ما فيه رسالة" }, 400);
     const { data, error } = await db.from("team_meeting_msgs").insert(rows).select();
-    return error ? json({ error: error.message }, 500) : json({ ok: true, msgs: data });
+    return error ? json({ error: error.message }, 500) : json({ ok: true, msgs: await withUrls(data || []) });
   }
 
   if (body.action === "meeting_close") {
