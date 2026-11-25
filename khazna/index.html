@@ -852,7 +852,8 @@ async function aiAsk(system,user,model,max){const r=await fetch('https://api.ant
   body:JSON.stringify({model,max_tokens:max,system,messages:[{role:'user',content:user}]})});
   if(r.status===401){try{localStorage.removeItem('orb_key')}catch(e){}throw new Error('المفتاح ما اشتغل — حطه من جديد في الكرة')}
   const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error((j.error&&j.error.message)||('HTTP '+r.status));
-  return (j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').trim()}
+  const txt=(j.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('').trim();
+  if(!txt)throw new Error(j.stop_reason==='max_tokens'?'الرد انقطع قبل يكمل':'الرد طلع فاضي');return txt}
 const mMember=id=>(TEAM.data&&TEAM.data.members||[]).find(x=>x.id===id);
 const mAtt=mt=>(mt.attendees||[]).map(mMember).filter(Boolean);
 async function loadMeetings(){try{const r=await teamCall('meetings');MEET.list=r.meetings||[];MEET.tasks=r.tasks||[];MEET.err=null}catch(e){MEET.err=e.message}if(tab==='team'&&teamView==='meet')render()}
@@ -889,19 +890,23 @@ function renderRoom(seg){const c=MEET.cur,mt=c.meeting,open=mt.status==='open',a
   ${(c.msgs||[]).map(x=>`<div class="bub${x.member_id?'':' me'}"><span class="who">${x.member_id?esc(x.from_name):'أنت'}</span>${esc(x.body)}</div>`).join('')}
   ${MEET.typing?`<div class="bub typing">${esc(MEET.typing)} يكتب…</div>`:''}
   ${open?`<div class="composer"><textarea class="inp" id="mtIn" placeholder="اكتب… (اذكر اسم موظف عشان يرد هو بس)">${esc(MEET.draft)}</textarea><button id="mtSend" ${MEET.busy?'disabled':''}>إرسال</button></div>
-    <button class="btn" style="margin-top:8px" onclick="closeMeeting()" ${MEET.busy?'disabled':''}>قفل الاجتماع وكتابة المحضر</button>`
+    <div class="btn-row" style="margin-top:8px"><button class="btn" onclick="continueTalk()" ${MEET.busy?'disabled':''}>خلّهم يتناقشون 💬</button><button class="btn" onclick="closeMeeting()" ${MEET.busy?'disabled':''}>قفل وكتابة المحضر</button></div>`
    :`${mt.minutes?`<h2 class="sec"><span>المحضر</span></h2><div class="minutes">${esc(mt.minutes)}</div>`:''}
     ${tk.length?`<h2 class="sec"><span>المهام</span><span>${Team.taskProgress(tk).done}/${tk.length}</span></h2>`+tk.map(t=>`<div class="mtask"><i>${t.status==='done'?'✅':'⏳'}</i><div>${esc((mMember(t.member_id)||{}).n||'')}: ${esc(t.task)}${t.due?`<small>الموعد: ${esc(t.due)}</small>`:''}${t.result?`<small>${esc(t.result)}</small>`:''}</div></div>`).join('')
     +`<div class="kv mute">كل موظف ينفّذ مهمته في الجولة (كل ساعة) ويرسل لك في البريد إذا خلص.</div>`:''}`}`;
   const btn=$('#mtSend');if(btn)btn.onclick=sendMeeting}
 async function postMsgs(msgs){const r=await teamCall('meeting_post',{id:MEET.cur.meeting.id,msgs});MEET.cur.msgs.push(...(r.msgs||[]))}
 async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;
-  try{for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
-      const sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting));
-      const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح.');
-      const txt=await aiAsk(sys,user,Team.isHead(m,TEAM.data.members)?AI_MODEL.lead:AI_MODEL.staff,Team.isHead(m,TEAM.data.members)?700:300);
-      if(txt)await postMsgs([{member_id:m.id,body:txt}])}}
-  catch(e){toast(e.message)}MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}}
+  const failed=[];let lastErr='';
+  for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
+    try{const head=Team.isHead(m,TEAM.data.members),sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting));
+      const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح، وعلّق على كلام زملائك إذا يفيد.');
+      const txt=await aiAsk(sys,user,head?AI_MODEL.lead:AI_MODEL.staff,head?4000:2000);
+      await postMsgs([{member_id:m.id,body:txt}])}
+    catch(e){failed.push(m.n);lastErr=e.message;if(/المفتاح/.test(e.message))break}}
+  MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}
+  if(failed.length)toast('ما ردّ: '+failed.join('، ')+' — '+lastErr)}
+function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش مع زملائك: رد على آخر الآراء، وافق أو اعترض بسبب، أو أضف فكرة جديدة. لا تكرر كلامك.')}
 async function sendMeeting(){const t=($('#mtIn').value||'').trim();if(!t||MEET.busy)return;if(needKey())return;
   MEET.busy=true;try{await postMsgs([{member_id:null,body:t}]);MEET.draft='';const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}
   MEET.busy=false;runRound(Team.pickResponders(t,mAtt(MEET.cur.meeting)))}
@@ -911,7 +916,7 @@ async function closeMeeting(){if(MEET.busy||needKey())return;const c=MEET.cur,at
 ارجع JSON فقط بدون أي كلام قبله أو بعده، بهالشكل:
 {"summary":"خلاصة القرارات بلهجة سعودية بسيطة في 3-6 أسطر","tasks":[{"who":"اسم الموظف كما هو","task":"مهمة واضحة قابلة للتنفيذ","due":"موعد إذا انذكر أو فاضي"}]}
 المهام فقط للحضور: ${att.map(a=>a.n).join('، ')}. لا تخترع مهام ما انتفق عليها، وكل مهمة لموظف واحد.`;
-    const raw=await aiAsk(sys,'الموضوع: '+c.meeting.topic+'\n\nالنقاش:\n'+Team.transcript(c.msgs),AI_MODEL.lead,1200);
+    const raw=await aiAsk(sys,'الموضوع: '+c.meeting.topic+'\n\nالنقاش:\n'+Team.transcript(c.msgs),AI_MODEL.lead,6000);
     mins=Team.parseMinutes(raw,att);if(!mins)throw new Error('المحضر طلع ناقص — جرّب مرة ثانية')}
   catch(e){toast(e.message)}MEET.typing=null;MEET.busy=false;render();if(!mins)return;
   sheet(`<h3>محضر الاجتماع</h3><div class="minutes" style="margin-top:0">${esc(mins.summary)}</div>
