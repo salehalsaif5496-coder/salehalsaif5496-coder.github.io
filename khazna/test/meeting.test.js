@@ -90,3 +90,25 @@ test('recentImages: newest first-capped, kept in order', () => {
 test('memberPrompt: tells the member to look at attached images', () => {
   assert.match(Team.memberPrompt(M[2], M, { topic: 'x' }, att), /صور/);
 });
+
+test('named: only mentioned attendees, none when nobody named', () => {
+  assert.deepStrictEqual(Team.named('وش رأيك يا مشعل؟', att).map((m) => m.id), ['mishal']);
+  assert.deepStrictEqual(Team.named('طيب كيف نكمل؟', att), []);
+});
+test('parseRoute: picks valid ids (max 2), by id or name', () => {
+  assert.deepStrictEqual(Team.parseRoute('{"ids":["saad"]}', att).map((m) => m.id), ['saad']);
+  assert.deepStrictEqual(Team.parseRoute('ok {"ids":["مشعل","saad","rakan"]}', att).map((m) => m.id), ['rakan', 'mishal']);
+});
+test('parseRoute: bad/empty output falls back to the lead, else first attendee', () => {
+  assert.deepStrictEqual(Team.parseRoute('ما أدري', M).map((m) => m.id), ['badr']);
+  assert.deepStrictEqual(Team.parseRoute('{"ids":["nobody"]}', att).map((m) => m.id), ['rakan']);
+});
+test('routePrompt lists attendees with ids', () => {
+  const p = Team.routePrompt(att);
+  assert.match(p, /mishal: مشعل/);
+  assert.match(p, /"ids"/);
+});
+test('isPass', () => {
+  assert.ok(Team.isPass(' PASS '));
+  assert.ok(!Team.isPass('PASS على كلام سعد'));
+});

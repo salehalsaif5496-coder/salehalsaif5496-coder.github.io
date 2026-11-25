@@ -89,6 +89,38 @@
   }
 
   /* مين يرد: اللي انذكر اسمه، وإذا ما انذكر أحد يردون كلهم (الرؤساء قبل) */
+  /* اللي انذكر اسمهم في الرسالة (بترتيبهم) — فاضية إذا ما انذكر أحد */
+  function named(text, attendees) {
+    return (attendees || []).slice().sort(byOrd).filter(function (m) { return mentions(text, m.n); });
+  }
+
+  /* موجّه الردود: يختار مين يهمه كلام صالح (واحد أو اثنين بالكثير) */
+  function routePrompt(attendees) {
+    return 'أنت موزّع الكلام في اجتماع صالح مع فريقه (موظفين ذكاء اصطناعي). صالح ما يبي الكل يرد على كل رسالة.\n' +
+      'اختر مين لازم يرد على آخر رسالة من صالح: اللي الكلام يخصه مباشرة أو تخصصه هو الأنسب. واحد في الغالب، واثنين بالكثير إذا الموضوع فعلًا يخص اثنين.\n' +
+      'إذا الرسالة عامة أو قرار أو توزيع شغل أو ما تخص أحد بعينه، اختر المنسّق العام بس.\n' +
+      'الحضور:\n' + (attendees || []).map(function (a) {
+        return '- ' + a.id + ': ' + a.n + ' — ' + (a.t || '') + (a.lead ? ' (المنسّق العام)' : '') + (a.d ? '. ' + a.d : '') + (a.tasks && a.tasks.length ? '. مهامه: ' + a.tasks.slice(0, 4).join('، ') : '');
+      }).join('\n') +
+      '\n\nارجع JSON فقط بدون أي كلام: {"ids":["id1"]}';
+  }
+
+  /* يقرأ رد الموجّه؛ لو خربان أو فاضي يرجع للمنسّق العام (أو أول واحد) */
+  function parseRoute(raw, attendees) {
+    var list = (attendees || []).slice().sort(byOrd);
+    var fallback = list.filter(function (m) { return m.lead; }).slice(0, 1);
+    if (!fallback.length) fallback = list.slice(0, 1);
+    var s = String(raw || ''), a = s.indexOf('{'), b = s.lastIndexOf('}');
+    if (a < 0 || b <= a) return fallback;
+    var j; try { j = JSON.parse(s.slice(a, b + 1)); } catch (e) { return fallback; }
+    var ids = Array.isArray(j && j.ids) ? j.ids.map(String) : [];
+    var out = list.filter(function (m) { return ids.indexOf(m.id) >= 0 || ids.indexOf(m.n) >= 0; }).slice(0, 2);
+    return out.length ? out : fallback;
+  }
+
+  /* الموظف يقدر يسكت إذا ما عنده جديد (في «خلّهم يتناقشون») */
+  function isPass(txt) { return /^\s*PASS\s*\.?\s*$/i.test(String(txt || '')); }
+
   function pickResponders(text, attendees) {
     var list = (attendees || []).slice().sort(byOrd);
     var named = list.filter(function (m) { return mentions(text, m.n); });
@@ -159,6 +191,6 @@
     return { done: list.filter(function (t) { return t.status === 'done'; }).length, total: list.length };
   }
 
-  return { isHead: isHead, pickResponders: pickResponders, memberPrompt: memberPrompt, transcript: transcript, recentImages: recentImages, parseMinutes: parseMinutes, taskProgress: taskProgress,
+  return { isHead: isHead, named: named, routePrompt: routePrompt, parseRoute: parseRoute, isPass: isPass, pickResponders: pickResponders, memberPrompt: memberPrompt, transcript: transcript, recentImages: recentImages, parseMinutes: parseMinutes, taskProgress: taskProgress,
     STALE_MIN: STALE_MIN, tree: tree, isPaused: isPaused, isWorking: isWorking, sortMail: sortMail, unread: unread, esc: esc, ago: ago };
 });

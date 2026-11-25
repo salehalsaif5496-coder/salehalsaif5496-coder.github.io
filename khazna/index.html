@@ -934,20 +934,26 @@ async function addMeetingImages(files){const c=MEET.cur;if(!c)return;
     if(MEET.cur===c)render()}}
 async function postMsgs(msgs){const r=await teamCall('meeting_post',{id:MEET.cur.meeting.id,msgs});MEET.cur.msgs.push(...(r.msgs||[]))}
 async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;await freshMeeting();
-  const failed=[];let lastErr='';
+  const failed=[];let lastErr='',said=0;
   for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
     try{const head=Team.isHead(m,TEAM.data.members),sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting),c.msgs.some(z=>z.member_id===m.id));
       const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح باختصار: ناقشه برأيك، لا تشرح له كلامه.');
       const txt=await aiAsk(sys,user,head?AI_MODEL.lead:AI_MODEL.staff,head?4000:2000);
-      await postMsgs([{member_id:m.id,body:txt}])}
+      if(Team.isPass(txt))continue;
+      await postMsgs([{member_id:m.id,body:txt}]);said++}
     catch(e){failed.push(m.n);lastErr=e.message;if(/المفتاح/.test(e.message))break}}
   MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}
-  if(failed.length)toast('ما ردّ: '+failed.join('، ')+' — '+lastErr)}
-function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش: رد على آخر كلام صالح وزملائك، وافق أو اعترض بسبب أو أضف فكرة جديدة. باختصار، وبدون أسئلة لصالح.')}
+  if(failed.length)toast('ما ردّ: '+failed.join('، ')+' — '+lastErr);else if(!said&&responders.length)toast('محد عنده جديد يضيفه')}
+function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش: رد على آخر كلام صالح وزملائك، وافق أو اعترض بسبب أو أضف فكرة جديدة. باختصار، وبدون أسئلة لصالح. إذا ما عندك شي جديد يفيد، رد بكلمة PASS بس.')}
+/* مين يرد على صالح: اللي ذكر اسمهم، وإلا الموجّه يختار اللي يهمه الكلام (واحد أو اثنين) */
+async function whoReplies(t){const att=mAtt(MEET.cur.meeting),n=Team.named(t,att);if(n.length||att.length<2)return n.length?n:att;
+  MEET.typing='يختار مين يرد —';render();scrollRoom();
+  try{const c=MEET.cur,raw=await aiAsk(Team.routePrompt(att),(c.msgs.length>1?'آخر النقاش:\n'+Team.transcript(c.msgs.slice(-10,-1))+'\n\n':'')+'رسالة صالح الأخيرة: '+(t||'(صور بدون نص)'),AI_MODEL.staff,200);
+    return Team.parseRoute(raw,att)}catch(e){return Team.parseRoute('',att)}finally{MEET.typing=null}}
 async function sendMeeting(){const t=($('#mtIn').value||'').trim(),imgs=MEET.pend.filter(p=>p.path);
   if((!t&&!imgs.length)||MEET.busy||MEET.pend.some(p=>!p.path))return;if(needKey())return;
   MEET.busy=true;try{await postMsgs([{member_id:null,body:t,images:imgs.map(p=>p.path)}]);MEET.draft='';MEET.pend=[];const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}
-  MEET.busy=false;runRound(Team.pickResponders(t,mAtt(MEET.cur.meeting)))}
+  const who=await whoReplies(t);MEET.busy=false;runRound(who)}
 async function closeMeeting(){if(MEET.busy||needKey())return;const c=MEET.cur,att=mAtt(c.meeting),lead=(TEAM.data.members||[]).find(m=>m.lead);
   MEET.busy=true;MEET.typing=(lead&&lead.n||'الفا')+' يكتب المحضر —';render();scrollRoom();let mins=null;await freshMeeting();
   try{const sys=`أنت «${lead?lead.n:'الفا'}» المنسّق العام لفريق صالح. اكتب محضر الاجتماع.
