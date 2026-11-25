@@ -896,7 +896,7 @@ function newMeeting(){if(needKey())return;const ms=(TEAM.data.members||[]).filte
   $('#mtGo').onclick=async()=>{const topic=$('#mtT').value.trim();if(!topic)return toast('اكتب الموضوع');if(!sel.size)return toast('اختر موظف واحد على الأقل');
     $('#mtGo').disabled=true;try{const r=await teamCall('meeting_create',{topic,details:$('#mtD').value.trim(),attendees:[...sel]});closeSheet();
       MEET.list=null;MEET.cur={meeting:r.meeting,msgs:[],tasks:[]};MEET.at=Date.now();MEET.pend=[];render();
-      runRound(mAtt(r.meeting),'الاجتماع بدأ. عرّف بنفسك واعط رأيك المبدئي في الموضوع من زاوية تخصصك.')}
+      runRound(mAtt(r.meeting),'الاجتماع بدأ. اعط رأيك المبدئي في الموضوع من زاوية تخصصك، باختصار.')}
     catch(e){$('#mtGo').disabled=false;toast(e.message)}}})}
 async function openMeeting(id){try{MEET.cur=await teamCall('meeting_get',{id});MEET.at=Date.now();MEET.draft='';MEET.pend=[];render();scrollRoom()}catch(e){toast(e.message)}}
 function closeRoom(){MEET.cur=null;MEET.pend=[];MEET.list=null;render();$('#main').scrollTop=0}
@@ -936,14 +936,14 @@ async function postMsgs(msgs){const r=await teamCall('meeting_post',{id:MEET.cur
 async function runRound(responders,cue){if(needKey())return;const c=MEET.cur;if(!c)return;MEET.busy=true;await freshMeeting();
   const failed=[];let lastErr='';
   for(const m of responders){if(MEET.cur!==c)break;MEET.typing=m.n;render();scrollRoom();
-    try{const head=Team.isHead(m,TEAM.data.members),sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting));
-      const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح، وعلّق على كلام زملائك إذا يفيد.');
+    try{const head=Team.isHead(m,TEAM.data.members),sys=Team.memberPrompt(m,TEAM.data.members,c.meeting,mAtt(c.meeting),c.msgs.some(z=>z.member_id===m.id));
+      const user=(c.msgs.length?'النقاش لين الحين:\n'+Team.transcript(c.msgs)+'\n\n':'')+(cue||'رد الحين على آخر كلام صالح باختصار: ناقشه برأيك، لا تشرح له كلامه.');
       const txt=await aiAsk(sys,user,head?AI_MODEL.lead:AI_MODEL.staff,head?4000:2000);
       await postMsgs([{member_id:m.id,body:txt}])}
     catch(e){failed.push(m.n);lastErr=e.message;if(/المفتاح/.test(e.message))break}}
   MEET.typing=null;MEET.busy=false;if(MEET.cur===c){render();scrollRoom()}
   if(failed.length)toast('ما ردّ: '+failed.join('، ')+' — '+lastErr)}
-function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش مع زملائك: رد على آخر الآراء، وافق أو اعترض بسبب، أو أضف فكرة جديدة. لا تكرر كلامك.')}
+function continueTalk(){if(MEET.busy)return;runRound(mAtt(MEET.cur.meeting),'كمّل النقاش: رد على آخر كلام صالح وزملائك، وافق أو اعترض بسبب أو أضف فكرة جديدة. باختصار، وبدون أسئلة لصالح.')}
 async function sendMeeting(){const t=($('#mtIn').value||'').trim(),imgs=MEET.pend.filter(p=>p.path);
   if((!t&&!imgs.length)||MEET.busy||MEET.pend.some(p=>!p.path))return;if(needKey())return;
   MEET.busy=true;try{await postMsgs([{member_id:null,body:t,images:imgs.map(p=>p.path)}]);MEET.draft='';MEET.pend=[];const el=$('#mtIn');if(el)el.value=''}catch(e){MEET.busy=false;return toast(e.message)}

@@ -36,9 +36,23 @@ test('memberPrompt: employee gets short-answer rule and its reference', () => {
   assert.match(p, /سطر/);
   assert.match(p, /راكان، مشعل، سعد/);
 });
-test('memberPrompt: head may detail', () => {
-  const p = Team.memberPrompt(M[1], M, { topic: 'x' }, att);
-  assert.match(p, /تفصّل/);
+test('memberPrompt: heads also capped short (4 lines), staff 2-3', () => {
+  assert.match(Team.memberPrompt(M[1], M, { topic: 'x' }, att), /٤ أسطر/);
+  assert.match(Team.memberPrompt(M[2], M, { topic: 'x' }, att), /سطرين أو ثلاثة/);
+});
+test('memberPrompt: discuss, do not explain back; no re-asking; questions via الفا', () => {
+  const p = Team.memberPrompt(M[2], M, { topic: 'x' }, att);
+  assert.match(p, /لا تشرح له فكرته/);
+  assert.match(p, /جاوب عليه من قبل لا تسأله/);
+  assert.match(p, /سؤال للفا:/);
+});
+test('memberPrompt: no self-intro once the member has spoken', () => {
+  assert.match(Team.memberPrompt(M[2], M, { topic: 'x' }, att, true), /لا تعرّف بنفسك/);
+  assert.match(Team.memberPrompt(M[2], M, { topic: 'x' }, att, false), /عرّف بنفسك بكلمتين/);
+});
+test('memberPrompt: lead collects questions', () => {
+  assert.match(Team.memberPrompt(M[0], M, { topic: 'x' }, att), /اجمعها لصالح/);
+  assert.doesNotMatch(Team.memberPrompt(M[2], M, { topic: 'x' }, att), /اجمعها لصالح/);
 });
 
 test('transcript: labels speakers', () => {
