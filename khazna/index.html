@@ -223,6 +223,47 @@ h2.sec{font-size:13px;color:var(--mute);font-weight:500;margin:26px 2px 10px;dis
 .goal .acts{display:flex;gap:8px;margin-top:10px}
 .goal .acts button{flex:1;font-size:12.5px;padding:9px}
 
+/* ---------- TEAM (الفريق) ---------- */
+.seg{display:flex;gap:6px;margin:4px 0 6px;border:1px solid var(--line);border-radius:14px;padding:4px}
+.seg button{flex:1;background:none;border:none;border-radius:10px;padding:10px 6px;font-size:13.5px;color:var(--mute);min-height:40px}
+.seg button.on{background:rgba(255,255,255,.07);color:var(--ink)}
+.seg .cnt{display:inline-block;min-width:18px;padding:0 5px;margin-inline-start:6px;border-radius:9px;background:#eee;color:#000;font-size:11px;line-height:18px;font-family:"JetBrains Mono"}
+.lamp-dot{width:10px;height:10px;border-radius:50%;flex:none;background:#1c1c1c;border:1px solid #2c2c2c}
+.lamp-dot.on{background:#f4f4f4;border-color:#fff;box-shadow:0 0 10px rgba(255,255,255,.75),0 0 22px rgba(255,255,255,.25)}
+@media (prefers-reduced-motion:no-preference){.lamp-dot.on{animation:flick 2.8s ease-in-out infinite}}
+@keyframes flick{0%,100%{opacity:1}50%{opacity:.72}}
+.chief{position:relative;overflow:hidden;padding:18px 16px 16px}
+.chief::before{content:"";position:absolute;inset:-40% 20% auto 20%;height:120%;background:radial-gradient(ellipse at 50% 0,rgba(255,255,255,.09),transparent 60%);pointer-events:none}
+.chief .who{display:flex;align-items:center;gap:12px;position:relative}
+.chief .nm{font-size:19px;font-weight:500} .chief .tt{font-size:12px;color:var(--mute)}
+.chief .now{display:flex;gap:18px;margin-top:14px;font-size:12px;color:var(--mute);position:relative}
+.chief .now b{display:block;font-size:20px;font-weight:500;color:var(--ink);font-family:"JetBrains Mono"}
+.dept{margin-top:22px}
+.dept.paused{opacity:.45}
+.dept-hd{display:flex;align-items:baseline;justify-content:space-between;font-size:13px;color:var(--mute);margin:0 2px 8px}
+.dept-hd span:last-child{font-size:11px}
+.plate{display:flex;align-items:center;gap:12px;width:100%;text-align:start;background:none;border:none;border-bottom:1px solid var(--line);padding:12px 4px;min-height:52px;color:inherit}
+.plate:active{background:rgba(255,255,255,.03)}
+.plate.head{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:13px 12px;margin-bottom:4px}
+.plate .info{flex:1;min-width:0}
+.plate .info div{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plate .info div small{color:var(--mute);font-size:11.5px;margin-inline-start:6px}
+.plate .info span{display:block;font-size:11.5px;color:var(--mute);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plate .info span.live{color:var(--ink)}
+.plate .cad{font-size:10.5px;color:#777;flex:none}
+.letter{border-bottom:1px solid var(--line);padding:14px 4px}
+.letter button.hd{display:flex;align-items:flex-start;gap:12px;width:100%;background:none;border:none;text-align:start;color:inherit;padding:0}
+.letter .seal{width:8px;height:8px;border-radius:50%;margin-top:7px;flex:none;background:transparent}
+.letter.unread .seal{background:#eee;box-shadow:var(--glow)}
+.letter .info{flex:1;min-width:0}
+.letter .from{font-size:12px;color:var(--mute);display:flex;justify-content:space-between;gap:10px}
+.letter .sub{font-size:14.5px;margin-top:3px}
+.letter.unread .sub{font-weight:500}
+.letter .body{white-space:pre-wrap;font-size:13.5px;line-height:1.8;color:#cfcfcf;margin:10px 20px 2px 0;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02)}
+.kv{font-size:13px;line-height:1.7;margin-top:12px}
+.kv .k{font-size:11.5px;color:var(--mute);display:block}
+.kv ul{margin:4px 18px 0 0;padding:0}
+
 /* ---------- SHEETS / OVERLAYS ---------- */
 .veil{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:30;opacity:0;pointer-events:none;transition:.3s}
 .veil.on{opacity:1;pointer-events:auto}
@@ -308,6 +349,7 @@ label.f{display:block;font-size:12px;color:var(--mute);margin:12px 0 6px}
     <button data-t="income"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="1" transform="rotate(-8 12 12)"/><circle cx="12" cy="12" r="2.5"/></svg>الإيرادات</button>
     <button data-t="tasks"><svg viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20"/><path d="M9 6h2M13 6h2M9 10h2M13 10h2M9 14h2M13 14h2"/></svg>المهام</button>
     <button data-t="plan"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18"/><rect x="7" y="7" width="10" height="10"/><rect x="10" y="10" width="4" height="4"/></svg>الخطة</button>
+    <button data-t="team"><svg viewBox="0 0 24 24"><circle cx="12" cy="6.5" r="2.5"/><circle cx="5.5" cy="15" r="2"/><circle cx="12" cy="15" r="2"/><circle cx="18.5" cy="15" r="2"/><path d="M12 9v4M5.5 13v-1.5h13V13" opacity=".6"/></svg>الفريق</button>
     <button data-t="orb"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="M8.5 9.5a4.5 4.5 0 0 1 3-2" opacity=".6"/></svg>الكرة</button>
   </nav>
 </div>
@@ -319,6 +361,7 @@ label.f{display:block;font-size:12px;color:var(--mute);margin:12px 0 6px}
 <div id="rain"></div>
 <div class="toast" id="toast"></div>
 
+<script src="./team-core.js"></script>
 <script>
 /* ================= UTIL ================= */
 const $=s=>document.querySelector(s);
@@ -409,15 +452,16 @@ function avgNet(n=3){const ks=[];for(let i=0;i<12&&ks.length<n;i++){const k=shif
 
 /* ================= ROUTER ================= */
 let tab='home',viewMonth=curMonth(),openDrawer=null;
-function go(t){if(!['home','expenses','income','tasks','plan','orb'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+t)}catch(e){}
+function go(t){if(t==='team-mail'){teamView='mail';t='team'}if(!['home','expenses','income','tasks','plan','team','orb'].includes(t))t='home';tab=t;try{history.replaceState(null,'','#'+(t==='team'&&teamView==='mail'?'team-mail':t))}catch(e){}
   document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));render();$('#main').scrollTop=0}
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>go(b.dataset.t));
-window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&h!==tab&&!$('#app').classList.contains('hidden'))go(h)});
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(h&&(h!==tab||h==='team-mail')&&!$('#app').classList.contains('hidden'))go(h)});
 function render(){const isOrb=tab==='orb';$('#orbStage').classList.toggle('on',isOrb);if(window.Orb){isOrb?Orb.show():Orb.hide()}if(isOrb){$('#fab').classList.add('hidden');return}
-  const subs={home:'لوحة القيادة',expenses:'الأرشيف',income:'الإيرادات',tasks:'مهام اليوم',plan:'الخطة'};$('#hdrSub').textContent=subs[tab];
-  const fab=$('#fab');fab.classList.toggle('hidden',!['expenses','income','tasks','plan'].includes(tab));
-  fab.onclick={expenses:addExpense,income:addIncome,tasks:addTask,plan:addGoal}[tab]||null;
-  ({home:renderHome,expenses:renderExpenses,income:renderIncome,tasks:renderTasks,plan:renderPlan})[tab]()}
+  const subs={home:'لوحة القيادة',expenses:'الأرشيف',income:'الإيرادات',tasks:'مهام اليوم',plan:'الخطة',team:'الفريق'};$('#hdrSub').textContent=subs[tab];
+  const fab=$('#fab');fab.classList.toggle('hidden',!['expenses','income','tasks','plan'].includes(tab)&&!(tab==='team'&&teamView==='board'&&TEAM.data));
+  fab.onclick={expenses:addExpense,income:addIncome,tasks:addTask,plan:addGoal,team:()=>editMember(null)}[tab]||null;
+  if(tab!=='team')stopTeamPoll();
+  ({home:renderHome,expenses:renderExpenses,income:renderIncome,tasks:renderTasks,plan:renderPlan,team:renderTeam})[tab]()}
 
 /* ================= SVG PIECES ================= */
 const lampSVG=`<svg viewBox="0 0 120 70" class="lamp"><line x1="60" y1="0" x2="60" y2="22" stroke="#444" stroke-width="1.5"/>
@@ -701,6 +745,70 @@ function addGoal(){sheet(`<h3>هدف مالي جديد</h3><label class="f">ال
 function depositGoal(id,sign){const g=S.goals.find(x=>x.id===id);sheet(`<h3>${sign>0?'إيداع في':'سحب من'} «${esc(g.name)}»</h3><input class="inp big mono" id="dA" inputmode="decimal" placeholder="0">
   <div style="margin-top:18px"><button class="btn primary" id="fSave">تأكيد</button></div>`,()=>{setTimeout(()=>$('#dA').focus(),350);
   $('#fSave').onclick=()=>{const a=parseFloat($('#dA').value);if(!(a>0))return toast('اكتب المبلغ');g.saved=Math.max(0,g.saved+sign*a);save();closeSheet();render();toast(sign>0?'تم الإيداع':'تم السحب')}})}
+
+/* ================= TEAM (الفريق) ================= */
+let teamView='board';const TEAM={data:null,err:null,loading:false,open:null,t:null};
+const CAD={daily:'يومي',every2:'كل يومين',weekly:'أسبوعي',monthly:'شهري',on_demand:'بالتكليف'};
+async function teamCall(action,extra){const r=await fetch(PUSH.url+'/functions/v1/khazna-team',{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+PUSH.key,'apikey':PUSH.key},body:JSON.stringify({action,secret:pushSecret(),...extra})});
+  const j=await r.json().catch(()=>({}));if(!r.ok){const e=new Error(j.error||('HTTP '+r.status));e.code=j.error;throw e}return j}
+async function loadTeam(quiet){if(TEAM.loading)return;TEAM.loading=true;if(!quiet&&!TEAM.data)renderTeam();
+  try{TEAM.data=await teamCall('list');TEAM.err=null}catch(e){TEAM.err=e.code==='not_registered'?'reg':'net'}
+  TEAM.loading=false;if(tab==='team')render()}
+function stopTeamPoll(){clearInterval(TEAM.t);TEAM.t=null}
+function teamStatus(id){return (TEAM.data.status||[]).find(x=>x.member_id===id)}
+function plateHTML(m,head){const st=teamStatus(m.id),now=new Date(TEAM.data.now),on=Team.isWorking(st,now)&&!Team.isPaused(m,today());
+  const line=on?`<span class="live">${esc(st.doing||'يشتغل الحين')}</span>`:`<span>${Team.isPaused(m,today())?'موقوف':esc(Team.ago(st&&st.last_done,now))}</span>`;
+  return `<button class="plate${head?' head':''}" onclick="showMember('${esc(m.id)}')"><i class="lamp-dot${on?' on':''}"></i>
+  <div class="info"><div>${esc(m.n)}<small>${esc(m.t)}</small></div>${line}</div><span class="cad">${CAD[m.cadence]||''}</span></button>`}
+function renderTeam(){
+  if(!TEAM.t){TEAM.t=setInterval(()=>{if(tab==='team'&&!document.hidden)loadTeam(true)},60000);loadTeam(true)}
+  const segHTML=()=>{const n=TEAM.data?Team.unread(TEAM.data.mail):0;return `<div class="seg"><button class="${teamView==='board'?'on':''}" onclick="setTeamView('board')">اللوحة</button><button class="${teamView==='mail'?'on':''}" onclick="setTeamView('mail')">البريد${n?`<span class="cnt">${n}</span>`:''}</button></div>`};
+  if(!TEAM.data){$('#main').innerHTML=TEAM.err==='reg'?`<div class="card" style="margin-top:14px"><div class="notif"><div class="ic">🔔</div><div class="tx"><b>فعّل الإشعارات أول</b><span class="mute">الفريق يفتح على جوالك المسجّل بس. فعّلها وترجع هنا على طول.</span></div></div><button class="btn primary" style="margin-top:14px" onclick="enablePush().then(()=>loadTeam())">تفعيل الإشعارات</button></div>`
+    :TEAM.err?`<div class="empty">ما قدرت أوصل للفريق — تأكد من النت<br><button class="btn" style="margin-top:14px;width:auto;padding:10px 22px" onclick="loadTeam()">حاول مرة ثانية</button></div>`:`<div class="empty">لحظة…</div>`;return}
+  if(teamView==='mail')return renderMail(segHTML());
+  const T=Team.tree(TEAM.data.members),now=new Date(TEAM.data.now),all=TEAM.data.members;
+  const working=all.filter(m=>Team.isWorking(teamStatus(m.id),now)&&!Team.isPaused(m,today())).length,unread=Team.unread(TEAM.data.mail);
+  const L=T.lead,lst=L&&teamStatus(L.id),lon=L&&Team.isWorking(lst,now);
+  $('#main').innerHTML=segHTML()+(L?`<div class="card chief" onclick="showMember('${esc(L.id)}')"><div class="who"><i class="lamp-dot${lon?' on':''}"></i><div><div class="nm">${esc(L.n)}</div><div class="tt">${esc(L.t)}${lon?' · '+esc(lst.doing||'يشتغل'):''}</div></div></div>
+    <div class="now"><div><b>${working}</b>يشتغلون الحين</div><div><b>${all.length}</b>موظف</div><div><b>${unread}</b>رسالة جديدة</div></div></div>`:'')
+    +T.depts.map(d=>{const p=Team.isPaused(d.head,today());return `<section class="dept${p?' paused':''}"><div class="dept-hd"><span>${esc(d.head.dept||('قسم '+d.head.n))}</span><span>${p?'موقوف لين '+esc(prettyDate(d.head.paused_until)):d.kids.length+' موظف'}</span></div>
+    ${plateHTML(d.head,true)}${d.kids.map(k=>plateHTML(k)).join('')}</section>`}).join('')
+    +(T.orphans.length?`<section class="dept"><div class="dept-hd"><span>بدون قسم</span></div>${T.orphans.map(k=>plateHTML(k)).join('')}</section>`:'')}
+function setTeamView(v){teamView=v;try{history.replaceState(null,'','#'+(v==='mail'?'team-mail':'team'))}catch(e){}render();$('#main').scrollTop=0}
+function renderMail(seg){const mail=Team.sortMail(TEAM.data.mail),now=new Date(TEAM.data.now),n=Team.unread(mail);
+  $('#main').innerHTML=seg+(n?`<div style="display:flex;justify-content:flex-end;margin:4px 0"><button class="chip" onclick="readMail('all')">قراءة الكل</button></div>`:'')
+  +(mail.map(m=>`<div class="letter${m.read_at?'':' unread'}"><button class="hd" onclick="openLetter('${esc(m.id)}')"><i class="seal"></i><div class="info">
+    <div class="from"><span>${esc(m.from_name)}</span><span>${esc(Team.ago(m.created_at,now))}</span></div><div class="sub">${esc(m.subject)}</div></div></button>
+    ${TEAM.open===m.id?`<div class="body">${esc(m.body)}</div>`:''}</div>`).join('')||'<div class="empty">ما فيه رسايل للحين — أول ما يخلص موظف شغله توصلك رسالته هنا</div>')}
+function openLetter(id){TEAM.open=TEAM.open===id?null:id;const m=TEAM.data.mail.find(x=>x.id===id);if(m&&!m.read_at){m.read_at=new Date().toISOString();teamCall('read',{id}).catch(()=>{})}render()}
+function readMail(id){TEAM.data.mail.forEach(m=>{if(!m.read_at)m.read_at=new Date().toISOString()});render();teamCall('read',{id}).catch(()=>toast('ما انحفظت القراءة — جرّب بعدين'))}
+function showMember(id){const m=TEAM.data.members.find(x=>x.id===id);if(!m)return;const st=teamStatus(id),now=new Date(TEAM.data.now),on=Team.isWorking(st,now)&&!Team.isPaused(m,today());
+  const boss=TEAM.data.members.find(x=>x.id===m.boss);
+  sheet(`<h3>${esc(m.n)} <span class="mute" style="font-size:13px">· ${esc(m.t)}</span></h3>
+  <div class="notif"><i class="lamp-dot${on?' on':''}"></i><div class="tx">${on?esc(st.doing||'يشتغل الحين'):Team.isPaused(m,today())?'موقوف لين '+esc(prettyDate(m.paused_until)):'متوقف · '+esc(Team.ago(st&&st.last_done,now))}</div></div>
+  ${m.duty?`<div class="kv"><span class="k">شغله في الجولة (${CAD[m.cadence]||''})</span>${esc(m.duty)}</div>`:`<div class="kv"><span class="k">التكرار</span>${CAD[m.cadence]||'بالتكليف'}</div>`}
+  ${(m.tasks||[]).length?`<div class="kv"><span class="k">المهام</span><ul>${m.tasks.map(t=>`<li>${esc(t)}</li>`).join('')}</ul></div>`:''}
+  ${m.ref?`<div class="kv"><span class="k">المرجعية</span>${esc(m.ref)}</div>`:''}${m.rule?`<div class="kv"><span class="k">القاعدة</span>${esc(m.rule)}</div>`:''}
+  ${boss?`<div class="kv"><span class="k">يتبع</span>${esc(boss.n)}</div>`:''}
+  <div style="margin-top:18px"><button class="btn" onclick="editMember('${esc(m.id)}')">تعديل</button></div>`)}
+function editMember(id){const m=id?TEAM.data.members.find(x=>x.id===id):{cadence:'on_demand',tasks:[]};if(!m)return;
+  const lead=TEAM.data.members.find(x=>x.lead),opts=TEAM.data.members.filter(x=>x.id!==id&&(x.lead||(lead&&x.boss===lead.id)));
+  sheet(`<h3>${id?'تعديل '+esc(m.n):'موظف جديد'}</h3>
+  <label class="f" for="mN">الاسم</label><input class="inp" id="mN" maxlength="40" value="${esc(m.n||'')}">
+  <label class="f" for="mT">المنصب</label><input class="inp" id="mT" maxlength="60" value="${esc(m.t||'')}">
+  <label class="f" for="mB">يتبع</label><select class="inp" id="mB">${m.lead?'<option value="">— المنسّق العام —</option>':''}${opts.map(o=>`<option value="${esc(o.id)}"${o.id===m.boss?' selected':''}>${esc(o.n)}${o.lead?' (رئيس قسم تحته)':''}</option>`).join('')}</select>
+  <label class="f" for="mDp">اسم القسم (لرئيس القسم)</label><input class="inp" id="mDp" maxlength="60" value="${esc(m.dept||'')}">
+  <label class="f" for="mK">المهام (كل مهمة بسطر)</label><textarea class="inp" id="mK" style="min-height:110px">${esc((m.tasks||[]).join('\n'))}</textarea>
+  <label class="f" for="mC">التكرار</label><select class="inp" id="mC">${Object.entries(CAD).map(([k,v])=>`<option value="${k}"${m.cadence===k?' selected':''}>${v}</option>`).join('')}</select>
+  <label class="f" for="mR">المرجعية</label><input class="inp" id="mR" maxlength="160" value="${esc(m.ref||'')}">
+  <label class="f" for="mL">القاعدة</label><input class="inp" id="mL" maxlength="200" value="${esc(m.rule||'')}">
+  <div style="margin-top:18px"><button class="btn primary" id="mSave">حفظ</button></div>${id&&!m.lead?`<div style="margin-top:8px"><button class="btn" id="mDel" style="color:#c88">حذف</button></div>`:''}`,()=>{
+  let arm=false;const del=$('#mDel');if(del)del.onclick=async()=>{if(!arm){arm=true;del.textContent='متأكد؟ اضغط مرة ثانية للحذف';return}
+    try{await teamCall('delete_member',{id});closeSheet();toast('انحذف');loadTeam(true)}catch(e){toast(e.message)}};
+  $('#mSave').onclick=async()=>{const n=$('#mN').value.trim(),t=$('#mT').value.trim();if(!n||!t)return toast('اكتب الاسم والمنصب');
+    const body={...m,id:id||'',n,t,boss:$('#mB').value,dept:$('#mDp').value.trim(),tasks:$('#mK').value.split('\n').map(x=>x.trim()).filter(Boolean),cadence:$('#mC').value,ref:$('#mR').value.trim(),rule:$('#mL').value.trim(),
+      ord:m.ord??Math.max(0,...TEAM.data.members.map(x=>x.ord||0))+1};
+    $('#mSave').disabled=true;try{await teamCall('upsert_member',{member:body});closeSheet();toast('انحفظ');loadTeam(true)}catch(e){$('#mSave').disabled=false;toast(e.message)}}})}
 
 /* ================= STAGES ================= */
 function stage(html){const s=$('#stage');s.innerHTML=`<button class="icon-btn close" onclick="closeStage()">✕</button>`+html;s.classList.add('on')}

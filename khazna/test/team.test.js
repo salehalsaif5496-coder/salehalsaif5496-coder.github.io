@@ -56,6 +56,8 @@ test('ago: Arabic relative time', () => {
   assert.strictEqual(Team.ago('2026-11-25T16:59:30Z', now), 'الحين');
   assert.strictEqual(Team.ago('2026-11-25T16:20:00Z', now), 'قبل 40 دقيقة');
   assert.strictEqual(Team.ago('2026-11-25T14:00:00Z', now), 'قبل 3 ساعات');
-  assert.strictEqual(Team.ago('2026-11-23T17:00:00Z', now), 'قبل 2 أيام');
+  assert.strictEqual(Team.ago('2026-11-23T17:00:00Z', now), 'قبل يومين');
+  assert.strictEqual(Team.ago('2026-11-24T17:30:00Z', now), 'قبل 23 ساعة');
+  assert.strictEqual(Team.ago('2026-11-25T16:00:00Z', now), 'قبل ساعة');
   assert.strictEqual(Team.ago(null, now), 'ما اشتغل للحين');
 });

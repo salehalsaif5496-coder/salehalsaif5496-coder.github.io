@@ -56,14 +56,21 @@
     });
   }
 
+  /* عدد بالعربي: 1 ساعة، ساعتين، 3–10 ساعات، 11+ ساعة */
+  function count(n, one, two, few) {
+    if (n === 1) return one;
+    if (n === 2) return two;
+    return n + ' ' + (n <= 10 ? few : one);
+  }
+
   function ago(iso, now) {
     if (!iso) return 'ما اشتغل للحين';
     var min = Math.floor(((now || new Date()) - new Date(iso)) / 60000);
     if (min < 1) return 'الحين';
     if (min < 60) return 'قبل ' + min + ' دقيقة';
     var h = Math.floor(min / 60);
-    if (h < 24) return 'قبل ' + h + ' ساعات';
-    return 'قبل ' + Math.floor(h / 24) + ' أيام';
+    if (h < 24) return 'قبل ' + count(h, 'ساعة', 'ساعتين', 'ساعات');
+    return 'قبل ' + count(Math.floor(h / 24), 'يوم', 'يومين', 'أيام');
   }
 
   return { STALE_MIN: STALE_MIN, tree: tree, isPaused: isPaused, isWorking: isWorking, sortMail: sortMail, unread: unread, esc: esc, ago: ago };
