@@ -63,3 +63,5 @@ language sql security definer set search_path = public as $$
   returning *;
 $$;
 revoke all on function public.team_claim_push() from anon, authenticated, public;
+grant execute on function public.team_claim_push() to service_role;
+-- team_secret: مفتاح عشوائي داخل khazna_config (ما ينكتب هنا) — تستخدمه rays-quality لتنبيه الشكاوى

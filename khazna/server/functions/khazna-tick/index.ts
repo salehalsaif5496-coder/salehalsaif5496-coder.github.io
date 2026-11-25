@@ -23,13 +23,15 @@ Deno.serve(async (req) => {
   webpush.setVapidDetails("mailto:noreply@khazna.app", c.vapid_public, c.vapid_private);
 
   const { data: devices } = await db.from("khazna_devices").select("*").not("subscription", "is", null);
+  // إشعارات «الفريق»: تنحجز وتتعلّم مرسلة بخطوة وحدة، فما تتكرر لو اشتغلت الدالة مرتين
+  const { data: teamPush } = devices && devices.length ? await db.rpc("team_claim_push") : { data: [] };
   let sent = 0;
   for (const d of devices || []) {
     const now = localNow(d.tz || "Asia/Riyadh");
     const { data: rems } = await db.from("khazna_reminders").select("*").eq("device_hash", d.device_hash);
     const wd = new Date(now.date + "T12:00:00Z").getUTCDay();
     const today = (rems || []).filter((r: any) => (r.daily ? (!r.days || !r.days.length || r.days.includes(wd)) : r.date === now.date) && r.skip_date !== now.date);
-    const pushes: { payload: any; mark?: string }[] = [];
+    const pushes: { payload: any; mark?: string }[] = (teamPush || []).map((t: any) => ({ payload: { title: t.title, body: t.body, url: t.url, tag: t.tag || "team-" + t.id } }));
 
     for (const r of today) {
       if (r.last_sent === now.date || !due(r.time, now.min)) continue;
@@ -44,6 +46,7 @@ Deno.serve(async (req) => {
       try {
         await webpush.sendNotification(d.subscription, JSON.stringify(p.payload), { TTL: 3600, urgency: "high" });
         sent++;
+        if (!p.mark) continue;
         if (p.mark === "__morning") await db.from("khazna_devices").update({ morning_sent: now.date }).eq("device_hash", d.device_hash);
         else await db.from("khazna_reminders").update({ last_sent: now.date }).eq("device_hash", d.device_hash).eq("task_id", p.mark);
       } catch (err: any) {
