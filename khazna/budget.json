@@ -1,0 +1,34 @@
+{
+  "_about": "مرجعية ميزانية صالح الشهرية — بديل ملف الإكسل. الخزنة تقرأ هذا الملف مباشرة. كل شهر له بنوده ومبلغ كل بند، والمجموع يتحسب لحاله. نفس البند يكون له نفس الـ id في كل الشهور.",
+  "months": {
+    "2026-11": {
+      "items": [
+        { "id": "net", "name": "نت", "amount": 200 },
+        { "id": "food", "name": "اكل", "amount": 1000 },
+        { "id": "coffee", "name": "قهوة", "amount": 200 },
+        { "id": "mishal", "name": "مشعل", "amount": 1000 },
+        { "id": "tamara", "name": "تمارا", "amount": 1409 },
+        { "id": "transport", "name": "بانزين", "amount": 1000 },
+        { "id": "barber", "name": "حلاقة", "amount": 100 },
+        { "id": "shoes", "name": "شوز", "amount": 3300 }
+      ]
+    },
+    "2026-12": {
+      "items": [
+        { "id": "net", "name": "نت", "amount": 200 },
+        { "id": "food", "name": "اكل", "amount": 1200 },
+        { "id": "coffee", "name": "قهوة", "amount": 300 },
+        { "id": "mom_phone", "name": "جوال امي", "amount": 500 },
+        { "id": "tabby", "name": "تابي", "amount": 130 },
+        { "id": "tamara", "name": "تمارا", "amount": 1566 },
+        { "id": "transport", "name": "بانزين", "amount": 1200 },
+        { "id": "barber", "name": "حلاقة", "amount": 100 },
+        { "id": "carwash", "name": "غسيل سيارة", "amount": 100 },
+        { "id": "shein", "name": "شي ان", "amount": 363 },
+        { "id": "thobe", "name": "ثوب", "amount": 250 },
+        { "id": "engine_oil", "name": "زيت مكينة", "amount": 180 },
+        { "id": "laundry", "name": "مغسلة", "amount": 50 }
+      ]
+    }
+  }
+}

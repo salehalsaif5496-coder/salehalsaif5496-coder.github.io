@@ -455,36 +455,39 @@ function save(){S.updatedAt=Date.now();lsSet();try{schedulePushSync()}catch(e){}
   if(!store.ref)return;const payload={json:JSON.stringify(S),updatedAt:S.updatedAt};
   store.writing=store.writing.then(()=>store.ref.set(payload)).catch(e=>console.log('save fail',e));},700)}
 
-/* ================= مرجع الإكسل (المصروفات الشهرية) ================= */
-// بنود الشهر وسقوفها من ملف الإكسل — ورقة «المصروفات الشهرية»
-const EXCEL_REF={month:'2026-11',total:8209,items:[
-  ['net','نت',200],['food','اكل',1000],['coffee','قهوة',200],['mishal','مشعل',1000],
-  ['tamara','تمارا',1409],['transport','بانزين',1000],['barber','حلاقة',100],['shoes','شوز',3300]],
-  // الصرف الفعلي المسجّل في «سجل نوشن» داخل الإكسل
-  spent:[{id:'EXP-2',cat:'shoes',amt:3300,date:'2026-11-05',note:'شوز (نوشن EXP-2)'}]};
-function applyExcelRef(){
-  if(S.excelRef===EXCEL_REF.month)return;
-  const used=new Set(S.expenses.map(e=>e.cat)),old=S.cats,cats=[];
-  EXCEL_REF.items.forEach(([id,name,b])=>cats.push({id,name,budget:b}));
-  old.forEach(c=>{if(!cats.some(x=>x.id===c.id)&&(used.has(c.id)||c.id==='other'))cats.push({...c,budget:0})});
-  if(!cats.some(c=>c.id==='other'))cats.push({id:'other',name:'أخرى',budget:0});
-  S.cats=cats;S.monthlyBudget=EXCEL_REF.total;
-  EXCEL_REF.spent.forEach(x=>{const dup=S.expenses.some(e=>e.id===x.id||(mk(e.date)===mk(x.date)&&e.amt===x.amt&&(e.cat===x.cat||/شوز|حذاء/.test(e.note||''))));
-    if(!dup)S.expenses.push({...x})});
-  S.excelRef=EXCEL_REF.month;save()}
-function catLeft(c,k){const s=S.expenses.filter(e=>e.cat===c.id&&mk(e.date)===k).reduce((a,e)=>a+e.amt,0);return {s,left:c.budget-s}}
-function budgetPanel(k,exp){const budget=S.monthlyBudget||0;if(!budget)return '';
-  const left=budget-exp,items=S.cats.filter(c=>c.budget);
-  return `<div class="panel" style="margin-bottom:12px"><div class="pt"><i>▤</i>الميزانية الفعلية<em>مرجع الإكسل · ${monthName(k)}</em></div>
-  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:6px 0 14px">
+/* ================= مرجعية الميزانية (budget.json في GitHub) ================= */
+// المرجعية الوحيدة للبنود والمبالغ: khazna/budget.json — تتعدل هناك والتطبيق يقرأها كل ما ينفتح
+const REF_LS='khazna.ref';
+let REF=(()=>{try{return JSON.parse(localStorage.getItem(REF_LS))||null}catch(e){return null}})();
+let budgetMonth=null;
+const refMonth=k=>REF&&REF.months&&REF.months[k]||null;
+function monthBudget(k){const m=refMonth(k);return m?m.items.reduce((a,x)=>a+(+x.amount||0),0):(REF?0:S.monthlyBudget||0)}
+function catBudget(c,k){const m=refMonth(k);if(m){const it=m.items.find(x=>x.id===c.id);return it?+it.amount||0:0}return REF?0:c.budget||0}
+function applyRef(){if(!REF||!REF.months)return;
+  if(!S.refInit){const used=new Set(S.expenses.map(e=>e.cat));S.cats=S.cats.filter(c=>used.has(c.id)||c.id==='other');S.refInit=1}
+  const seen=[];Object.keys(REF.months).sort().reverse().forEach(k=>REF.months[k].items.forEach(it=>{if(seen.includes(it.id))return;seen.push(it.id);
+    const c=S.cats.find(x=>x.id===it.id);if(c)c.name=it.name;else S.cats.push({id:it.id,name:it.name,budget:0})}));
+  if(!S.cats.some(c=>c.id==='other'))S.cats.push({id:'other',name:'أخرى',budget:0});
+  const rank=id=>{const i=seen.indexOf(id);return i<0?999:i};S.cats.sort((a,b)=>rank(a.id)-rank(b.id))}
+async function loadRef(){try{const r=await fetch('./budget.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;REF=await r.json();
+  try{localStorage.setItem(REF_LS,JSON.stringify(REF))}catch(e){}}catch(e){}
+  if(REF){applyRef();lsSet()}}
+function catLeft(c,k){const s=S.expenses.filter(e=>e.cat===c.id&&mk(e.date)===k).reduce((a,e)=>a+e.amt,0),b=catBudget(c,k);return {s,b,left:b-s}}
+function budgetPanel(){const k=budgetMonth||curMonth(),budget=monthBudget(k);
+  const ks=REF?Object.keys(REF.months).sort():[];if(!budget&&!ks.length)return '';
+  const i=ks.indexOf(k),prev=i>0?ks[i-1]:(i<0&&ks.filter(x=>x<k).pop()),next=i>=0?ks[i+1]:ks.find(x=>x>k);
+  const exp=sumExp(k),left=budget-exp,items=S.cats.filter(c=>catBudget(c,k));
+  const nav=(m,ch)=>m?`<button onclick="budgetMonth='${m}';render()" style="background:none;border:0;color:#aaa;font-size:16px;padding:0 6px">${ch}</button>`:'<span style="width:22px;display:inline-block"></span>';
+  return `<div class="panel" style="margin-bottom:12px"><div class="pt"><i>▤</i>الميزانية الفعلية<em>${nav(prev,'›')}${monthName(k)}${nav(next,'‹')}</em></div>
+  ${budget?`<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:6px 0 14px">
     <div><small class="mute" style="font-size:11px">الميزانية</small><div class="mono" style="font-size:22px">${fmt(budget)}</div></div>
     <div><small class="mute" style="font-size:11px">المصروف</small><div class="mono" style="font-size:22px">${fmt(exp)}</div></div>
     <div><small class="mute" style="font-size:11px">الباقي</small><div class="mono" style="font-size:22px;${left<0?'color:#e07a7a':'text-shadow:var(--glow)'}">${left<0?'−':''}${fmt(Math.abs(left))}</div></div></div>
-  ${items.map(c=>{const {s,left}=catLeft(c,k),p=Math.min(100,s/c.budget*100);
-    return `<div class="gbar" style="margin-bottom:10px"><div class="t"><span>${esc(c.name)} <span class="mute" style="font-size:11px">صرفت <span class="mono">${fmt(s)}</span> من <span class="mono">${fmt(c.budget)}</span></span></span>
+  ${items.map(c=>{const {s,b,left}=catLeft(c,k),p=Math.min(100,s/b*100);
+    return `<div class="gbar" style="margin-bottom:10px"><div class="t"><span>${esc(c.name)} <span class="mute" style="font-size:11px">صرفت <span class="mono">${fmt(s)}</span> من <span class="mono">${fmt(b)}</span></span></span>
     <span style="${left<0?'color:#e07a7a':''}">${left<0?'زايد':'باقي'} <b class="mono" style="font-weight:400">${fmt(Math.abs(left))}</b></span></div><div class="bar ${p>=90?'warn':''}"><i style="width:${p}%"></i></div></div>`}).join('')}
-  ${(()=>{const out=S.expenses.filter(e=>mk(e.date)===k&&!items.some(c=>c.id===e.cat)).reduce((a,e)=>a+e.amt,0);return out?`<div class="gbar"><div class="t"><span class="mute">خارج البنود</span><span class="mono">${fmt(out)}</span></div></div>`:''})()}</div>`}
-
+  ${(()=>{const out=S.expenses.filter(e=>mk(e.date)===k&&!items.some(c=>c.id===e.cat)).reduce((a,e)=>a+e.amt,0);return out?`<div class="gbar"><div class="t"><span class="mute">خارج البنود</span><span class="mono">${fmt(out)}</span></div></div>`:''})()}`
+  :'<div class="mute" style="font-size:12px;padding:8px 0">ما فيه ميزانية لهذا الشهر في المرجعية</div>'}</div>`}
 /* ================= LOGIN ================= */
 let pinBuf='',pinStage='enter',pinFirst='';
 function buildPad(){const p=$('#pad');p.innerHTML='';[1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(k=>{const b=document.createElement('button');b.textContent=k;
@@ -617,16 +620,16 @@ function renderHome(){const k=curMonth(),pk=shiftMonth(k,-1),ks=lastMonths(6);
   const list=S.expenses.filter(e=>mk(e.date)===k);const byCat={};list.forEach(e=>byCat[e.cat]=(byCat[e.cat]||0)+e.amt);
   const cats=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);const topMax=cats.length?cats[0][1]:1;
   const parts=cats.slice(0,5).map(([c,v])=>({n:catName(c),v}));const rest=cats.slice(5).reduce((a,x)=>a+x[1],0);if(rest)parts.push({n:'باقي الأدراج',v:rest});
-  const budget=S.monthlyBudget||0,used=budget?exp/budget*100:0,dLeft=daysInMonth(k)-new Date().getDate()+1,dayN=new Date().getDate();
+  const budget=monthBudget(k),used=budget?exp/budget*100:0,dLeft=daysInMonth(k)-new Date().getDate()+1,dayN=new Date().getDate();
   const allowance=budget?Math.max(0,(budget-exp)/dLeft):0;
-  const capped=S.cats.filter(c=>c.budget);
+  const capped=S.cats.filter(c=>catBudget(c,k)).map(c=>({...c,budget:catBudget(c,k)}));
   const tt=todaysTasks(),done=tt.filter(x=>x.done).length;const big=[...list].sort((a,b)=>b.amt-a.amt)[0];
   const goalsSaved=S.goals.reduce((a,g)=>a+g.saved,0),goalsT=S.goals.reduce((a,g)=>a+g.target,0);
   const kpi=(ic,lbl,val,d,vals,col,cls)=>`<div class="panel kpi"><div class="lbl"><i>${ic}</i>${lbl}</div><div class="v mono ${cls||''}">${val}</div><div class="d">${d}</div>${spark(vals,col)}</div>`;
   const dt=new Date();
   $('#main').innerHTML=`
   <div class="dash-hd"><h2>لوحة القيادة المالية</h2><div class="tags"><span>${monthName(k)}</span><span>اليوم ${dayN}</span><span>${store.mode==='cloud'?'متزامن':'محلي'}</span></div></div>
-  ${budgetPanel(k,exp)}
+  ${budgetPanel()}
   <div class="kpis">
     ${kpi('↓','الإيرادات',fmt(inc),delta(inc,pinc),ks.map(sumInc),'#9cc4a2','green')}
     ${kpi('↑','المصروفات',fmt(exp),delta(exp,pexp,true),ks.map(sumExp),'#bdbdbd')}
@@ -669,7 +672,7 @@ function delBtn(kind,id){return `<button class="del" onclick="armDel(this,'${kin
 function armDel(b,kind,id){event.stopPropagation();if(!b.classList.contains('arm')){b.classList.add('arm');b.textContent='حذف؟';setTimeout(()=>{b.classList.remove('arm');b.textContent='✕'},2500);return}
   const map={exp:'expenses',inc:'incomes',task:'tasks',goal:'goals'};S[map[kind]]=S[map[kind]].filter(x=>x.id!==id);save();render();toast('تم الحذف')}
 function renderExpenses(){const k=viewMonth,list=S.expenses.filter(e=>mk(e.date)===k),total=list.reduce((a,e)=>a+e.amt,0);
-  const groups=S.cats.map(c=>({c,items:list.filter(e=>e.cat===c.id).sort((a,b)=>b.date.localeCompare(a.date))})).filter(g=>g.items.length||g.c.budget)
+  const groups=S.cats.map(c=>({c:{...c,budget:catBudget(c,k)},items:list.filter(e=>e.cat===c.id).sort((a,b)=>b.date.localeCompare(a.date))})).filter(g=>g.items.length||g.c.budget)
     .sort((a,b)=>b.items.reduce((s,e)=>s+e.amt,0)-a.items.reduce((s,e)=>s+e.amt,0));
   $('#main').innerHTML=`${monthNav()}
   <div style="text-align:center;padding:18px 0 8px"><div class="mute" style="font-size:12px">إجمالي المصروف</div><div class="mono" style="font-size:36px;margin-top:4px;text-shadow:var(--glow)">${fmt(total)}</div></div>
@@ -698,7 +701,7 @@ function addExpense(){let cat=S.cats[0].id;
   $('#fSave').onclick=()=>{const amt=parseFloat(($('#fAmt').value||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(',','.'));
     if(!(amt>0))return toast('اكتب المبلغ');const date=$('#fDate').value||today();
     S.expenses.push({id:uid(),amt,cat,note:$('#fNote').value.trim(),date});save();closeSheet();viewMonth=mk(date);openDrawer=cat;render();const c=S.cats.find(x=>x.id===cat);
-    if(c&&c.budget){const {left}=catLeft(c,mk(date));toast(left<0?`${c.name}: زايد ${fmt(-left)} عن الميزانية`:`انخصم من ${c.name} — باقي ${fmt(left)}`)}else toast('انحفظ الملف في درج '+catName(cat))}})}
+    if(c&&catBudget(c,mk(date))){const {left}=catLeft(c,mk(date));toast(left<0?`${c.name}: زايد ${fmt(-left)} عن الميزانية`:`انخصم من ${c.name} — باقي ${fmt(left)}`)}else toast('انحفظ الملف في درج '+catName(cat))}})}
 
 /* ================= INCOME ================= */
 function renderIncome(){const k=viewMonth,list=S.incomes.filter(e=>mk(e.date)===k).sort((a,b)=>b.date.localeCompare(a.date)),t=list.reduce((a,e)=>a+e.amt,0);
@@ -1011,7 +1014,7 @@ function interrogate(){const k=curMonth(),prev=shiftMonth(k,-1),list=S.expenses.
     ['أكبر مصروف واحد؟',big?`${esc(big.note||catName(big.cat))} — <span class="mono">${fmt(big.amt)}</span>`:'—'],
     ['كم صرفت آخر ٧ أيام؟',`<span class="mono">${fmt(wk)}</span> ريال`],
     ['مقارنة بالشهر الماضي؟',pexp?`${exp>pexp?'أعلى':'أقل'} بـ <span class="mono">${Math.abs(Math.round((exp-pexp)/pexp*100))}٪</span> (${fmt(pexp)} الشهر الماضي)`:'ما فيه بيانات للشهر الماضي'],
-    ['كم باقي من الميزانية؟',S.monthlyBudget?`<span class="mono">${fmt(S.monthlyBudget-exp)}</span> ريال`:'ما حددت ميزانية بعد']];
+    ['كم باقي من الميزانية؟',monthBudget(k)?`<span class="mono">${fmt(monthBudget(k)-exp)}</span> ريال`:'ما حددت ميزانية بعد']];
   stage(`<div class="int-lamp">${lampSVG}</div><div class="int-cone"></div><div style="font-size:13px;color:#777;margin:-120px 0 90px;letter-spacing:1px">جلسة المحاسبة · ${monthName(k)}</div>
   ${qs.map(q=>`<div class="q"><div class="ask">${q[0]}</div><div class="ans">${q[1]}</div></div>`).join('')}<div class="table-sil"></div>`);
   document.querySelectorAll('.q').forEach((q,i)=>setTimeout(()=>q.classList.add('in'),400+i*450))}
@@ -1033,7 +1036,7 @@ $('#gearBtn').onclick=()=>{const g1=gearPath(140,18,40),g2=gearPath(90,12,26),g3
   <div style="width:100%;max-width:440px;position:relative;margin-top:40px">
   <h3 style="font-weight:500;font-size:20px">الإعدادات</h3>
   <label class="f">الميزانية الشهرية (ريال)</label><input class="inp mono" id="sB" inputmode="decimal" value="${S.monthlyBudget||''}" placeholder="0">
-  <h2 class="sec">الأدراج وسقف كل درج</h2>
+  <h2 class="sec">الأدراج وسقف كل درج</h2>${REF?'<div class="mute" style="font-size:12px;line-height:1.7;margin-bottom:10px">الميزانية ومبالغ البنود تجي من المرجعية (budget.json) — أي تعديل عليها قوله لكلود.</div>':''}
   <div id="sCats">${S.cats.map(c=>`<div style="display:flex;gap:8px;margin-bottom:8px"><input class="inp" style="flex:2" data-n="${c.id}" value="${esc(c.name)}"><input class="inp mono" style="flex:1" data-b="${c.id}" inputmode="decimal" placeholder="سقف" value="${c.budget||''}"></div>`).join('')}</div>
   <button class="btn" id="sAddCat">+ درج جديد</button>
   <label class="f">مصادر الدخل (افصل بفاصلة)</label><input class="inp" id="sSrc" value="${esc(S.incomeSources.join('، '))}">
@@ -1070,7 +1073,7 @@ function lockDoor(){closeStage();$('#app').classList.add('hidden');$('#doorScene
   const local=lsGet();if(local)S=normalize(local);
   $('#pinMsg').textContent='…';buildPad();
   await Promise.race([connectDb(),new Promise(r=>setTimeout(r,4000))]);
-  applyExcelRef();
+  await loadRef();
   setupLogin();
 })();
 </script>
