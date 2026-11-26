@@ -455,6 +455,36 @@ function save(){S.updatedAt=Date.now();lsSet();try{schedulePushSync()}catch(e){}
   if(!store.ref)return;const payload={json:JSON.stringify(S),updatedAt:S.updatedAt};
   store.writing=store.writing.then(()=>store.ref.set(payload)).catch(e=>console.log('save fail',e));},700)}
 
+/* ================= مرجع الإكسل (المصروفات الشهرية) ================= */
+// بنود الشهر وسقوفها من ملف الإكسل — ورقة «المصروفات الشهرية»
+const EXCEL_REF={month:'2026-11',total:8209,items:[
+  ['net','نت',200],['food','اكل',1000],['coffee','قهوة',200],['mishal','مشعل',1000],
+  ['tamara','تمارا',1409],['transport','بانزين',1000],['barber','حلاقة',100],['shoes','شوز',3300]],
+  // الصرف الفعلي المسجّل في «سجل نوشن» داخل الإكسل
+  spent:[{id:'EXP-2',cat:'shoes',amt:3300,date:'2026-11-05',note:'شوز (نوشن EXP-2)'}]};
+function applyExcelRef(){
+  if(S.excelRef===EXCEL_REF.month)return;
+  const used=new Set(S.expenses.map(e=>e.cat)),old=S.cats,cats=[];
+  EXCEL_REF.items.forEach(([id,name,b])=>cats.push({id,name,budget:b}));
+  old.forEach(c=>{if(!cats.some(x=>x.id===c.id)&&(used.has(c.id)||c.id==='other'))cats.push({...c,budget:0})});
+  if(!cats.some(c=>c.id==='other'))cats.push({id:'other',name:'أخرى',budget:0});
+  S.cats=cats;S.monthlyBudget=EXCEL_REF.total;
+  EXCEL_REF.spent.forEach(x=>{const dup=S.expenses.some(e=>e.id===x.id||(mk(e.date)===mk(x.date)&&e.amt===x.amt&&(e.cat===x.cat||/شوز|حذاء/.test(e.note||''))));
+    if(!dup)S.expenses.push({...x})});
+  S.excelRef=EXCEL_REF.month;save()}
+function catLeft(c,k){const s=S.expenses.filter(e=>e.cat===c.id&&mk(e.date)===k).reduce((a,e)=>a+e.amt,0);return {s,left:c.budget-s}}
+function budgetPanel(k,exp){const budget=S.monthlyBudget||0;if(!budget)return '';
+  const left=budget-exp,items=S.cats.filter(c=>c.budget);
+  return `<div class="panel" style="margin-bottom:12px"><div class="pt"><i>▤</i>الميزانية الفعلية<em>مرجع الإكسل · ${monthName(k)}</em></div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center;margin:6px 0 14px">
+    <div><small class="mute" style="font-size:11px">الميزانية</small><div class="mono" style="font-size:22px">${fmt(budget)}</div></div>
+    <div><small class="mute" style="font-size:11px">المصروف</small><div class="mono" style="font-size:22px">${fmt(exp)}</div></div>
+    <div><small class="mute" style="font-size:11px">الباقي</small><div class="mono" style="font-size:22px;${left<0?'color:#e07a7a':'text-shadow:var(--glow)'}">${left<0?'−':''}${fmt(Math.abs(left))}</div></div></div>
+  ${items.map(c=>{const {s,left}=catLeft(c,k),p=Math.min(100,s/c.budget*100);
+    return `<div class="gbar" style="margin-bottom:10px"><div class="t"><span>${esc(c.name)} <span class="mute" style="font-size:11px">صرفت <span class="mono">${fmt(s)}</span> من <span class="mono">${fmt(c.budget)}</span></span></span>
+    <span style="${left<0?'color:#e07a7a':''}">${left<0?'زايد':'باقي'} <b class="mono" style="font-weight:400">${fmt(Math.abs(left))}</b></span></div><div class="bar ${p>=90?'warn':''}"><i style="width:${p}%"></i></div></div>`}).join('')}
+  ${(()=>{const out=S.expenses.filter(e=>mk(e.date)===k&&!items.some(c=>c.id===e.cat)).reduce((a,e)=>a+e.amt,0);return out?`<div class="gbar"><div class="t"><span class="mute">خارج البنود</span><span class="mono">${fmt(out)}</span></div></div>`:''})()}</div>`}
+
 /* ================= LOGIN ================= */
 let pinBuf='',pinStage='enter',pinFirst='';
 function buildPad(){const p=$('#pad');p.innerHTML='';[1,2,3,4,5,6,7,8,9,'',0,'⌫'].forEach(k=>{const b=document.createElement('button');b.textContent=k;
@@ -596,6 +626,7 @@ function renderHome(){const k=curMonth(),pk=shiftMonth(k,-1),ks=lastMonths(6);
   const dt=new Date();
   $('#main').innerHTML=`
   <div class="dash-hd"><h2>لوحة القيادة المالية</h2><div class="tags"><span>${monthName(k)}</span><span>اليوم ${dayN}</span><span>${store.mode==='cloud'?'متزامن':'محلي'}</span></div></div>
+  ${budgetPanel(k,exp)}
   <div class="kpis">
     ${kpi('↓','الإيرادات',fmt(inc),delta(inc,pinc),ks.map(sumInc),'#9cc4a2','green')}
     ${kpi('↑','المصروفات',fmt(exp),delta(exp,pexp,true),ks.map(sumExp),'#bdbdbd')}
@@ -645,7 +676,7 @@ function renderExpenses(){const k=viewMonth,list=S.expenses.filter(e=>mk(e.date)
   <h2 class="sec"><span>الأدراج</span><span>${list.length} ملف</span></h2>
   ${groups.length?groups.map(g=>{const s=g.items.reduce((a,e)=>a+e.amt,0),p=g.c.budget?Math.min(100,s/g.c.budget*100):0;
     return `<div class="drawer ${openDrawer===g.c.id?'open':''}" data-c="${g.c.id}">
-    <div class="drawer-front" onclick="toggleDrawer('${g.c.id}')"><div class="plate"><div class="nm">${esc(g.c.name)}</div><div class="ct">${g.items.length} ملف${g.c.budget?` · من ${fmt(g.c.budget)}`:''}</div></div>
+    <div class="drawer-front" onclick="toggleDrawer('${g.c.id}')"><div class="plate"><div class="nm">${esc(g.c.name)}</div><div class="ct">${g.items.length} ملف${g.c.budget?` · من ${fmt(g.c.budget)} · ${g.c.budget-s<0?'زايد '+fmt(s-g.c.budget):'باقي '+fmt(g.c.budget-s)}`:''}</div></div>
     <div class="amt mono">${fmt(s)}</div><div class="handle"></div></div>
     ${g.c.budget?`<div class="bar ${p>=90?'warn':''}"><i style="width:${p}%"></i></div>`:''}
     <div class="files">${g.items.map(e=>`<div class="file"><div class="tab"></div><div class="info"><div>${esc(e.note||g.c.name)}</div><span>${prettyDate(e.date)}</span></div><div class="mono" style="font-size:14px">${fmt(e.amt)}</div>${delBtn('exp',e.id)}</div>`).join('')||'<div class="empty">الدرج فاضي</div>'}</div></div>`}).join('')
@@ -666,7 +697,8 @@ function addExpense(){let cat=S.cats[0].id;
   <div style="margin-top:18px"><button class="btn primary" id="fSave">حفظ في الأرشيف</button></div>`,()=>{chipPick($('#fCats'),v=>cat=v);setTimeout(()=>$('#fAmt').focus(),350);
   $('#fSave').onclick=()=>{const amt=parseFloat(($('#fAmt').value||'').replace(/[٠-٩]/g,d=>'٠١٢٣٤٥٦٧٨٩'.indexOf(d)).replace(',','.'));
     if(!(amt>0))return toast('اكتب المبلغ');const date=$('#fDate').value||today();
-    S.expenses.push({id:uid(),amt,cat,note:$('#fNote').value.trim(),date});save();closeSheet();viewMonth=mk(date);openDrawer=cat;render();toast('انحفظ الملف في درج '+catName(cat))}})}
+    S.expenses.push({id:uid(),amt,cat,note:$('#fNote').value.trim(),date});save();closeSheet();viewMonth=mk(date);openDrawer=cat;render();const c=S.cats.find(x=>x.id===cat);
+    if(c&&c.budget){const {left}=catLeft(c,mk(date));toast(left<0?`${c.name}: زايد ${fmt(-left)} عن الميزانية`:`انخصم من ${c.name} — باقي ${fmt(left)}`)}else toast('انحفظ الملف في درج '+catName(cat))}})}
 
 /* ================= INCOME ================= */
 function renderIncome(){const k=viewMonth,list=S.incomes.filter(e=>mk(e.date)===k).sort((a,b)=>b.date.localeCompare(a.date)),t=list.reduce((a,e)=>a+e.amt,0);
@@ -1038,6 +1070,7 @@ function lockDoor(){closeStage();$('#app').classList.add('hidden');$('#doorScene
   const local=lsGet();if(local)S=normalize(local);
   $('#pinMsg').textContent='…';buildPad();
   await Promise.race([connectDb(),new Promise(r=>setTimeout(r,4000))]);
+  applyExcelRef();
   setupLogin();
 })();
 </script>
